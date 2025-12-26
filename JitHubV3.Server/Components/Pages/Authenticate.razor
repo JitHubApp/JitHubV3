@@ -1,0 +1,46 @@
+@page "/authenticate"
+@inject NavigationManager Navigation
+
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<h1>Authenticate</h1>
+<p>Redirecting to GitHub...</p>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Client { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? Scope { get; set; }
+
+    [SupplyParameterFromQuery(Name = "redirect_uri")]
+    public string? RedirectUri { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var target = "/auth/start";
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Client))
+        {
+            parts.Add($"client={Uri.EscapeDataString(Client)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(Scope))
+        {
+            parts.Add($"scope={Uri.EscapeDataString(Scope)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(RedirectUri))
+        {
+            parts.Add($"redirect_uri={Uri.EscapeDataString(RedirectUri)}");
+        }
+
+        if (parts.Count > 0)
+        {
+            target += "?" + string.Join("&", parts);
+        }
+
+        Navigation.NavigateTo(target, forceLoad: true);
+    }
+}

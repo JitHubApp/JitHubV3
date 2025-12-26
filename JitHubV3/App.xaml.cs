@@ -1,0 +1,284 @@
+using Uno.Resizetizer;
+using JitHubV3.Authentication;
+using JitHubV3.Services.GitHub;
+
+namespace JitHubV3;
+
+public partial class App : Application
+{
+    /// <summary>
+    /// Initializes the singleton application object. This is the first line of authored code
+    /// executed, and as such is the logical equivalent of main() or WinMain().
+    /// </summary>
+    public App()
+    {
+        this.InitializeComponent();
+
+        // Ensure the broker callback URI matches the app's registered custom scheme.
+        // See: https://platform.uno/docs/articles/features/web-authentication-broker.html
+        // Windows uses ms-app:// (handled by default); non-Windows native platforms use custom schemes.
+#if __IOS__ || __ANDROID__ || __MACOS__ || __MACCATALYST__ || __SKIA__
+        Uno.WinRTFeatureConfiguration.WebAuthenticationBroker.DefaultReturnUri = new Uri(GitHubAuthFlow.DefaultCallbackUri);
+#endif
+    }
+
+    protected Window? MainWindow { get; private set; }
+    protected IHost? Host { get; private set; }
+
+#if WINDOWS
+    private bool _pendingWindowActivation;
+#endif
+
+    protected async override void OnLaunched(LaunchActivatedEventArgs args)
+    {
+#if WINDOWS
+        if (!await EnsureSingleWindowsInstanceAsync())
+        {
+            return;
+        }
+
+        RegisterWindowsProtocolActivation();
+#endif
+        var builder = this.CreateBuilder(args)
+            // Add navigation support for toolkit controls such as TabBar and NavigationView
+            .UseToolkitNavigation()
+            .Configure(host => host
+#if DEBUG
+                // Switch to Development environment when running in DEBUG
+                .UseEnvironment(Environments.Development)
+#endif
+                .UseLogging(configure: (context, logBuilder) =>
+                {
+                    // Configure log levels for different categories of logging
+                    logBuilder
+                        .SetMinimumLevel(
+                            context.HostingEnvironment.IsDevelopment() ?
+                                LogLevel.Information :
+                                LogLevel.Warning)
+
+                        // Default filters for core Uno Platform namespaces
+                        .CoreLogLevel(LogLevel.Warning);
+
+                    // Uno Platform namespace filter groups
+                    // Uncomment individual methods to see more detailed logging
+                    //// Generic Xaml events
+                    //logBuilder.XamlLogLevel(LogLevel.Debug);
+                    //// Layout specific messages
+                    //logBuilder.XamlLayoutLogLevel(LogLevel.Debug);
+                    //// Storage messages
+                    //logBuilder.StorageLogLevel(LogLevel.Debug);
+                    //// Binding related messages
+                    //logBuilder.XamlBindingLogLevel(LogLevel.Debug);
+                    //// Binder memory references tracking
+                    //logBuilder.BinderMemoryReferenceLogLevel(LogLevel.Debug);
+                    //// DevServer and HotReload related
+                    //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
+                    //// Debug JS interop
+                    //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
+
+                }, enableUnoLogging: true)
+                .UseSerilog(consoleLoggingEnabled: true, fileLoggingEnabled: true)
+                .UseConfiguration(configure: configBuilder =>
+                    configBuilder
+                        .EmbeddedSource<App>()
+                        .Section<AppConfig>()
+                )
+                // Enable localization (see appsettings.json for supported languages)
+                .UseLocalization()
+                .UseAuthentication(auth =>
+                    auth.AddCustom(custom =>
+                    {
+                        custom
+                            .Login(async (services, dispatcher, credentials, ct) =>
+                            {
+                                var resultTokens = await GitHubAuthFlow.LoginAsync(services, credentials);
+                                return resultTokens;
+                            })
+                            .Refresh((services, tokens, ct) =>
+                            {
+                                // GitHub OAuth tokens are typically long-lived; no refresh token.
+                                // If we have an access token, consider the session still valid.
+                                if (tokens is not null && tokens.TryGetValue("access_token", out var accessToken) && !string.IsNullOrWhiteSpace(accessToken))
+                                {
+                                    return ValueTask.FromResult<IDictionary<string, string>?>(tokens);
+                                }
+
+                                return ValueTask.FromResult<IDictionary<string, string>?>(new Dictionary<string, string>());
+                            })
+                            .Logout(async (services, dispatcher, tokenCache, tokens, ct) =>
+                            {
+                                await tokenCache.ClearAsync(ct);
+                                return true;
+                            });
+                    }, name: "GitHub")
+                )
+                .ConfigureServices((context, services) =>
+                {
+                    // TODO: Register your services
+                    //services.AddSingleton<IMyService, MyService>();
+
+                    services.AddSingleton<IGitHubApi, OctokitGitHubApi>();
+                })
+                .UseNavigation(RegisterRoutes)
+            );
+        MainWindow = builder.Window;
+
+#if DEBUG
+        MainWindow.UseStudio();
+#endif
+        MainWindow.SetWindowIcon();
+
+    #if WINDOWS
+        // If we received a protocol activation before the window existed, activate it now.
+        if (_pendingWindowActivation)
+        {
+            _pendingWindowActivation = false;
+            TryActivateMainWindow();
+        }
+    #endif
+
+        Host = await builder.NavigateAsync<Shell>
+            (initialNavigate: async (services, navigator) =>
+            {
+                var auth = services.GetRequiredService<IAuthenticationService>();
+
+#if __WASM__
+                // If we returned from backend auth with an access token in the URL,
+                // persist it into the Uno authentication token cache and clear the URL.
+                await GitHubAuthFlow.TryConsumeAndPersistWasmRedirectTokensAsync(services);
+#endif
+
+                var authenticated = await auth.RefreshAsync();
+                if (authenticated)
+                {
+                    await navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.Nested);
+                }
+                else
+                {
+#if WINDOWS
+                    // If the app was activated via protocol (handoffCode), try to complete login immediately
+                    // so we can skip the login screen and navigate to the authenticated route.
+                    if (GitHubAuthFlow.HasPendingProtocolHandoff())
+                    {
+                        var dispatcher = services.GetRequiredService<IDispatcher>();
+                        var protocolLoginSuccess = await auth.LoginAsync(dispatcher);
+                        if (protocolLoginSuccess)
+                        {
+                            await navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.Nested);
+                            return;
+                        }
+                    }
+#endif
+                    await navigator.NavigateViewModelAsync<LoginViewModel>(this, qualifier: Qualifiers.Nested);
+                }
+            });
+    }
+
+#if WINDOWS
+    private static async Task<bool> EnsureSingleWindowsInstanceAsync()
+    {
+        var currentInstance = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent();
+        var activatedArgs = currentInstance.GetActivatedEventArgs();
+
+        var mainInstance = Microsoft.Windows.AppLifecycle.AppInstance.FindOrRegisterForKey("main");
+        if (!mainInstance.IsCurrent)
+        {
+            await mainInstance.RedirectActivationToAsync(activatedArgs);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void RegisterWindowsProtocolActivation()
+    {
+        // WinUI 3 (Windows App SDK) doesn't support overriding Application.OnActivated like UWP.
+        // Use AppInstance activation events instead.
+        var instance = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent();
+
+        HandleWindowsActivation(instance.GetActivatedEventArgs());
+        instance.Activated += (_, e) => HandleWindowsActivation(e);
+    }
+
+    private void HandleWindowsActivation(Microsoft.Windows.AppLifecycle.AppActivationArguments args)
+    {
+        if (args.Kind != Microsoft.Windows.AppLifecycle.ExtendedActivationKind.Protocol)
+        {
+            return;
+        }
+
+        if (args.Data is Windows.ApplicationModel.Activation.IProtocolActivatedEventArgs protocolArgs && protocolArgs.Uri is not null)
+        {
+            GitHubAuthFlow.TryHandleProtocolActivation(protocolArgs.Uri);
+
+            // Bring the existing window to foreground.
+            // AppInstance.Activated can come in on a non-UI thread; marshal activation to the window dispatcher.
+            if (MainWindow is null)
+            {
+                _pendingWindowActivation = true;
+            }
+            else
+            {
+                TryActivateMainWindow();
+            }
+        }
+    }
+
+    private void TryActivateMainWindow()
+    {
+        var window = MainWindow;
+        if (window is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var dispatcher = window.DispatcherQueue;
+            if (dispatcher.HasThreadAccess)
+            {
+                window.Activate();
+            }
+            else
+            {
+                dispatcher.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        window.Activate();
+                    }
+                    catch (System.Runtime.InteropServices.COMException)
+                    {
+                        // If activation is not possible in the current state, ignore.
+                    }
+                });
+            }
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Ignore activation failures.
+        }
+    }
+#endif
+
+    private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
+    {
+        views.Register(
+            new ViewMap(ViewModel: typeof(ShellViewModel)),
+            new ViewMap<LoginPage, LoginViewModel>(),
+            new ViewMap<MainPage, MainViewModel>(),
+            new DataViewMap<SecondPage, SecondViewModel, Entity>()
+        );
+
+        routes.Register(
+            new RouteMap("", View: views.FindByViewModel<ShellViewModel>(),
+                Nested:
+                [
+                    new ("Login", View: views.FindByViewModel<LoginViewModel>()),
+                    new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("Second", View: views.FindByViewModel<SecondViewModel>()),
+                ]
+            )
+        );
+    }
+}

@@ -1,0 +1,54 @@
+@page "/auth/complete"
+@inject NavigationManager Navigation
+
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<h1>Authentication complete</h1>
+
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <p>@_error</p>
+}
+else
+{
+    <p>Returning to the app...</p>
+    <p><a href="@_protocolUri">Open JitHubV3</a></p>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Client { get; set; }
+
+    [SupplyParameterFromQuery(Name = "handoffCode")]
+    public string? HandoffCode { get; set; }
+
+    private string? _error;
+    private string _protocolUri = "";
+    private bool _isWindows;
+    private bool _isWasm;
+
+    protected override void OnInitialized()
+    {
+        _isWindows = string.Equals(Client, "windows", StringComparison.OrdinalIgnoreCase);
+        _isWasm = string.Equals(Client, "wasm", StringComparison.OrdinalIgnoreCase);
+
+        if (!_isWindows && !_isWasm)
+        {
+            _error = "Missing or invalid client. Expected client=windows or client=wasm.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(HandoffCode))
+        {
+            _error = "Missing handoffCode.";
+            return;
+        }
+
+        if (_isWindows)
+        {
+            _protocolUri = $"jithubv3://auth?handoffCode={Uri.EscapeDataString(HandoffCode)}";
+            // Trigger protocol activation (old-app style), then let the window be closed.
+            Navigation.NavigateTo(_protocolUri, forceLoad: true);
+        }
+    }
+}

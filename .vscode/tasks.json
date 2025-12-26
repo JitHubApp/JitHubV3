@@ -1,0 +1,157 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-wasm",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/JitHubV3/JitHubV3.csproj",
+        "/property:GenerateFullPaths=true",
+        "/property:TargetFramework=net10.0-browserwasm",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "publish-wasm",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/JitHubV3/JitHubV3.csproj",
+        "/property:GenerateFullPaths=true",
+        "/property:TargetFramework=net10.0-browserwasm",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-desktop",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/JitHubV3/JitHubV3.csproj",
+        "/property:GenerateFullPaths=true",
+        "/property:TargetFramework=net10.0-desktop",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "publish-desktop",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "publish",
+        "${workspaceFolder}/JitHubV3/JitHubV3.csproj",
+        "/property:GenerateFullPaths=true",
+        "/property:TargetFramework=net10.0-desktop",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "run-server (API)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/JitHubV3.Server/JitHubV3.Server.csproj"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/JitHubV3.Server",
+        "env": {
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "ASPNETCORE_URLS": "https://localhost:5002"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "jithubv3-server",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Now listening on:",
+          "endsPattern": "Application started"
+        }
+      }
+    },
+    {
+      "label": "run-wasm-ui",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/JitHubV3/JitHubV3.csproj",
+        "--framework",
+        "net10.0-browserwasm"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/JitHubV3",
+        "env": {
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "ASPNETCORE_URLS": "http://localhost:5000"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "jithubv3-wasm-ui",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Now listening on:",
+          "endsPattern": "Application started"
+        }
+      }
+    },
+    {
+      "label": "test-ui (WASM smoke)",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "${workspaceFolder}/JitHubV3.UITests/JitHubV3.UITests.csproj",
+        "-v",
+        "minimal",
+        "--filter",
+        "FullyQualifiedName~JitHubV3.UITests.Given_MainPage.When_SmokeTest"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JITHUBV3_WASM_URI": "http://localhost:5000/"
+        }
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "e2e (WASM UI smoke)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "run-server (API)",
+        "run-wasm-ui",
+        "test-ui (WASM smoke)"
+      ],
+      "command": "pwsh",
+      "type": "process",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-Command",
+        "Write-Output 'e2e completed.'"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

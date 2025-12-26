@@ -1,0 +1,9 @@
+{
+    "servers": {
+        "Uno": {
+            "type": "sse",
+            "url": "https://mcp.platform.uno/v1",
+            "headers": {}
+        }
+    }
+}

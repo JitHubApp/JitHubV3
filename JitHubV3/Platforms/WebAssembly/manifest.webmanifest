@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "JitHubV3",
+  "display": "standalone",
+  "name": "JitHubV3",
+  "short_name": "JitHubV3",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}
