@@ -663,7 +663,7 @@ Phase 6 lessons learned:
 
 ## Phase 7 — Accessibility (per platform) + RTL
 
-### 7.1 Core accessibility semantic tree
+### 7.1 Core accessibility semantic tree (implemented)
 Deliverables:
 - Produce `AccessibilityNode` tree for visible layout.
 - Stable node ids.
@@ -673,6 +673,11 @@ Unit tests:
   - headings
   - lists
   - link presence
+
+Implemented notes:
+- Added core accessibility types (`MarkdownAccessibilityRole`, `AccessibilityNode`, `MarkdownAccessibilityTree`).
+- Added `MarkdownAccessibilityTreeBuilder.Build(...)` which extracts a visible-only semantic tree from `MarkdownLayout`.
+- Added unit tests to gate heading/list/link node presence and ID stability.
 
 ### 7.2 Platform accessibility bridges
 Sub-phases per platform.
