@@ -210,7 +210,8 @@ public sealed class MarkdownLayoutEngine
                 text,
                 Url: null,
                 IsStrikethrough: false,
-                IsCodeBlockLine: true);
+                IsCodeBlockLine: true,
+                GlyphX: BuildGlyphX(text, textStyle, scale, textMeasurer, runBounds.X, extraLeft: 0));
             runsBuilder.Add(new LineLayout(localY, lineHeight, ImmutableArray.Create(run)));
 
             localY += lineHeight;
@@ -676,7 +677,8 @@ public sealed class MarkdownLayoutEngine
                         token.Text,
                         token.Url,
                         token.IsStrikethrough,
-                        token.IsCodeBlockLine));
+                        token.IsCodeBlockLine,
+                        GlyphX: default));
 
                     lineHeight = Math.Max(lineHeight, imageHeight);
                     FlushLine();
@@ -704,6 +706,13 @@ public sealed class MarkdownLayoutEngine
                 }
 
                 var runBounds = new RectF(x, lineY, tokenWidth, tokenHeight);
+
+                var extraLeft = 0f;
+                if (token.Kind == NodeKind.InlineCode && !token.IsCodeBlockLine)
+                {
+                    extraLeft = Math.Max(0, theme.Metrics.InlineCodePadding) * scale;
+                }
+
                 currentRuns.Add(new InlineRunLayout(
                     token.Id,
                     token.Kind,
@@ -713,7 +722,8 @@ public sealed class MarkdownLayoutEngine
                     token.Text,
                     token.Url,
                     token.IsStrikethrough,
-                    token.IsCodeBlockLine));
+                    token.IsCodeBlockLine,
+                    GlyphX: BuildGlyphX(token.Text, token.Style, scale, textMeasurer, runBounds.X, extraLeft)));
 
                 x += tokenWidth;
                 lineHeight = Math.Max(lineHeight, tokenHeight);
@@ -731,6 +741,29 @@ public sealed class MarkdownLayoutEngine
         }
 
         return lines.ToImmutable();
+    }
+
+    private static ImmutableArray<float> BuildGlyphX(string text, MarkdownTextStyle style, float scale, ITextMeasurer measurer, float startX, float extraLeft)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return ImmutableArray<float>.Empty;
+        }
+
+        var builder = ImmutableArray.CreateBuilder<float>(text.Length + 1);
+        var x = startX + Math.Max(0, extraLeft);
+        builder.Add(x);
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            // Deterministic, fast-enough approximation: per-char measurement.
+            // Kerning/shaping will be handled in a later shaping phase.
+            var w = measurer.Measure(text[i].ToString(), style, scale).Width;
+            x += Math.Max(0, w);
+            builder.Add(x);
+        }
+
+        return builder.ToImmutable();
     }
 
     private ImmutableArray<InlineSegment> FlattenInlineSegments(ImmutableArray<InlineNode> inlines, MarkdownTextStyle baseStyle, MarkdownTheme theme)

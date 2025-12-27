@@ -128,4 +128,5 @@ public sealed record InlineRunLayout(
     string Text,
     string? Url,
     bool IsStrikethrough,
-    bool IsCodeBlockLine);
+    bool IsCodeBlockLine,
+    ImmutableArray<float> GlyphX = default);

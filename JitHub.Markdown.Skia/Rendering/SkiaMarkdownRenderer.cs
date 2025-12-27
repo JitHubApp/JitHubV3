@@ -16,49 +16,53 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         context.Canvas.Save();
         context.Canvas.ClipRect(new SKRect(context.Viewport.X, context.Viewport.Y, context.Viewport.Right, context.Viewport.Bottom));
 
+        var selectionRects = context.Selection is not null
+            ? SelectionGeometryBuilder.Build(layout, context.Selection.Value).Rects
+            : System.Collections.Immutable.ImmutableArray<RectF>.Empty;
+
         var visible = layout.GetVisibleBlockIndices(context.Viewport.Y, context.Viewport.Height, context.Overscan);
         for (var i = 0; i < visible.Length; i++)
         {
             var block = layout.Blocks[visible[i]];
-            RenderBlock(block, context);
+            RenderBlock(block, context, selectionRects);
         }
 
         context.Canvas.Restore();
     }
 
-    private static void RenderBlock(BlockLayout block, RenderContext context)
+    private static void RenderBlock(BlockLayout block, RenderContext context, System.Collections.Immutable.ImmutableArray<RectF> selectionRects)
     {
         DrawBlockBackground(block, context);
 
         switch (block)
         {
             case ParagraphLayout p:
-                RenderLines(p.Lines, context);
+                RenderLines(p.Lines, context, selectionRects);
                 break;
             case HeadingLayout h:
-                RenderLines(h.Lines, context);
+                RenderLines(h.Lines, context, selectionRects);
                 break;
             case CodeBlockLayout c:
-                RenderLines(c.Lines, context);
+                RenderLines(c.Lines, context, selectionRects);
                 break;
             case BlockQuoteLayout q:
                 DrawBlockQuoteStripe(q, context);
                 foreach (var child in q.Blocks)
                 {
-                    RenderBlock(child, context);
+                    RenderBlock(child, context, selectionRects);
                 }
                 break;
             case ListLayout l:
                 foreach (var item in l.Items)
                 {
-                    RenderBlock(item, context);
+                    RenderBlock(item, context, selectionRects);
                 }
                 break;
             case ListItemLayout li:
                 DrawListMarker(li, context);
                 foreach (var child in li.Blocks)
                 {
-                    RenderBlock(child, context);
+                    RenderBlock(child, context, selectionRects);
                 }
                 break;
             case TableLayout t:
@@ -71,7 +75,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
                         var cell = row.Cells[c];
                         for (var bi = 0; bi < cell.Blocks.Length; bi++)
                         {
-                            RenderBlock(cell.Blocks[bi], context);
+                            RenderBlock(cell.Blocks[bi], context, selectionRects);
                         }
                     }
                 }
@@ -222,20 +226,62 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
     }
 
-    private static void RenderLines(System.Collections.Immutable.ImmutableArray<LineLayout> lines, RenderContext context)
+    private static void RenderLines(System.Collections.Immutable.ImmutableArray<LineLayout> lines, RenderContext context, System.Collections.Immutable.ImmutableArray<RectF> selectionRects)
     {
         for (var i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
+
+            // Pass 1: run backgrounds (inline code surface, images).
             for (var j = 0; j < line.Runs.Length; j++)
             {
                 var run = line.Runs[j];
-                DrawRun(run, context);
+                DrawRunBackground(run, context);
+            }
+
+            // Pass 2: selection overlay (continuous base fill).
+            if (!selectionRects.IsDefaultOrEmpty)
+            {
+                DrawSelectionForLine(line, selectionRects, context);
+            }
+
+            // Pass 3: run foreground (text + decorations).
+            for (var j = 0; j < line.Runs.Length; j++)
+            {
+                var run = line.Runs[j];
+                DrawRunForeground(run, context);
             }
         }
     }
 
-    private static void DrawRun(InlineRunLayout run, RenderContext context)
+    private static void DrawSelectionForLine(LineLayout line, System.Collections.Immutable.ImmutableArray<RectF> selectionRects, RenderContext context)
+    {
+        // selectionRects are in layout coordinates; canvas is already clipped to viewport.
+        var lineTop = line.Y;
+        var lineBottom = line.Y + line.Height;
+
+        var fill = context.Theme.Selection.SelectionFill.ToSKColor();
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = fill,
+        };
+
+        for (var i = 0; i < selectionRects.Length; i++)
+        {
+            var r = selectionRects[i];
+            if (r.Bottom <= lineTop || r.Y >= lineBottom)
+            {
+                continue;
+            }
+
+            var rr = new SKRect(r.X, r.Y, r.Right, r.Bottom);
+            context.Canvas.DrawRect(rr, paint);
+        }
+    }
+
+    private static void DrawRunBackground(InlineRunLayout run, RenderContext context)
     {
         if (string.IsNullOrEmpty(run.Text))
         {
@@ -245,6 +291,43 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         if (run.Kind == NodeKind.Image)
         {
             DrawImageRun(run, context);
+            return;
+        }
+
+        // Inline code surface background is drawn before selection so selection can overlay it.
+        if (run.Kind == NodeKind.InlineCode && !run.IsCodeBlockLine)
+        {
+            var radius = Math.Max(0, context.Theme.Metrics.InlineCodeCornerRadius) * context.Scale;
+
+            using var bgPaint = new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                Color = context.Theme.Colors.InlineCodeBackground.ToSKColor(),
+            };
+
+            var r = new SKRect(run.Bounds.X, run.Bounds.Y, run.Bounds.Right, run.Bounds.Bottom);
+            if (radius <= 0)
+            {
+                context.Canvas.DrawRect(r, bgPaint);
+            }
+            else
+            {
+                context.Canvas.DrawRoundRect(r, radius, radius, bgPaint);
+            }
+        }
+    }
+
+    private static void DrawRunForeground(InlineRunLayout run, RenderContext context)
+    {
+        if (string.IsNullOrEmpty(run.Text))
+        {
+            return;
+        }
+
+        if (run.Kind == NodeKind.Image)
+        {
+            // Image already drawn in background pass.
             return;
         }
 
@@ -276,24 +359,6 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         if (run.Kind == NodeKind.InlineCode && !run.IsCodeBlockLine)
         {
             var pad = Math.Max(0, context.Theme.Metrics.InlineCodePadding) * context.Scale;
-            var radius = Math.Max(0, context.Theme.Metrics.InlineCodeCornerRadius) * context.Scale;
-
-            using var bgPaint = new SKPaint
-            {
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill,
-                Color = context.Theme.Colors.InlineCodeBackground.ToSKColor(),
-            };
-
-            var r = new SKRect(run.Bounds.X, run.Bounds.Y, run.Bounds.Right, run.Bounds.Bottom);
-            if (radius <= 0)
-            {
-                context.Canvas.DrawRect(r, bgPaint);
-            }
-            else
-            {
-                context.Canvas.DrawRoundRect(r, radius, radius, bgPaint);
-            }
 
             x += pad;
             baselineY = (run.Bounds.Y + pad) - metrics.Ascent;

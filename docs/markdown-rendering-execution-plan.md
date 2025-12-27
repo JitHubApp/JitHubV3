@@ -442,27 +442,30 @@ Tests:
 
 ## Phase 5 — Selection engine (revolutionized) + clipboard
 
-- Create per-run glyph boundaries for hit testing.
+### 5.1 Hit testing + glyph boundaries (implemented)
+Deliverables:
+- Per-run glyph boundary X positions (deterministic) to support hit testing.
+- `MarkdownHitTester` mapping `(x,y)` → run + text offset.
 
 Unit tests:
-- Hit testing returns correct run for known layouts.
+- Hit testing returns correct run + offset for known layouts.
 
-### 5.2 Range model and normalization
+### 5.2 Range model and normalization (implemented)
 Deliverables:
 - `SelectionRange` in layout coordinates.
 - `ISelectionNormalizer` with default behavior.
 
 Unit tests:
-- Drag selection across blocks yields continuous range.
-- Word snapping rules (if enabled) behave deterministically.
+- Normalization orders anchor/active deterministically.
 
-### 5.3 Visual selection geometry
+### 5.3 Visual selection geometry (implemented)
 Deliverables:
 - Generate selection rects/paths per line.
 - Render continuous base overlay.
 
 Unit tests:
-- Geometry continuity tests (no gaps for typical cases).
+- Geometry continuity tests (no gaps for typical wrapped text).
+- Renderer draws base selection fill.
 
 ### 5.4 Element-aware selection overlays
 Deliverables:

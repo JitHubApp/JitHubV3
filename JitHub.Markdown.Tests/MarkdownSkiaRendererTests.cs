@@ -112,6 +112,84 @@ public sealed class MarkdownSkiaRendererTests
     }
 
     [Test]
+    public void Selection_overlay_renders_base_fill()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("Hello world");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var spaceIndex = line.Runs.ToList().FindIndex(r => r.Text == " ");
+        spaceIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        var spaceRun = line.Runs[spaceIndex];
+        spaceRun.Text.Length.Should().Be(1);
+
+        var anchor = new MarkdownHitTestResult(
+            LineIndex: 0,
+            RunIndex: spaceIndex,
+            Run: spaceRun,
+            Line: line,
+            TextOffset: 0,
+            CaretX: MarkdownHitTester.GetCaretX(spaceRun, 0));
+
+        var active = new MarkdownHitTestResult(
+            LineIndex: 0,
+            RunIndex: spaceIndex,
+            Run: spaceRun,
+            Line: line,
+            TextOffset: 1,
+            CaretX: MarkdownHitTester.GetCaretX(spaceRun, 1));
+
+        var selection = new SelectionRange(anchor, active);
+        var geometry = SelectionGeometryBuilder.Build(layout, selection);
+        geometry.Rects.Should().NotBeEmpty();
+
+        using var bitmap = new SKBitmap(800, 200);
+        using var canvas = new SKCanvas(bitmap);
+        var bg = theme.Colors.PageBackground;
+        canvas.Clear(new SKColor((byte)bg.R, (byte)bg.G, (byte)bg.B, (byte)bg.A));
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 200),
+            Scale = 1,
+            Selection = selection,
+        });
+
+        var r = geometry.Rects[0];
+        var sampleX = Math.Clamp((int)MathF.Floor(r.X + (r.Width / 2f)), 0, bitmap.Width - 1);
+        var sampleY = Math.Clamp((int)MathF.Floor(r.Y + (r.Height / 2f)), 0, bitmap.Height - 1);
+
+        var actual = bitmap.GetPixel(sampleX, sampleY);
+
+        // Expected blend: selection fill over page background.
+        var src = theme.Selection.SelectionFill;
+        var dst = theme.Colors.PageBackground;
+        var a = src.A / 255f;
+
+        static byte Blend(byte s, byte d, float a)
+            => (byte)Math.Clamp((s * a) + (d * (1f - a)), 0, 255);
+
+        var expected = new SKColor(
+            Blend(src.R, dst.R, a),
+            Blend(src.G, dst.G, a),
+            Blend(src.B, dst.B, a),
+            255);
+
+        actual.Red.Should().BeInRange((byte)Math.Max(0, expected.Red - 1), (byte)Math.Min(255, expected.Red + 1));
+        actual.Green.Should().BeInRange((byte)Math.Max(0, expected.Green - 1), (byte)Math.Min(255, expected.Green + 1));
+        actual.Blue.Should().BeInRange((byte)Math.Max(0, expected.Blue - 1), (byte)Math.Min(255, expected.Blue + 1));
+    }
+
+    [Test]
     public void Code_block_renders_background_surface()
     {
         var theme = MarkdownTheme.Light;
