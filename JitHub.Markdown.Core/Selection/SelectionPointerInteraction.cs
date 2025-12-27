@@ -25,6 +25,12 @@ public sealed class SelectionPointerInteraction
 
     public SelectionRange? Selection { get; private set; }
 
+    public void SetSelection(SelectionRange? selection)
+    {
+        Selection = selection;
+        ResetPointerState();
+    }
+
     public void ClearSelection()
     {
         Selection = null;

@@ -7,7 +7,7 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       xmlns:md="using:JitHub.Markdown.Uno"
       mc:Ignorable="d"
-  IsTabStop="False"
+      IsTabStop="False"
       NavigationCacheMode="Required"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 

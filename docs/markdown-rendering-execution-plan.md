@@ -553,7 +553,7 @@ Tests:
 Tests:
 - Core tests + manual UX verification.
 
-### 6.3 Keyboard navigation
+### 6.3 Keyboard navigation (implemented)
 Deliverables:
 - Arrow keys move selection caret (if selection enabled)
 - Tab navigates focusable elements (links)

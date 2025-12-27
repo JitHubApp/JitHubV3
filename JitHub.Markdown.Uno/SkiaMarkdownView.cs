@@ -75,6 +75,8 @@ public class SkiaMarkdownView : ContentControl
         }
     }
 
+    public event EventHandler<string>? LinkActivated;
+
     public SkiaMarkdownView()
     {
         IsTabStop = true;
@@ -103,7 +105,20 @@ public class SkiaMarkdownView : ContentControl
             VerticalAlignment = VerticalAlignment.Top,
             IsHitTestVisible = true,
         };
+
+        _linkFocusOverlay = new Border
+        {
+            Visibility = Visibility.Collapsed,
+            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            BorderThickness = new Thickness(2),
+            BorderBrush = GetLinkFocusBrush(),
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+        };
+
         _canvas.Children.Add(_image);
+        _canvas.Children.Add(_linkFocusOverlay);
         Content = _canvas;
 
         // Ensure we can receive pointer events even when the hit-test source is this ContentControl.
@@ -122,6 +137,8 @@ public class SkiaMarkdownView : ContentControl
         Unloaded += OnUnloaded;
         SizeChanged += OnSizeChanged;
 
+        KeyDown += OnKeyDown;
+
         RebuildDocumentAndLayout();
     }
 
@@ -131,6 +148,7 @@ public class SkiaMarkdownView : ContentControl
     private readonly SkiaMarkdownRenderer _renderer;
     private readonly Grid _canvas;
     private readonly Image _image;
+    private readonly Border _linkFocusOverlay;
 
     private MarkdownDocumentModel? _document;
     private MarkdownLayout? _layout;
@@ -149,6 +167,7 @@ public class SkiaMarkdownView : ContentControl
     private readonly HttpClient _http = new();
 
     private readonly SelectionPointerInteraction _pointerInteraction = new();
+    private readonly SelectionKeyboardInteraction _keyboardInteraction = new();
     private bool _hasPointerCapture;
     private bool _isSelecting;
 
@@ -329,6 +348,9 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        ClearKeyboardLinkFocus();
+
         this.Log().LogWarning("[SkiaMarkdownView] PointerDown selectionChanged={SelectionChanged} selection={Selection}",
             result.SelectionChanged,
             Selection?.ToString() ?? "<null>");
@@ -432,6 +454,8 @@ public class SkiaMarkdownView : ContentControl
             _isSelecting = true;
         }
 
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+
         // Handle moves when we're actively selecting. This is important on WASM/Desktop
         // where CapturePointer may not be supported consistently.
         if (_hasPointerCapture || _touchSelectionStarted || _isSelecting)
@@ -470,6 +494,8 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+
         this.Log().LogWarning("[SkiaMarkdownView] PointerUp selectionChanged={SelectionChanged} activateLink={ActivateLink}",
             result.SelectionChanged,
             string.IsNullOrWhiteSpace(result.ActivateLinkUrl) ? "<none>" : result.ActivateLinkUrl);
@@ -477,6 +503,7 @@ public class SkiaMarkdownView : ContentControl
         if (!string.IsNullOrWhiteSpace(result.ActivateLinkUrl))
         {
             _ = OpenLinkAsync(result.ActivateLinkUrl);
+            LinkActivated?.Invoke(this, result.ActivateLinkUrl);
         }
 
         // Decide handled *before* we clear capture/flags.
@@ -528,6 +555,323 @@ public class SkiaMarkdownView : ContentControl
         _touchLongPressArmed = false;
         _touchSelectionStarted = false;
         _isSelecting = false;
+
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+    }
+
+    private void OnKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (_layout is null)
+        {
+            return;
+        }
+
+        if (!TryMapKey(e.Key, out var cmd))
+        {
+            return;
+        }
+
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+
+        var shift = IsShiftDown();
+
+        var result = _keyboardInteraction.OnKeyCommand(
+            _layout,
+            cmd,
+            selectionEnabled: SelectionEnabled,
+            shift: shift);
+
+        if (!result.Handled)
+        {
+            return;
+        }
+
+        e.Handled = true;
+
+        if (result.SelectionChanged && result.Selection is { } sel)
+        {
+            _pointerInteraction.SetSelection(sel);
+            Selection = sel;
+        }
+
+        if (result.FocusChanged)
+        {
+            UpdateLinkFocusOverlay();
+            EnsureFocusedLinkVisible();
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.ActivateLinkUrl))
+        {
+            _ = OpenLinkAsync(result.ActivateLinkUrl!);
+            LinkActivated?.Invoke(this, result.ActivateLinkUrl!);
+        }
+    }
+
+    private static bool IsShiftDown()
+    {
+        return IsKeyDown(VirtualKey.Shift);
+    }
+
+    private static bool IsKeyDown(VirtualKey key)
+    {
+        // Prefer WinUI InputKeyboardSource when available.
+        if (TryGetKeyStateFromInputKeyboardSource(key, out var state) && HasDownFlag(state))
+        {
+            return true;
+        }
+
+        // Fallback: CoreWindow for UWP/Uno targets.
+        if (TryGetKeyStateFromCoreWindow(key, out state) && HasDownFlag(state))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryGetKeyStateFromInputKeyboardSource(VirtualKey key, out object? state)
+    {
+        state = null;
+        try
+        {
+            var t = FindType("Microsoft.UI.Input.InputKeyboardSource");
+            if (t is null)
+            {
+                return false;
+            }
+
+            var m = t.GetMethod("GetKeyStateForCurrentThread", new[] { typeof(VirtualKey) });
+            if (m is null)
+            {
+                return false;
+            }
+
+            state = m.Invoke(null, new object[] { key });
+            return state is not null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryGetKeyStateFromCoreWindow(VirtualKey key, out object? state)
+    {
+        state = null;
+        try
+        {
+            var t = FindType("Windows.UI.Core.CoreWindow");
+            if (t is null)
+            {
+                return false;
+            }
+
+            var getForThread = t.GetMethod("GetForCurrentThread", Type.EmptyTypes);
+            if (getForThread is null)
+            {
+                return false;
+            }
+
+            var window = getForThread.Invoke(null, Array.Empty<object>());
+            if (window is null)
+            {
+                return false;
+            }
+
+            var getKeyState = t.GetMethod("GetKeyState", new[] { typeof(VirtualKey) });
+            if (getKeyState is null)
+            {
+                return false;
+            }
+
+            state = getKeyState.Invoke(window, new object[] { key });
+            return state is not null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool HasDownFlag(object? state)
+    {
+        if (state is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var enumType = state.GetType();
+            if (!enumType.IsEnum)
+            {
+                return false;
+            }
+
+            // Both VirtualKeyStates and CoreVirtualKeyStates use a 'Down' flag.
+            var down = Enum.Parse(enumType, "Down");
+            var value = Convert.ToUInt64(state);
+            var downValue = Convert.ToUInt64(down);
+            return (value & downValue) != 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static Type? FindType(string fullName)
+    {
+        try
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var t = asm.GetType(fullName, throwOnError: false);
+                if (t is not null)
+                {
+                    return t;
+                }
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return null;
+    }
+
+    private static bool TryMapKey(VirtualKey key, out MarkdownKeyCommand cmd)
+    {
+        switch (key)
+        {
+            case VirtualKey.Left:
+                cmd = MarkdownKeyCommand.Left;
+                return true;
+            case VirtualKey.Right:
+                cmd = MarkdownKeyCommand.Right;
+                return true;
+            case VirtualKey.Up:
+                cmd = MarkdownKeyCommand.Up;
+                return true;
+            case VirtualKey.Down:
+                cmd = MarkdownKeyCommand.Down;
+                return true;
+            case VirtualKey.Tab:
+                cmd = MarkdownKeyCommand.Tab;
+                return true;
+            case VirtualKey.Enter:
+                cmd = MarkdownKeyCommand.Enter;
+                return true;
+            default:
+                cmd = default;
+                return false;
+        }
+    }
+
+    private void ClearKeyboardLinkFocus()
+    {
+        _keyboardInteraction.ClearLinkFocus();
+        if (_linkFocusOverlay.Visibility != Visibility.Collapsed)
+        {
+            _linkFocusOverlay.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void UpdateLinkFocusOverlay()
+    {
+        var focused = _keyboardInteraction.FocusedLink;
+        if (_layout is null || focused is null)
+        {
+            _linkFocusOverlay.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var b = focused.Value.Bounds;
+        _linkFocusOverlay.Visibility = Visibility.Visible;
+        // IMPORTANT: Bounds are in document/layout coordinates (full control space), not viewport-local.
+        // The markdown view virtualizes rendering into a viewport bitmap, but this overlay must remain
+        // anchored to the actual document position so it scrolls naturally with the ScrollViewer.
+        _linkFocusOverlay.Margin = new Thickness(b.X, b.Y, 0, 0);
+        _linkFocusOverlay.Width = b.Width;
+        _linkFocusOverlay.Height = b.Height;
+    }
+
+    private void EnsureFocusedLinkVisible()
+    {
+        if (_scrollViewer is null)
+        {
+            return;
+        }
+
+        var focused = _keyboardInteraction.FocusedLink;
+        if (focused is null)
+        {
+            return;
+        }
+
+        var b = focused.Value.Bounds;
+        if (b.Height <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            // Convert control-local Y into ScrollViewer content Y.
+            // viewportY = controlContentY - VerticalOffset  => controlContentY = viewportY + VerticalOffset
+            var transform = TransformToVisual(_scrollViewer);
+            var topLeftInViewport = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+            var controlTopInContent = _scrollViewer.VerticalOffset + topLeftInViewport.Y;
+
+            var linkTop = controlTopInContent + b.Y;
+            var linkBottom = linkTop + b.Height;
+
+            var viewTop = _scrollViewer.VerticalOffset;
+            var viewBottom = viewTop + _scrollViewer.ViewportHeight;
+
+            const double padding = 16;
+            double? target = null;
+
+            if (linkTop < viewTop + padding)
+            {
+                target = linkTop - padding;
+            }
+            else if (linkBottom > viewBottom - padding)
+            {
+                target = linkBottom - (_scrollViewer.ViewportHeight - padding);
+            }
+
+            if (target is null)
+            {
+                return;
+            }
+
+            var clamped = Math.Max(0, Math.Min(_scrollViewer.ScrollableHeight, target.Value));
+            _scrollViewer.ChangeView(horizontalOffset: null, verticalOffset: clamped, zoomFactor: null, disableAnimation: true);
+        }
+        catch
+        {
+            // Ignore: platform-specific transform/ChangeView failures.
+        }
+    }
+
+    private static Brush GetLinkFocusBrush()
+    {
+        if (Application.Current?.Resources is not null)
+        {
+            if (Application.Current.Resources.TryGetValue("SystemControlHighlightAccentBrush", out var accent) && accent is Brush ab)
+            {
+                return ab;
+            }
+
+            if (Application.Current.Resources.TryGetValue("SystemControlForegroundBaseHighBrush", out var fg) && fg is Brush fb)
+            {
+                return fb;
+            }
+        }
+
+        return new SolidColorBrush(Microsoft.UI.Colors.Transparent);
     }
 
     private Windows.Foundation.Point GetPointerPositionForHitTest(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -688,6 +1032,7 @@ public class SkiaMarkdownView : ContentControl
             _viewportHeight = Math.Max(0, visible.Height);
 
             _image.Margin = new Thickness(0, _viewportTop, 0, 0);
+            UpdateLinkFocusOverlay();
         }
         catch
         {
@@ -696,6 +1041,7 @@ public class SkiaMarkdownView : ContentControl
             _viewportHeight = ActualHeight;
             _image.Visibility = Visibility.Visible;
             _image.Margin = new Thickness(0);
+            UpdateLinkFocusOverlay();
         }
     }
 
@@ -718,6 +1064,10 @@ public class SkiaMarkdownView : ContentControl
 
         _layout = _layoutEngine.Layout(_document, width: width, theme: theme, scale: scale, textMeasurer: _textMeasurer);
         Height = _layout.Height;
+
+        // Layout changed; clear any keyboard link focus bounds.
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        ClearKeyboardLinkFocus();
 
         UpdateViewportFromScrollViewer();
         InvalidateRender();
