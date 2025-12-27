@@ -191,6 +191,21 @@ Unit tests:
 
 ## Phase 2 — Styling system and theme infrastructure
 
+### Phase 2 status (implemented)
+
+Implemented artifacts:
+- `JitHub.Markdown.Core/Theming/*`
+  - `MarkdownTheme` + `MarkdownTypography`/`MarkdownColors`/`MarkdownMetrics`/`MarkdownSelectionTheme`
+  - `MarkdownThemePresets` (Light/Dark/HighContrast)
+  - `IMarkdownStyleResolver` + default `MarkdownStyleResolver`
+- `JitHub.Markdown.Tests/MarkdownThemingTests.cs`
+  - Verifies presets construct and basic resolver behavior for key inline/block kinds.
+
+Notes / deferred within Phase 2:
+- Serialization/deserialization is not implemented.
+- Contrast threshold checks are not implemented (tests currently validate structural sanity only).
+- RTL-specific knobs are not modeled yet (will be introduced with layout/text shaping work).
+
 ### 2.1 Theme object model
 Deliverables:
 - Implement `MarkdownTheme` with:

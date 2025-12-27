@@ -119,6 +119,22 @@ This section reflects what currently exists in the repo (not the full end-state 
 
 ---
 
+## Implemented so far (Phase 2)
+
+### Theme model + presets
+- `JitHub.Markdown.Core/Theming/*` introduces a theme object model:
+  - `MarkdownTheme` (typography/colors/metrics/selection + optional `ImageBaseUri`)
+  - `MarkdownThemePresets` (Light/Dark/HighContrast)
+
+### Style resolution
+- `IMarkdownStyleResolver` defines block + inline style resolution hooks.
+- `MarkdownStyleResolver` provides the default mapping from our normalized node kinds to theme styles.
+
+### Tests (gate)
+- `JitHub.Markdown.Tests/MarkdownThemingTests.cs` validates preset construction and basic resolution behavior.
+
+---
+
 ## Core architecture
 
 ### 1) Pipeline overview
