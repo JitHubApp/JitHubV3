@@ -139,7 +139,54 @@ public sealed class DocumentBuilder
             case Table table:
             {
                 var id = NodeId.Create(NodeKind.Table, span, ordinal, parentId);
-                var node = new TableBlockNode(id, span);
+
+                var rows = ImmutableArray.CreateBuilder<TableRowBlockNode>(table.Count);
+                for (var rowOrdinal = 0; rowOrdinal < table.Count; rowOrdinal++)
+                {
+                    if (table[rowOrdinal] is not TableRow row)
+                    {
+                        continue;
+                    }
+
+                    var rowSpan = GetSpan(row);
+                    var rowId = NodeId.Create(NodeKind.TableRow, rowSpan, rowOrdinal, id);
+
+                    var cells = ImmutableArray.CreateBuilder<TableCellBlockNode>(row.Count);
+                    var cellOrdinal = 0;
+                    foreach (var c in row)
+                    {
+                        if (c is not TableCell cell)
+                        {
+                            continue;
+                        }
+
+                        var cellSpan = GetSpan(cell);
+                        var cellId = NodeId.Create(NodeKind.TableCell, cellSpan, cellOrdinal++, rowId);
+
+                        var blocks = ImmutableArray.CreateBuilder<BlockNode>(cell.Count);
+                        for (var bi = 0; bi < cell.Count; bi++)
+                        {
+                            if (cell[bi] is Block child)
+                            {
+                                var converted = ConvertBlock(source, child, bi, cellId, sourceMapEntries);
+                                if (converted is not null)
+                                {
+                                    blocks.Add(converted);
+                                }
+                            }
+                        }
+
+                        var cellNode = new TableCellBlockNode(cellId, cellSpan, blocks.ToImmutable());
+                        sourceMapEntries.Add(new SourceSpanEntry(cellId, cellNode.Kind, cellNode.Span));
+                        cells.Add(cellNode);
+                    }
+
+                    var rowNode = new TableRowBlockNode(rowId, rowSpan, cells.ToImmutable());
+                    sourceMapEntries.Add(new SourceSpanEntry(rowId, rowNode.Kind, rowNode.Span));
+                    rows.Add(rowNode);
+                }
+
+                var node = new TableBlockNode(id, span, rows.ToImmutable());
                 sourceMapEntries.Add(new SourceSpanEntry(id, node.Kind, node.Span));
                 return node;
             }

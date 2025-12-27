@@ -14,6 +14,8 @@ public sealed class RenderContext
 
     public float Overscan { get; init; } = 0;
 
+    public Func<Uri, SKImage?>? ImageResolver { get; init; }
+
     public IList<HitRegion>? HitRegions { get; init; }
 
     public NodeId? HoveredId { get; init; }

@@ -19,6 +19,7 @@ public static class MarkdownThemePresets
             InlineCodePadding = 3,
             BlockSpacing = 12,
             BlockPadding = 12,
+            ImagePlaceholderHeight = 160,
         },
         Typography = new MarkdownTypography
         {
@@ -56,6 +57,7 @@ public static class MarkdownThemePresets
             InlineCodePadding = 3,
             BlockSpacing = 12,
             BlockPadding = 12,
+            ImagePlaceholderHeight = 160,
         },
         Typography = new MarkdownTypography
         {
@@ -93,6 +95,7 @@ public static class MarkdownThemePresets
             InlineCodePadding = 0,
             BlockSpacing = 12,
             BlockPadding = 12,
+            ImagePlaceholderHeight = 160,
         },
         Typography = new MarkdownTypography
         {

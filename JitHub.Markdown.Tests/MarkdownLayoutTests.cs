@@ -146,9 +146,72 @@ public sealed class MarkdownLayoutTests
         unordered.Items[0].Blocks.Should().NotBeEmpty();
         unordered.Items[0].Blocks[0].Bounds.X.Should().BeGreaterThan(0);
 
+        var firstParaRuns = unordered.Items[0].Blocks
+            .OfType<ParagraphLayout>()
+            .SelectMany(p => p.Lines)
+            .SelectMany(l => l.Runs)
+            .ToArray();
+        firstParaRuns.Any(r => !string.IsNullOrWhiteSpace(r.Text) && r.Bounds.X > 0).Should().BeTrue();
+
         var ordered = lists.First(l => l.IsOrdered);
         ordered.Items.Length.Should().Be(2);
         ordered.Items[0].MarkerText.Should().Be("1.");
         ordered.Items[1].MarkerText.Should().Be("2.");
+    }
+
+    [Test]
+    public void Blockquote_offsets_children_and_runs_with_padding()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("> Quote child\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var quote = layout.Blocks.OfType<BlockQuoteLayout>().Single();
+        quote.Blocks.Should().NotBeEmpty();
+
+        var childPara = quote.Blocks.OfType<ParagraphLayout>().First();
+        childPara.Lines.SelectMany(l => l.Runs).Any(r => !string.IsNullOrWhiteSpace(r.Text) && r.Bounds.X > 0).Should().BeTrue();
+    }
+
+    [Test]
+    public void Tables_layout_cells_and_nested_blocks()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("| A | B |\n|---|---|\n| one | two |\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var table = layout.Blocks.OfType<TableLayout>().First();
+        table.ColumnCount.Should().Be(2);
+        table.Rows.Length.Should().BeGreaterThan(0);
+
+        var firstCell = table.Rows[0].Cells[0];
+        firstCell.Bounds.Width.Should().BeGreaterThan(0);
+        firstCell.Blocks.Should().NotBeNull();
+    }
+
+    [Test]
+    public void Images_layout_as_full_width_placeholder_runs()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("![Alt](img.png)\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var runs = layout.Blocks
+            .OfType<ParagraphLayout>()
+            .SelectMany(p => p.Lines)
+            .SelectMany(l => l.Runs)
+            .Where(r => r.Kind == NodeKind.Image)
+            .ToArray();
+
+        runs.Should().HaveCount(1);
+        runs[0].Bounds.Width.Should().BeGreaterThan(0);
+        runs[0].Bounds.Height.Should().BeApproximately(theme.Metrics.ImagePlaceholderHeight, 0.01f);
     }
 }

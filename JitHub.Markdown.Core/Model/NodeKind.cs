@@ -21,4 +21,7 @@ public enum NodeKind
     Image,
     InlineCode,
     LineBreak,
+
+    TableRow,
+    TableCell,
 }

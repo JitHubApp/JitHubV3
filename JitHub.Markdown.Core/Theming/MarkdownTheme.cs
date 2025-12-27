@@ -59,6 +59,8 @@ public sealed class MarkdownMetrics
     public required float BlockSpacing { get; init; }
 
     public required float BlockPadding { get; init; }
+
+    public required float ImagePlaceholderHeight { get; init; }
 }
 
 public sealed class MarkdownSelectionTheme

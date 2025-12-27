@@ -81,6 +81,27 @@ public sealed record ListItemLayout(
     ImmutableArray<BlockLayout> Blocks)
     : BlockLayout(Id, NodeKind.ListItem, Span, Bounds, Style);
 
+public sealed record TableLayout(
+    NodeId Id,
+    SourceSpan Span,
+    RectF Bounds,
+    MarkdownBlockStyle Style,
+    int ColumnCount,
+    ImmutableArray<TableRowLayout> Rows)
+    : BlockLayout(Id, NodeKind.Table, Span, Bounds, Style);
+
+public sealed record TableRowLayout(
+    NodeId Id,
+    SourceSpan Span,
+    RectF Bounds,
+    ImmutableArray<TableCellLayout> Cells);
+
+public sealed record TableCellLayout(
+    NodeId Id,
+    SourceSpan Span,
+    RectF Bounds,
+    ImmutableArray<BlockLayout> Blocks);
+
 public sealed record ThematicBreakLayout(
     NodeId Id,
     SourceSpan Span,

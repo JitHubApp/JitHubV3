@@ -93,8 +93,8 @@ public sealed class MarkdownLayoutEngine
         // Simple caching for the common, non-nested blocks.
         if (TryGetCached(block, width, scale, themeHash, out var cached))
         {
-            var bounds = new RectF(0, y, width, cached.Bounds.Height);
-            var rebased = Rebase(cached, bounds);
+            var targetBounds = new RectF(0, y, width, cached.Bounds.Height);
+            var rebased = Translate(cached, dx: targetBounds.X - cached.Bounds.X, dy: targetBounds.Y - cached.Bounds.Y);
             y += cached.Bounds.Height + spacingAfter;
             return rebased;
         }
@@ -106,6 +106,7 @@ public sealed class MarkdownLayoutEngine
             CodeBlockNode c => LayoutCodeBlock(c, width, contentWidth, theme, scale, textMeasurer, style, padding, spacingAfter, ref y),
             BlockQuoteBlockNode q => LayoutBlockQuote(q, width, contentWidth, theme, themeHash, scale, textMeasurer, style, padding, spacingAfter, ref y),
             ListBlockNode l => LayoutList(l, width, theme, themeHash, scale, textMeasurer, style, padding, spacingAfter, ref y),
+            TableBlockNode t => LayoutTable(t, width, theme, themeHash, scale, textMeasurer, style, padding, spacingAfter, ref y),
             ThematicBreakBlockNode hr => LayoutThematicBreak(hr, width, theme, scale, style, padding, spacingAfter, ref y),
             _ => LayoutUnknown(block, width, theme, scale, style, padding, spacingAfter, ref y),
         };
@@ -246,11 +247,8 @@ public sealed class MarkdownLayoutEngine
             var childY = localY;
             var childLayout = LayoutBlock(child, contentWidth, theme, themeHash, scale, textMeasurer, ref childY);
 
-            // Rebase child bounds inside the quote container.
-            childLayout = childLayout with
-            {
-                Bounds = new RectF(padding + childLayout.Bounds.X, childLayout.Bounds.Y, childLayout.Bounds.Width, childLayout.Bounds.Height)
-            };
+            // Offset child layout inside the quote container.
+            childLayout = Translate(childLayout, dx: padding, dy: 0);
 
             innerBlocks.Add(childLayout);
             localY = childY;
@@ -323,7 +321,7 @@ public sealed class MarkdownLayoutEngine
             foreach (var child in item.Blocks)
             {
                 var childLayout = LayoutBlock(child, itemContentWidth, theme, themeHash, scale, textMeasurer, ref childY);
-                childBlocks.Add(RebaseX(childLayout, xOffset: markerGutterWidth));
+                childBlocks.Add(Translate(childLayout, dx: markerGutterWidth, dy: 0));
             }
 
             localY = childY;
@@ -357,32 +355,96 @@ public sealed class MarkdownLayoutEngine
         return new ListLayout(list.Id, list.Span, bounds, blockStyle, list.IsOrdered, items.ToImmutable());
     }
 
-    private static BlockLayout RebaseX(BlockLayout layout, float xOffset)
-        => layout switch
+    private TableLayout LayoutTable(
+        TableBlockNode table,
+        float width,
+        MarkdownTheme theme,
+        int themeHash,
+        float scale,
+        ITextMeasurer textMeasurer,
+        MarkdownBlockStyle blockStyle,
+        float padding,
+        float spacingAfter,
+        ref float y)
+    {
+        // Phase 4.2.10: baseline table layout with equal columns.
+        // The table is a container; cell contents are regular blocks laid out within each cell width.
+        var tableTop = y;
+        var contentWidth = Math.Max(0, width - (padding * 2));
+
+        var colCount = 0;
+        for (var i = 0; i < table.Rows.Length; i++)
         {
-            ParagraphLayout p => p with { Bounds = p.Bounds with { X = p.Bounds.X + xOffset } },
-            HeadingLayout h => h with { Bounds = h.Bounds with { X = h.Bounds.X + xOffset } },
-            CodeBlockLayout c => c with { Bounds = c.Bounds with { X = c.Bounds.X + xOffset } },
-            ThematicBreakLayout hr => hr with { Bounds = hr.Bounds with { X = hr.Bounds.X + xOffset } },
-            UnknownBlockLayout u => u with { Bounds = u.Bounds with { X = u.Bounds.X + xOffset } },
-            BlockQuoteLayout q => q with
+            colCount = Math.Max(colCount, table.Rows[i].Cells.Length);
+        }
+        colCount = Math.Max(1, colCount);
+
+        var cellPadding = Math.Max(4f, theme.Metrics.BlockPadding / 2f) * scale;
+        var cellWidth = colCount == 0 ? 0 : Math.Max(0, contentWidth / colCount);
+        var cellContentWidth = Math.Max(0, cellWidth - (cellPadding * 2));
+
+        var rows = ImmutableArray.CreateBuilder<TableRowLayout>(table.Rows.Length);
+        var localY = y + padding;
+
+        for (var r = 0; r < table.Rows.Length; r++)
+        {
+            var row = table.Rows[r];
+            var rowTop = localY;
+
+            var cells = ImmutableArray.CreateBuilder<TableCellLayout>(colCount);
+            var rowHeight = 0f;
+
+            for (var c = 0; c < colCount; c++)
             {
-                Bounds = q.Bounds with { X = q.Bounds.X + xOffset },
-                Blocks = q.Blocks.Select(b => RebaseX(b, xOffset)).ToImmutableArray(),
-            },
-            ListLayout l => l with
+                var cellX = padding + (c * cellWidth);
+                var cellY = rowTop;
+
+                ImmutableArray<BlockNode> cellBlocks = ImmutableArray<BlockNode>.Empty;
+                if (c < row.Cells.Length)
+                {
+                    cellBlocks = row.Cells[c].Blocks;
+                }
+
+                var childLayouts = ImmutableArray.CreateBuilder<BlockLayout>(cellBlocks.Length);
+                var childY = cellY + cellPadding;
+
+                for (var bi = 0; bi < cellBlocks.Length; bi++)
+                {
+                    var child = cellBlocks[bi];
+                    var childLayout = LayoutBlock(child, cellContentWidth, theme, themeHash, scale, textMeasurer, ref childY);
+                    childLayouts.Add(Translate(childLayout, dx: cellX + cellPadding, dy: 0));
+                }
+
+                var cellHeight = Math.Max(0, (childY - cellY)) + cellPadding;
+                rowHeight = Math.Max(rowHeight, cellHeight);
+
+                var cellId = c < row.Cells.Length ? row.Cells[c].Id : row.Id;
+                var cellSpan = c < row.Cells.Length ? row.Cells[c].Span : row.Span;
+
+                var cellBounds = new RectF(cellX, cellY, cellWidth, cellHeight);
+                cells.Add(new TableCellLayout(cellId, cellSpan, cellBounds, childLayouts.ToImmutable()));
+            }
+
+            // Normalize all cell heights to the max for the row.
+            var normalizedCells = cells.ToImmutable();
+            if (rowHeight > 0)
             {
-                Bounds = l.Bounds with { X = l.Bounds.X + xOffset },
-                Items = l.Items.Select(it => (ListItemLayout)RebaseX(it, xOffset)).ToImmutableArray(),
-            },
-            ListItemLayout li => li with
-            {
-                Bounds = li.Bounds with { X = li.Bounds.X + xOffset },
-                MarkerBounds = li.MarkerBounds with { X = li.MarkerBounds.X + xOffset },
-                Blocks = li.Blocks.Select(b => RebaseX(b, xOffset)).ToImmutableArray(),
-            },
-            _ => layout,
-        };
+                normalizedCells = normalizedCells
+                    .Select(cell => cell with { Bounds = cell.Bounds with { Height = rowHeight } })
+                    .ToImmutableArray();
+            }
+
+            var rowBounds = new RectF(0, rowTop, width, rowHeight);
+            rows.Add(new TableRowLayout(row.Id, row.Span, rowBounds, normalizedCells));
+            localY += rowHeight;
+        }
+
+        var tableHeight = (localY - (y + padding)) + (padding * 2);
+        var bounds = new RectF(0, y, width, Math.Max(0, tableHeight));
+        y += bounds.Height + spacingAfter;
+
+        return new TableLayout(table.Id, table.Span, bounds, blockStyle, colCount, rows.ToImmutable());
+    }
 
     private static (float Y, float Height) GetFirstLineYAndHeight(BlockLayout block, float fallbackLineHeight)
         => block switch
@@ -448,23 +510,80 @@ public sealed class MarkdownLayoutEngine
         }
 
         // Store cached version normalized to Y=0.
-        var normalized = Rebase(layout, layout.Bounds with { Y = 0 });
+        var normalized = Translate(layout, dx: -layout.Bounds.X, dy: -layout.Bounds.Y);
         _cache[new BlockCacheKey(block.Id, width, scale, themeHash)] = normalized;
     }
 
     private static BlockLayout Rebase(BlockLayout layout, RectF bounds)
-        => layout switch
+        => Translate(layout, dx: bounds.X - layout.Bounds.X, dy: bounds.Y - layout.Bounds.Y);
+
+    private static BlockLayout Translate(BlockLayout layout, float dx, float dy)
+    {
+        RectF Shift(RectF r) => new(r.X + dx, r.Y + dy, r.Width, r.Height);
+        LineLayout ShiftLine(LineLayout l)
+            => new(l.Y + dy, l.Height, l.Runs.Select(ShiftRun).ToImmutableArray());
+        InlineRunLayout ShiftRun(InlineRunLayout r)
+            => r with { Bounds = Shift(r.Bounds) };
+
+        return layout switch
         {
-            ParagraphLayout p => p with { Bounds = bounds },
-            HeadingLayout h => h with { Bounds = bounds },
-            CodeBlockLayout c => c with { Bounds = bounds },
-            ThematicBreakLayout hr => hr with { Bounds = bounds },
-            UnknownBlockLayout u => u with { Bounds = bounds },
-            BlockQuoteLayout q => q with { Bounds = bounds },
-            ListLayout l => l with { Bounds = bounds },
-            ListItemLayout li => li with { Bounds = bounds },
+            ParagraphLayout p => p with
+            {
+                Bounds = Shift(p.Bounds),
+                Lines = p.Lines.Select(ShiftLine).ToImmutableArray(),
+            },
+
+            HeadingLayout h => h with
+            {
+                Bounds = Shift(h.Bounds),
+                Lines = h.Lines.Select(ShiftLine).ToImmutableArray(),
+            },
+
+            CodeBlockLayout c => c with
+            {
+                Bounds = Shift(c.Bounds),
+                Lines = c.Lines.Select(ShiftLine).ToImmutableArray(),
+            },
+
+            ThematicBreakLayout hr => hr with { Bounds = Shift(hr.Bounds) },
+            UnknownBlockLayout u => u with { Bounds = Shift(u.Bounds) },
+
+            BlockQuoteLayout q => q with
+            {
+                Bounds = Shift(q.Bounds),
+                Blocks = q.Blocks.Select(b => Translate(b, dx, dy)).ToImmutableArray(),
+            },
+
+            ListLayout l => l with
+            {
+                Bounds = Shift(l.Bounds),
+                Items = l.Items.Select(it => (ListItemLayout)Translate(it, dx, dy)).ToImmutableArray(),
+            },
+
+            ListItemLayout li => li with
+            {
+                Bounds = Shift(li.Bounds),
+                MarkerBounds = Shift(li.MarkerBounds),
+                Blocks = li.Blocks.Select(b => Translate(b, dx, dy)).ToImmutableArray(),
+            },
+
+            TableLayout t => t with
+            {
+                Bounds = Shift(t.Bounds),
+                Rows = t.Rows.Select(r => r with
+                {
+                    Bounds = Shift(r.Bounds),
+                    Cells = r.Cells.Select(c => c with
+                    {
+                        Bounds = Shift(c.Bounds),
+                        Blocks = c.Blocks.Select(b => Translate(b, dx, dy)).ToImmutableArray(),
+                    }).ToImmutableArray(),
+                }).ToImmutableArray(),
+            },
+
             _ => layout,
         };
+    }
 
     private readonly record struct BlockCacheKey(NodeId Id, float Width, float Scale, int ThemeHash);
 
@@ -534,6 +653,33 @@ public sealed class MarkdownLayoutEngine
             {
                 if (token.Text.Length == 0)
                 {
+                    continue;
+                }
+
+                // Phase 4.2.11: images reserve a deterministic placeholder surface.
+                // They are laid out as a full-width run on their own line.
+                if (token.Kind == NodeKind.Image)
+                {
+                    if (currentRuns.Count > 0)
+                    {
+                        FlushLine();
+                    }
+
+                    var imageHeight = Math.Max(0, theme.Metrics.ImagePlaceholderHeight) * scale;
+                    var imageRunBounds = new RectF(paddingLeft, lineY, contentWidth, imageHeight);
+                    currentRuns.Add(new InlineRunLayout(
+                        token.Id,
+                        token.Kind,
+                        token.Span,
+                        imageRunBounds,
+                        token.Style,
+                        token.Text,
+                        token.Url,
+                        token.IsStrikethrough,
+                        token.IsCodeBlockLine));
+
+                    lineHeight = Math.Max(lineHeight, imageHeight);
+                    FlushLine();
                     continue;
                 }
 
@@ -639,8 +785,17 @@ public sealed class MarkdownLayoutEngine
                         break;
 
                     case ImageInlineNode img:
-                        // Phase 3: treat image as its alt text for layout measurement.
-                        FlattenInto(img.AltText, current, url, isStrikethrough);
+                        // Phase 4.2.11: represent images as a dedicated run with URL metadata.
+                        // Layout will allocate placeholder bounds; renderer draws placeholder or resolved image.
+                        builder.Add(new InlineSegment(
+                            Id: img.Id,
+                            Kind: NodeKind.Image,
+                            Span: img.Span,
+                            Style: current,
+                            Text: "\uFFFC",
+                            Url: img.Url,
+                            IsStrikethrough: false,
+                            IsCodeBlockLine: false));
                         break;
 
                     default:

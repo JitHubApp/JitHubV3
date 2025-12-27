@@ -26,8 +26,14 @@ public sealed record ListItemBlockNode(NodeId Id, SourceSpan Span, bool IsTask, 
 public sealed record CodeBlockNode(NodeId Id, SourceSpan Span, string? Info, string Code)
     : BlockNode(Id, NodeKind.CodeBlock, Span);
 
-public sealed record TableBlockNode(NodeId Id, SourceSpan Span)
+public sealed record TableBlockNode(NodeId Id, SourceSpan Span, ImmutableArray<TableRowBlockNode> Rows)
     : BlockNode(Id, NodeKind.Table, Span);
+
+public sealed record TableRowBlockNode(NodeId Id, SourceSpan Span, ImmutableArray<TableCellBlockNode> Cells)
+    : BlockNode(Id, NodeKind.TableRow, Span);
+
+public sealed record TableCellBlockNode(NodeId Id, SourceSpan Span, ImmutableArray<BlockNode> Blocks)
+    : BlockNode(Id, NodeKind.TableCell, Span);
 
 public sealed record ThematicBreakBlockNode(NodeId Id, SourceSpan Span)
     : BlockNode(Id, NodeKind.ThematicBreak, Span);

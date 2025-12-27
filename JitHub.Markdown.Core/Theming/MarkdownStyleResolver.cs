@@ -31,6 +31,14 @@ public sealed class MarkdownStyleResolver : IMarkdownStyleResolver
 
         return block.Kind switch
         {
+            NodeKind.Table => baseStyle with
+            {
+                Background = ColorRgba.Transparent,
+                CornerRadius = 0,
+                Padding = theme.Metrics.BlockPadding,
+                SpacingAfter = theme.Metrics.BlockSpacing,
+            },
+
             NodeKind.List => baseStyle with
             {
                 Background = ColorRgba.Transparent,
@@ -65,7 +73,7 @@ public sealed class MarkdownStyleResolver : IMarkdownStyleResolver
 
             NodeKind.ThematicBreak => baseStyle with
             {
-                Background = theme.Colors.ThematicBreak,
+                Background = ColorRgba.Transparent,
                 CornerRadius = 0,
                 Padding = 0,
                 SpacingAfter = theme.Metrics.BlockSpacing,

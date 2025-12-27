@@ -58,6 +58,6 @@ public sealed class MarkdownThemingTests
         quote.Background.Should().Be(theme.Colors.QuoteBackground);
 
         var hr = resolver.ResolveBlockStyle(new ThematicBreakBlockNode(new NodeId(3), new SourceSpan(0, 1)), theme);
-        hr.Background.Should().Be(theme.Colors.ThematicBreak);
+        hr.Background.Should().Be(ColorRgba.Transparent);
     }
 }

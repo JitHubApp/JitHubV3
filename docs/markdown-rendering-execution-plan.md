@@ -429,22 +429,19 @@ Tests:
 Tests:
 - Golden tests: table alignment
 
-#### 4.2.11 Images
-- Placeholder
-- Async load + cache
-- Base URI resolution
+#### 4.2.11 Images (implemented)
+- Parse image nodes with URL + title + alt
+- Layout images as full-width placeholder runs (fixed height)
+- Render deterministic placeholder surface; optional resolver hook + base-URI resolution
 
 Tests:
-- Unit tests for URL resolution
-- Golden tests with placeholder (deterministic)
+- Unit tests: layout sizing and URL/base-URI resolution behavior
+- Golden/pixel tests: placeholder surface (deterministic)
 
 ---
 
 ## Phase 5 — Selection engine (revolutionized) + clipboard
 
-### 5.1 Hit testing infrastructure
-Deliverables:
-- Map pointer coordinates → `DocumentPosition`.
 - Create per-run glyph boundaries for hit testing.
 
 Unit tests:

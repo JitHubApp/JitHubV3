@@ -61,12 +61,92 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
                     RenderBlock(child, context);
                 }
                 break;
+            case TableLayout t:
+                DrawTableGrid(t, context);
+                for (var r = 0; r < t.Rows.Length; r++)
+                {
+                    var row = t.Rows[r];
+                    for (var c = 0; c < row.Cells.Length; c++)
+                    {
+                        var cell = row.Cells[c];
+                        for (var bi = 0; bi < cell.Blocks.Length; bi++)
+                        {
+                            RenderBlock(cell.Blocks[bi], context);
+                        }
+                    }
+                }
+                break;
             case ThematicBreakLayout:
-                // Baseline: background already drawn by block style (if any).
+                DrawThematicBreak(block, context);
                 break;
             default:
                 break;
         }
+    }
+
+    private static void DrawTableGrid(TableLayout table, RenderContext context)
+    {
+        if (table.Rows.Length == 0)
+        {
+            return;
+        }
+
+        var stroke = Math.Max(1f, context.Scale);
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = stroke,
+            Color = context.Theme.Colors.ThematicBreak.ToSKColor(),
+        };
+
+        // Outer border.
+        var r = new SKRect(table.Bounds.X, table.Bounds.Y, table.Bounds.Right, table.Bounds.Bottom);
+        context.Canvas.DrawRect(r, paint);
+
+        // Vertical separators based on first row.
+        var firstRow = table.Rows[0];
+        for (var c = 0; c < firstRow.Cells.Length; c++)
+        {
+            var cell = firstRow.Cells[c];
+            var x = cell.Bounds.Right;
+            if (x <= table.Bounds.X || x >= table.Bounds.Right)
+            {
+                continue;
+            }
+
+            context.Canvas.DrawLine(x, table.Bounds.Y, x, table.Bounds.Bottom, paint);
+        }
+
+        // Horizontal separators.
+        for (var ri = 0; ri < table.Rows.Length; ri++)
+        {
+            var y = table.Rows[ri].Bounds.Bottom;
+            if (y <= table.Bounds.Y || y >= table.Bounds.Bottom)
+            {
+                continue;
+            }
+
+            context.Canvas.DrawLine(table.Bounds.X, y, table.Bounds.Right, y, paint);
+        }
+    }
+
+    private static void DrawThematicBreak(BlockLayout block, RenderContext context)
+    {
+        var y = block.Bounds.Y + (block.Bounds.Height / 2f);
+        var thickness = Math.Max(1f, context.Scale);
+
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = thickness,
+            Color = context.Theme.Colors.ThematicBreak.ToSKColor(),
+        };
+
+        var x1 = block.Bounds.X;
+        var x2 = block.Bounds.Right;
+        context.Canvas.DrawLine(x1, y, x2, y, paint);
     }
 
     private static void DrawBlockQuoteStripe(BlockQuoteLayout quote, RenderContext context)
@@ -162,6 +242,12 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             return;
         }
 
+        if (run.Kind == NodeKind.Image)
+        {
+            DrawImageRun(run, context);
+            return;
+        }
+
         if (run.Kind == NodeKind.Link && run.Url is not null)
         {
             context.HitRegions?.Add(new HitRegion(run.Id, run.Kind, run.Span, run.Bounds, run.Url));
@@ -243,6 +329,48 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
             var y = baselineY - Math.Max(1, style.FontSize * 0.3f * context.Scale);
             context.Canvas.DrawLine(x, y, x + w, y, strike);
+        }
+    }
+
+    private static void DrawImageRun(InlineRunLayout run, RenderContext context)
+    {
+        var bounds = new SKRect(run.Bounds.X, run.Bounds.Y, run.Bounds.Right, run.Bounds.Bottom);
+        var radius = Math.Max(0, context.Theme.Metrics.CornerRadius) * context.Scale;
+
+        Uri? uri = null;
+        if (!string.IsNullOrWhiteSpace(run.Url))
+        {
+            if (Uri.TryCreate(run.Url, UriKind.Absolute, out var absolute))
+            {
+                uri = absolute;
+            }
+            else if (context.Theme.ImageBaseUri is not null && Uri.TryCreate(context.Theme.ImageBaseUri, run.Url, out var combined))
+            {
+                uri = combined;
+            }
+        }
+
+        var image = (uri is not null && context.ImageResolver is not null) ? context.ImageResolver(uri) : null;
+        if (image is not null)
+        {
+            context.Canvas.DrawImage(image, bounds);
+            return;
+        }
+
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = context.Theme.Colors.CodeBlockBackground.ToSKColor(),
+        };
+
+        if (radius <= 0)
+        {
+            context.Canvas.DrawRect(bounds, paint);
+        }
+        else
+        {
+            context.Canvas.DrawRoundRect(bounds, radius, radius, paint);
         }
     }
 

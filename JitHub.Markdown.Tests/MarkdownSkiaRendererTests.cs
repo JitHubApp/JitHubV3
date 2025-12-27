@@ -220,4 +220,105 @@ public sealed class MarkdownSkiaRendererTests
 
         bitmap.Width.Should().Be(800);
     }
+
+    [Test]
+    public void Thematic_break_renders_line()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("---\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        var hr = layout.Blocks.OfType<ThematicBreakLayout>().First();
+
+        using var bitmap = new SKBitmap(800, 200);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 200),
+            Scale = 1,
+        });
+
+        var lineY = Math.Clamp((int)MathF.Floor(hr.Bounds.Y + (hr.Bounds.Height / 2f)), 0, bitmap.Height - 1);
+        var x = Math.Clamp(10, 0, bitmap.Width - 1);
+
+        var c = theme.Colors.ThematicBreak;
+        var expected = new SKColor((byte)c.R, (byte)c.G, (byte)c.B, (byte)c.A);
+        bitmap.GetPixel(x, lineY).Should().Be(expected);
+    }
+
+    [Test]
+    public void Renderer_renders_tables_without_throwing()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("| A | B |\n|---|---|\n| one | two |\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        layout.Blocks.OfType<TableLayout>().Should().NotBeEmpty();
+
+        using var bitmap = new SKBitmap(800, 300);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 300),
+            Scale = 1,
+        });
+
+        bitmap.Width.Should().Be(800);
+    }
+
+    [Test]
+    public void Image_renders_placeholder_surface()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("![Alt](img.png)\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        var imageRun = layout.Blocks
+            .OfType<ParagraphLayout>()
+            .SelectMany(p => p.Lines)
+            .SelectMany(l => l.Runs)
+            .First(r => r.Kind == NodeKind.Image);
+
+        using var bitmap = new SKBitmap(800, 300);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 300),
+            Scale = 1,
+        });
+
+        var bg = theme.Colors.CodeBlockBackground;
+        var expected = new SKColor((byte)bg.R, (byte)bg.G, (byte)bg.B, (byte)bg.A);
+
+        var x = Math.Clamp((int)MathF.Floor(imageRun.Bounds.X + 6), 0, bitmap.Width - 1);
+        var y = Math.Clamp((int)MathF.Floor(imageRun.Bounds.Y + 6), 0, bitmap.Height - 1);
+        bitmap.GetPixel(x, y).Should().Be(expected);
+    }
 }
