@@ -580,7 +580,7 @@ Deliverables:
 Tests:
 - Add/extend unit tests for keyboard behaviors in core (already present); keep Uno wiring minimal and deterministic.
 
-#### 6.6.2 Focus + scrolling maturity
+#### 6.6.2 Focus + scrolling maturity (implemented)
 Deliverables:
 - Ensure focused-link UI stays aligned under scroll virtualization:
   - Link focus rectangle follows document coordinates and updates on scroll changes.
@@ -590,6 +590,10 @@ Deliverables:
   - Add a small top/bottom padding so the focused link isn’t flush to the viewport edge.
 - Extend auto-scroll to caret navigation:
   - Arrow key caret movement should keep the caret visible (similar to a TextBox).
+
+Implemented notes:
+- Scroll-driven virtualization updates now also refresh the focused-link overlay alignment.
+- Arrow-key caret movement keeps the caret visible via ScrollViewer `ChangeView(...)` with padding.
 
 Tests:
 - Manual harness verification on Desktop + WASM:

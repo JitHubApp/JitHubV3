@@ -598,6 +598,13 @@ public class SkiaMarkdownView : ContentControl
         if (result.SelectionChanged && result.Selection is { } sel)
         {
             ApplySelectionFromKeyboard(sel);
+
+            // Phase 6.6.2: Arrow-key caret navigation should keep the caret visible.
+            // Tab/Shift+Tab focus changes are handled separately via EnsureFocusedLinkVisible().
+            if (!result.FocusChanged && cmd is MarkdownKeyCommand.Left or MarkdownKeyCommand.Right or MarkdownKeyCommand.Up or MarkdownKeyCommand.Down)
+            {
+                EnsureCaretVisible(sel);
+            }
         }
 
         if (result.FocusChanged)
@@ -729,6 +736,76 @@ public class SkiaMarkdownView : ContentControl
         else if (linkBottom > viewBottom - padding)
         {
             target = linkBottom - (_scrollViewer.ViewportHeight - padding);
+        }
+
+        if (target is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var clamped = Math.Max(0, Math.Min(_scrollViewer.ScrollableHeight, target.Value));
+            _scrollViewer.ChangeView(horizontalOffset: null, verticalOffset: clamped, zoomFactor: null, disableAnimation: true);
+        }
+        catch
+        {
+            // Ignore: platform-specific ChangeView failures.
+        }
+    }
+
+    private void EnsureCaretVisible(SelectionRange selection)
+    {
+        if (_scrollViewer is null || _layout is null)
+        {
+            return;
+        }
+
+        // Keep the active caret in view (even when selection is extended).
+        var caret = selection.Active;
+
+        SelectionGeometry geom;
+        try
+        {
+            geom = SelectionGeometryBuilder.Build(_layout, new SelectionRange(caret, caret));
+        }
+        catch
+        {
+            return;
+        }
+
+        if (geom.Rects.Length == 0)
+        {
+            return;
+        }
+
+        var r = geom.Rects[0];
+        if (r.Height <= 0)
+        {
+            return;
+        }
+
+        if (!TryGetScrollViewerContentYForControl(out var controlTopInContent))
+        {
+            return;
+        }
+
+        var caretTop = controlTopInContent + r.Y;
+        var caretBottom = caretTop + r.Height;
+
+        var viewTop = _scrollViewer.VerticalOffset;
+        var viewBottom = viewTop + _scrollViewer.ViewportHeight;
+
+        const double padding = 16;
+        double? target = null;
+
+        if (caretTop < viewTop + padding)
+        {
+            target = caretTop - padding;
+        }
+        else if (caretBottom > viewBottom - padding)
+        {
+            target = caretBottom - (_scrollViewer.ViewportHeight - padding);
         }
 
         if (target is null)
