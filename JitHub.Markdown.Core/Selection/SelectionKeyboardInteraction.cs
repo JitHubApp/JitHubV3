@@ -36,6 +36,44 @@ public sealed class SelectionKeyboardInteraction
         FocusedLink = null;
     }
 
+    internal bool TryFocusLink(MarkdownLayout layout, NodeId id, string url)
+    {
+        _ = layout ?? throw new ArgumentNullException(nameof(layout));
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        var links = BuildLinkList(layout);
+        for (var i = 0; i < links.Count; i++)
+        {
+            var link = links[i];
+            if (link.Id != id)
+            {
+                continue;
+            }
+
+            if (!string.Equals(link.Url, url, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var nextFocused = new FocusedLink(link.Id, link.Url, link.Bounds);
+            var nextSelection = new SelectionRange(link.Caret, link.Caret);
+
+            var focusChanged = FocusedLink is null || FocusedLink.Value.Id != nextFocused.Id || !string.Equals(FocusedLink.Value.Url, nextFocused.Url, StringComparison.Ordinal);
+            var selectionChanged = !Selection.Equals(nextSelection);
+
+            FocusedLink = nextFocused;
+            Selection = nextSelection;
+
+            return focusChanged || selectionChanged;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Handles a key command against the current layout.
     /// </summary>

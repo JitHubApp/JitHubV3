@@ -5,6 +5,8 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -76,6 +78,11 @@ public class SkiaMarkdownView : ContentControl
     }
 
     public event EventHandler<string>? LinkActivated;
+
+    private SkiaMarkdownViewAutomationPeer? _automationPeer;
+
+    protected override AutomationPeer OnCreateAutomationPeer()
+        => _automationPeer ??= new SkiaMarkdownViewAutomationPeer(this);
 
     public SkiaMarkdownView()
     {
@@ -670,6 +677,7 @@ public class SkiaMarkdownView : ContentControl
         {
             UpdateLinkFocusOverlay();
             EnsureFocusedLinkVisible();
+            NotifyAutomationFocusOrNameChanged();
         }
 
         if (!string.IsNullOrWhiteSpace(result.ActivateLinkUrl))
@@ -753,6 +761,34 @@ public class SkiaMarkdownView : ContentControl
         _linkFocusOverlay.Margin = new Thickness(b.X, b.Y, 0, 0);
         _linkFocusOverlay.Width = b.Width;
         _linkFocusOverlay.Height = b.Height;
+    }
+
+    private void NotifyAutomationFocusOrNameChanged()
+    {
+        // If UIA focus remains on the view itself (common when we handle Tab internally),
+        // updating the Name + raising a focus-changed event gives Narrator something to announce.
+        try
+        {
+            var focused = _keyboardInteraction.FocusedLink;
+            if (focused is { } fl)
+            {
+                AutomationProperties.SetName(this, fl.Url);
+            }
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            var peer = FrameworkElementAutomationPeer.FromElement(this) ?? FrameworkElementAutomationPeer.CreatePeerForElement(this);
+            peer?.InvalidatePeer();
+            peer?.RaiseAutomationEvent(AutomationEvents.AutomationFocusChanged);
+        }
+        catch
+        {
+            // Uno may not implement parts of UIA across all targets.
+        }
     }
 
     private void EnsureFocusedLinkVisible()
@@ -881,6 +917,142 @@ public class SkiaMarkdownView : ContentControl
         {
             // Ignore: platform-specific ChangeView failures.
         }
+    }
+
+    internal MarkdownAccessibilityTree? BuildAccessibilityTreeForAutomation()
+    {
+        if (_layout is null)
+        {
+            return null;
+        }
+
+        var viewportHeight = (float)_viewportHeight;
+        if (viewportHeight <= 0)
+        {
+            viewportHeight = (float)Math.Max(0, ActualHeight);
+        }
+
+        return MarkdownAccessibilityTreeBuilder.Build(
+            _layout,
+            viewportTop: (float)_viewportTop,
+            viewportHeight: viewportHeight,
+            overscan: 0);
+    }
+
+    internal Windows.Foundation.Rect GetAutomationBoundingRect(RectF bounds)
+    {
+        try
+        {
+            var transform = TransformToVisual(null);
+            var tl = transform.TransformPoint(new Windows.Foundation.Point(bounds.X, bounds.Y));
+            var br = transform.TransformPoint(new Windows.Foundation.Point(bounds.X + bounds.Width, bounds.Y + bounds.Height));
+            return new Windows.Foundation.Rect(tl, br);
+        }
+        catch
+        {
+            return new Windows.Foundation.Rect();
+        }
+    }
+
+    internal bool IsLinkFocusedForAutomation(NodeId id, string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        var focused = _keyboardInteraction.FocusedLink;
+        return focused is { } fl
+            && fl.Id == id
+            && string.Equals(fl.Url, url, StringComparison.Ordinal);
+    }
+
+    internal void FocusLinkForAutomation(NodeId id, string url, RectF bounds)
+    {
+        if (_layout is null)
+        {
+            return;
+        }
+
+        // Focus the control itself first.
+        Focus(FocusState.Programmatic);
+
+        // Align keyboard state with current selection.
+        SyncSelectionFromPointerToKeyboard();
+
+        if (_keyboardInteraction.TryFocusLink(_layout, id, url) && _keyboardInteraction.Selection is { } sel)
+        {
+            ApplySelectionFromKeyboard(sel);
+            UpdateLinkFocusOverlay();
+            EnsureFocusedLinkVisible();
+            NotifyAutomationFocusOrNameChanged();
+            return;
+        }
+
+        // Fallback: if we can't focus by NodeId, at least ensure bounds are visible.
+        EnsureAutomationBoundsVisible(bounds);
+    }
+
+    internal void EnsureAutomationBoundsVisible(RectF bounds)
+    {
+        if (_scrollViewer is null)
+        {
+            return;
+        }
+
+        if (bounds.Height <= 0)
+        {
+            return;
+        }
+
+        if (!TryGetScrollViewerContentYForControl(out var controlTopInContent))
+        {
+            return;
+        }
+
+        var top = controlTopInContent + bounds.Y;
+        var bottom = top + bounds.Height;
+
+        var viewTop = _scrollViewer.VerticalOffset;
+        var viewBottom = viewTop + _scrollViewer.ViewportHeight;
+
+        const double padding = 16;
+        double? target = null;
+
+        if (top < viewTop + padding)
+        {
+            target = top - padding;
+        }
+        else if (bottom > viewBottom - padding)
+        {
+            target = bottom - (_scrollViewer.ViewportHeight - padding);
+        }
+
+        if (target is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var clamped = Math.Max(0, Math.Min(_scrollViewer.ScrollableHeight, target.Value));
+            _scrollViewer.ChangeView(horizontalOffset: null, verticalOffset: clamped, zoomFactor: null, disableAnimation: true);
+        }
+        catch
+        {
+            // Ignore: platform-specific ChangeView failures.
+        }
+    }
+
+    internal void ActivateLinkForAutomation(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return;
+        }
+
+        _ = OpenLinkAsync(url);
+        LinkActivated?.Invoke(this, url);
     }
 
     private bool TryGetScrollViewerContentYForControl(out double controlTopInContent)

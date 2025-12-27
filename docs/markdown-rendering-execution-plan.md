@@ -682,12 +682,36 @@ Implemented notes:
 ### 7.2 Platform accessibility bridges
 Sub-phases per platform.
 
-#### 7.2.1 Windows (UIA)
+#### 7.2.1 Windows (UIA) (implemented)
 - Map semantic nodes to UI automation structure.
 - Focus and activation actions.
 
+Implemented notes:
+- Added a `SkiaMarkdownViewAutomationPeer` that exposes visible semantic nodes as UIA children.
+- Link nodes support focus (scroll into view + update the view’s focused-link overlay) and invoke (activate the link URL).
+
 Tests:
 - Automation smoke tests if possible; otherwise manual screen reader checks.
+
+Manual verification (Narrator on Windows):
+- Prereq: ensure the Markdown Test Page shows content with a heading, a list, and at least one link.
+- Start Narrator: `Ctrl+Win+Enter`.
+- Navigate into the markdown view:
+  - Use `Tab` until Narrator focus enters the markdown content.
+  - Expected: Narrator announces a document-like region/control (it should not be completely silent).
+- Verify structure/navigation:
+  - Use `H` / `Shift+H` to move by headings.
+  - Expected: Narrator lands on the heading text (Level should be reflected when possible).
+  - Use `Tab` to move through interactive elements.
+  - Expected: focus stops on links (announced as “link”) and moves in visual order.
+- Verify link focus alignment:
+  - When a link receives focus, visually confirm the link focus overlay aligns with the link bounds and stays aligned while scrolling.
+- Verify activation:
+  - With a focused link, press `Enter`.
+  - Expected: the link launches via `Launcher.LaunchUriAsync` and the `LinkActivated` event fires.
+- Basic scrolling sanity:
+  - Scroll the page (mouse wheel / touchpad) while Narrator focus is within the markdown view.
+  - Expected: focus remains stable; when you `Tab`/`Shift+Tab` again, focus continues to reachable links (no “lost focus” state).
 
 #### 7.2.2 WebAssembly (ARIA overlay)
 - Optional ARIA overlay for screen readers.
