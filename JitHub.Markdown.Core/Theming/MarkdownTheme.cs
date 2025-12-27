@@ -2,6 +2,48 @@ namespace JitHub.Markdown;
 
 public sealed class MarkdownTheme
 {
+    [System.Diagnostics.CodeAnalysis.SetsRequiredMembers]
+    public MarkdownTheme()
+    {
+        Colors = new MarkdownColors
+        {
+            PageBackground = ColorRgba.White,
+            InlineCodeBackground = ColorRgba.FromRgb(245, 245, 245),
+            CodeBlockBackground = ColorRgba.FromRgb(245, 245, 245),
+            QuoteBackground = ColorRgba.FromRgb(250, 250, 250),
+            ThematicBreak = ColorRgba.FromRgb(220, 220, 220),
+        };
+
+        Metrics = new MarkdownMetrics
+        {
+            CornerRadius = 8,
+            InlineCodeCornerRadius = 6,
+            InlineCodePadding = 3,
+            BlockSpacing = 12,
+            BlockPadding = 12,
+            ImagePlaceholderHeight = 160,
+        };
+
+        Typography = new MarkdownTypography
+        {
+            Paragraph = MarkdownTextStyle.Default(ColorRgba.Black),
+            Heading1 = MarkdownTextStyle.Default(ColorRgba.Black).With(fontSize: 28f, weight: FontWeight.Bold),
+            Heading2 = MarkdownTextStyle.Default(ColorRgba.Black).With(fontSize: 24f, weight: FontWeight.Bold),
+            Heading3 = MarkdownTextStyle.Default(ColorRgba.Black).With(fontSize: 20f, weight: FontWeight.SemiBold),
+            Heading4 = MarkdownTextStyle.Default(ColorRgba.Black).With(fontSize: 18f, weight: FontWeight.SemiBold),
+            Heading5 = MarkdownTextStyle.Default(ColorRgba.Black).With(fontSize: 16f, weight: FontWeight.SemiBold),
+            Heading6 = MarkdownTextStyle.Default(ColorRgba.Black).With(fontSize: 16f, weight: FontWeight.SemiBold),
+            InlineCode = MarkdownTextStyle.Default(ColorRgba.Black).With(fontFamily: "Consolas", fontSize: 14f),
+            Link = MarkdownTextStyle.Default(ColorRgba.FromRgb(0, 102, 204)).With(underline: true),
+        };
+
+        Selection = new MarkdownSelectionTheme
+        {
+            SelectionFill = ColorRgba.FromArgb(96, 0, 102, 204),
+            SelectionText = ColorRgba.Black,
+        };
+    }
+
     public required MarkdownTypography Typography { get; init; }
 
     public required MarkdownColors Colors { get; init; }

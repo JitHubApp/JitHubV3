@@ -501,7 +501,7 @@ Unit tests:
 
 ## Phase 6 — Uno Platform view + input (all platforms)
 
-### 6.1 `MarkdownView` control skeleton
+### 6.1 `MarkdownView` control skeleton (implemented)
 Deliverables:
 - Skia surface hosting
 - Bindable properties:
@@ -516,14 +516,14 @@ Unit tests:
 ### 6.2 Input handling: pointer
 Sub-phases per platform differences.
 
-#### 6.2.1 Shared pointer model
+#### 6.2.1 Shared pointer model (implemented)
 - Pointer down/move/up to update selection
 - Tap/click to activate link
 
 Tests:
 - Unit tests for gesture state machine.
 
-#### 6.2.2 Windows (WinUI/Uno)
+#### 6.2.2 Windows (WinUI/Uno) (implemented)
 - Mouse selection with drag
 - Shift+click selection extension
 - Right-click context possibility (optional later)

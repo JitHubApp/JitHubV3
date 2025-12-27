@@ -12,7 +12,7 @@
 
   <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
 
-    <utu:NavigationBar Content="Markdown Test" />
+    <utu:NavigationBar Content="{Binding Title}" />
 
     <ScrollViewer Grid.Row="1">
       <StackPanel Spacing="12" MaxWidth="960">

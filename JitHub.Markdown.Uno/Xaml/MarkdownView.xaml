@@ -5,14 +5,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-  <StackPanel Spacing="12">
-    <TextBlock
-      Text="MarkdownView (XAML placeholder)"
-      TextWrapping="Wrap" />
-
-    <TextBlock
-      x:Name="MarkdownText"
-      TextWrapping="Wrap" />
-  </StackPanel>
+  <Grid x:Name="Root" />
 
 </UserControl>

@@ -5,7 +5,7 @@
       Keep this adapter a single net10.0 library so it can be referenced by all Uno platform TFMs
       without introducing additional platform-specific runtime package graphs.
     -->
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.26100</TargetFrameworks>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

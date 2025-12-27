@@ -7,10 +7,10 @@
     <File Path="global.json" />
   </Folder>
   <Folder Name="/Tests/">
-    <Project Path="JitHubV3.Tests/JitHubV3.Tests.csproj">
+    <Project Path="JitHubV3.Server.Tests/JitHubV3.Server.Tests.csproj">
       <Deploy />
     </Project>
-    <Project Path="JitHubV3.Server.Tests/JitHubV3.Server.Tests.csproj">
+    <Project Path="JitHubV3.Tests/JitHubV3.Tests.csproj">
       <Deploy />
     </Project>
     <Project Path="JitHubV3.UITests/JitHubV3.UITests.csproj">
@@ -25,10 +25,10 @@
     <Project Path="JitHub.Markdown.Skia/JitHub.Markdown.Skia.csproj">
       <Deploy />
     </Project>
-    <Project Path="JitHub.Markdown.Uno/JitHub.Markdown.Uno.csproj">
+    <Project Path="JitHub.Markdown.Tests/JitHub.Markdown.Tests.csproj">
       <Deploy />
     </Project>
-    <Project Path="JitHub.Markdown.Tests/JitHub.Markdown.Tests.csproj">
+    <Project Path="JitHub.Markdown.Uno/JitHub.Markdown.Uno.csproj">
       <Deploy />
     </Project>
   </Folder>
