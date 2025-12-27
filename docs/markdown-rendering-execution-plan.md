@@ -242,6 +242,28 @@ Unit tests:
 
 ## Phase 3 — Layout engine (virtualization-first)
 
+### Phase 3 status (implemented — baseline)
+
+Implemented artifacts:
+- `JitHub.Markdown.Core/Layout/*`
+  - Layout primitives: `MarkdownLayout`, `BlockLayout`, `LineLayout`, `InlineRunLayout`, and lightweight geometry (`RectF`, `SizeF`).
+  - Text measurement abstraction: `ITextMeasurer` + `TextMeasurement`.
+  - `MarkdownLayoutEngine`:
+    - deterministic block layout for headings/paragraphs/code blocks/quotes/thematic breaks (given `width`, `theme`, `scale`, `ITextMeasurer`)
+    - simple word/whitespace tokenization + wrapping for paragraphs/headings
+    - viewport-friendly entry point `LayoutViewport(...)` (returns only intersecting blocks and stops after viewport bottom)
+    - basic per-block caching for common non-nested blocks (keyed by block id + width + scale + theme hash)
+- `JitHub.Markdown.Tests/MarkdownLayoutTests.cs`
+  - determinism tests
+  - wrapping tests
+  - viewport subset tests
+  - no-negative-sizes invariant
+
+Notes / deferred within Phase 3:
+- Lists/tables are not laid out yet (they currently flow as “unknown” blocks).
+- RTL/shaping is not implemented (unit tests use a deterministic, fake measurer).
+- Virtualization is a baseline pass (stops after viewport bottom); full offscreen caching + incremental recompute remains for later phases.
+
 ### 3.1 Define layout primitives
 Deliverables:
 - Layout tree types:

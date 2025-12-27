@@ -135,6 +135,25 @@ This section reflects what currently exists in the repo (not the full end-state 
 
 ---
 
+## Implemented so far (Phase 3)
+
+### Layout primitives + deterministic layout engine
+- `JitHub.Markdown.Core/Layout/*` introduces a Phase 3 layout layer:
+  - `MarkdownLayout` (block list + `GetVisibleBlockIndices`)
+  - block layout records (`ParagraphLayout`, `HeadingLayout`, `CodeBlockLayout`, `BlockQuoteLayout`, `ThematicBreakLayout`)
+  - `LineLayout` + `InlineRunLayout` (run bounds + source span)
+  - `ITextMeasurer` abstraction for deterministic, platform-independent measurement
+- `MarkdownLayoutEngine` can lay out a `MarkdownDocumentModel` deterministically for a given `width`/`theme`/`scale`/`ITextMeasurer`.
+
+### Baseline virtualization
+- `MarkdownLayoutEngine.LayoutViewport(...)` produces a layout containing only blocks intersecting a viewport and stops after passing the viewport bottom.
+- Baseline per-block caching exists for common non-nested blocks (paragraph/heading/code/thematic break) keyed by `NodeId + width + scale + theme hash`.
+
+### Tests (gate)
+- `JitHub.Markdown.Tests/MarkdownLayoutTests.cs` verifies determinism, wrapping, viewport subset behavior, and size invariants.
+
+---
+
 ## Core architecture
 
 ### 1) Pipeline overview
