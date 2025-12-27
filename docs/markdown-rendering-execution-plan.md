@@ -562,6 +562,79 @@ Deliverables:
 Unit tests:
 - Command routing tests in core.
 
+### 6.6 Cleanup + refactors + low-hanging perf (planned)
+Goal: incorporate lessons learned from Phase 6 implementation (bugs found/fixed, platform quirks, and reliability/perf hot spots) and leave the codebase in a cleaner, more maintainable state before moving on to accessibility.
+
+#### 6.6.1 Input adapter cleanup (Uno)
+Deliverables:
+- Replace reflection-based modifier detection for keyboard navigation with an explicit key state tracker:
+  - Track Shift via `KeyDown`/`KeyUp` (and/or `PreviewKeyDown`/`PreviewKeyUp`) to support Shift+Tab reliably.
+  - Avoid per-keystroke reflection and cross-platform API probing in hot paths.
+- Consolidate selection synchronization paths:
+  - Single helper to keep `SelectionPointerInteraction` + `SelectionKeyboardInteraction` + `Selection` DP consistent.
+  - Ensure pointer interactions always clear keyboard link focus in one place.
+- Extract coordinate utilities:
+  - Centralize “layout/document ↔ control ↔ ScrollViewer viewport/content” conversions.
+  - Prevent future regressions where overlays or hit-testing drift under virtualization/scroll.
+
+Tests:
+- Add/extend unit tests for keyboard behaviors in core (already present); keep Uno wiring minimal and deterministic.
+
+#### 6.6.2 Focus + scrolling maturity
+Deliverables:
+- Ensure focused-link UI stays aligned under scroll virtualization:
+  - Link focus rectangle follows document coordinates and updates on scroll changes.
+  - Focus rectangle should never appear “stuck” relative to the screen.
+- Auto-scroll on focus changes:
+  - When Tab/Shift+Tab moves focus off-screen, call into the platform `ScrollViewer` to bring it into view.
+  - Add a small top/bottom padding so the focused link isn’t flush to the viewport edge.
+- Extend auto-scroll to caret navigation:
+  - Arrow key caret movement should keep the caret visible (similar to a TextBox).
+
+Tests:
+- Manual harness verification on Desktop + WASM:
+  - Long documents with many links.
+  - Verify auto-scroll correctness when the markdown view is not at content origin (header above it).
+
+#### 6.6.3 Rendering performance low-hanging fruits
+Deliverables:
+- Reduce per-render allocations:
+  - Reuse the render pixel buffer (e.g., `ArrayPool<byte>` or a cached `byte[]` sized to current bitmap).
+  - Avoid allocating a new `byte[]` every frame in `RenderToBitmap`.
+- Coalesce invalidations:
+  - Throttle/merge frequent `InvalidateRender()` calls from `ScrollViewer.ViewChanged`.
+  - Prefer one render per UI frame/tick when multiple events occur.
+- Logging hygiene:
+  - Remove or gate hot-path logs (pointer move/drag) behind a debug flag or log level checks.
+
+Acceptance:
+- No regression in selection/link activation correctness.
+- Noticeably reduced GC pressure during scroll/drag on WASM.
+
+#### 6.6.4 Hit-testing performance + structure
+Deliverables:
+- Accelerate nearest-line hit testing:
+  - Precompute a flattened “lines index” (line bounds/vertical ranges) during layout.
+  - Use binary search by Y to find nearest line instead of scanning all lines.
+- Reduce duplicate enumerations:
+  - Avoid repeated `EnumerateLinesWithIndex(layout)` + `ToList()` in keyboard logic.
+- Add simple fast paths:
+  - If pointer moved within same line band, skip nearest-line search.
+
+Tests:
+- Add a couple of micro regression tests (core) verifying hit-test correctness is unchanged.
+
+#### 6.6.5 API + structure tidy-up
+Deliverables:
+- Review public surface area:
+  - Confirm what is public vs internal across Core/Uno.
+  - Normalize naming (`SelectionEnabled` vs `IsSelectionEnabled`, etc.) where inconsistencies exist.
+- Remove “implementation scar tissue”:
+  - Remove temporary hacks/no-ops, keep comments only where they capture platform invariants.
+
+Output:
+- Short “Phase 6 lessons learned” note in this plan section to document platform quirks we had to account for.
+
 ---
 
 ## Phase 7 — Accessibility (per platform) + RTL

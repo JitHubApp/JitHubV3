@@ -168,6 +168,7 @@ public class SkiaMarkdownView : ContentControl
 
     private readonly SelectionPointerInteraction _pointerInteraction = new();
     private readonly SelectionKeyboardInteraction _keyboardInteraction = new();
+    private bool _isShiftDown;
     private bool _hasPointerCapture;
     private bool _isSelecting;
 
@@ -348,7 +349,7 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
-        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        SyncSelectionFromPointerToKeyboard();
         ClearKeyboardLinkFocus();
 
         this.Log().LogWarning("[SkiaMarkdownView] PointerDown selectionChanged={SelectionChanged} selection={Selection}",
@@ -454,7 +455,7 @@ public class SkiaMarkdownView : ContentControl
             _isSelecting = true;
         }
 
-        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        SyncSelectionFromPointerToKeyboard();
 
         // Handle moves when we're actively selecting. This is important on WASM/Desktop
         // where CapturePointer may not be supported consistently.
@@ -494,7 +495,7 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
-        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        SyncSelectionFromPointerToKeyboard();
 
         this.Log().LogWarning("[SkiaMarkdownView] PointerUp selectionChanged={SelectionChanged} activateLink={ActivateLink}",
             result.SelectionChanged,
@@ -556,11 +557,17 @@ public class SkiaMarkdownView : ContentControl
         _touchSelectionStarted = false;
         _isSelecting = false;
 
-        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        SyncSelectionFromPointerToKeyboard();
     }
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key == VirtualKey.Shift)
+        {
+            _isShiftDown = true;
+            return;
+        }
+
         if (_layout is null)
         {
             return;
@@ -571,9 +578,9 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        SyncSelectionFromPointerToKeyboard();
 
-        var shift = IsShiftDown();
+        var shift = _isShiftDown;
 
         var result = _keyboardInteraction.OnKeyCommand(
             _layout,
@@ -590,8 +597,7 @@ public class SkiaMarkdownView : ContentControl
 
         if (result.SelectionChanged && result.Selection is { } sel)
         {
-            _pointerInteraction.SetSelection(sel);
-            Selection = sel;
+            ApplySelectionFromKeyboard(sel);
         }
 
         if (result.FocusChanged)
@@ -607,138 +613,24 @@ public class SkiaMarkdownView : ContentControl
         }
     }
 
-    private static bool IsShiftDown()
+    private void OnKeyUp(object sender, KeyRoutedEventArgs e)
     {
-        return IsKeyDown(VirtualKey.Shift);
-    }
-
-    private static bool IsKeyDown(VirtualKey key)
-    {
-        // Prefer WinUI InputKeyboardSource when available.
-        if (TryGetKeyStateFromInputKeyboardSource(key, out var state) && HasDownFlag(state))
+        if (e.Key == VirtualKey.Shift)
         {
-            return true;
-        }
-
-        // Fallback: CoreWindow for UWP/Uno targets.
-        if (TryGetKeyStateFromCoreWindow(key, out state) && HasDownFlag(state))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryGetKeyStateFromInputKeyboardSource(VirtualKey key, out object? state)
-    {
-        state = null;
-        try
-        {
-            var t = FindType("Microsoft.UI.Input.InputKeyboardSource");
-            if (t is null)
-            {
-                return false;
-            }
-
-            var m = t.GetMethod("GetKeyStateForCurrentThread", new[] { typeof(VirtualKey) });
-            if (m is null)
-            {
-                return false;
-            }
-
-            state = m.Invoke(null, new object[] { key });
-            return state is not null;
-        }
-        catch
-        {
-            return false;
+            _isShiftDown = false;
         }
     }
 
-    private static bool TryGetKeyStateFromCoreWindow(VirtualKey key, out object? state)
+    private void ApplySelectionFromKeyboard(SelectionRange selection)
     {
-        state = null;
-        try
-        {
-            var t = FindType("Windows.UI.Core.CoreWindow");
-            if (t is null)
-            {
-                return false;
-            }
-
-            var getForThread = t.GetMethod("GetForCurrentThread", Type.EmptyTypes);
-            if (getForThread is null)
-            {
-                return false;
-            }
-
-            var window = getForThread.Invoke(null, Array.Empty<object>());
-            if (window is null)
-            {
-                return false;
-            }
-
-            var getKeyState = t.GetMethod("GetKeyState", new[] { typeof(VirtualKey) });
-            if (getKeyState is null)
-            {
-                return false;
-            }
-
-            state = getKeyState.Invoke(window, new object[] { key });
-            return state is not null;
-        }
-        catch
-        {
-            return false;
-        }
+        _pointerInteraction.SetSelection(selection);
+        SyncSelectionFromPointerToKeyboard();
+        Selection = selection;
     }
 
-    private static bool HasDownFlag(object? state)
+    private void SyncSelectionFromPointerToKeyboard()
     {
-        if (state is null)
-        {
-            return false;
-        }
-
-        try
-        {
-            var enumType = state.GetType();
-            if (!enumType.IsEnum)
-            {
-                return false;
-            }
-
-            // Both VirtualKeyStates and CoreVirtualKeyStates use a 'Down' flag.
-            var down = Enum.Parse(enumType, "Down");
-            var value = Convert.ToUInt64(state);
-            var downValue = Convert.ToUInt64(down);
-            return (value & downValue) != 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static Type? FindType(string fullName)
-    {
-        try
-        {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                var t = asm.GetType(fullName, throwOnError: false);
-                if (t is not null)
-                {
-                    return t;
-                }
-            }
-        }
-        catch
-        {
-            // ignore
-        }
-
-        return null;
+        _keyboardInteraction.Selection = _pointerInteraction.Selection;
     }
 
     private static bool TryMapKey(VirtualKey key, out MarkdownKeyCommand cmd)
@@ -816,43 +708,65 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
+        if (!TryGetScrollViewerContentYForControl(out var controlTopInContent))
+        {
+            return;
+        }
+
+        var linkTop = controlTopInContent + b.Y;
+        var linkBottom = linkTop + b.Height;
+
+        var viewTop = _scrollViewer.VerticalOffset;
+        var viewBottom = viewTop + _scrollViewer.ViewportHeight;
+
+        const double padding = 16;
+        double? target = null;
+
+        if (linkTop < viewTop + padding)
+        {
+            target = linkTop - padding;
+        }
+        else if (linkBottom > viewBottom - padding)
+        {
+            target = linkBottom - (_scrollViewer.ViewportHeight - padding);
+        }
+
+        if (target is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var clamped = Math.Max(0, Math.Min(_scrollViewer.ScrollableHeight, target.Value));
+            _scrollViewer.ChangeView(horizontalOffset: null, verticalOffset: clamped, zoomFactor: null, disableAnimation: true);
+        }
+        catch
+        {
+            // Ignore: platform-specific ChangeView failures.
+        }
+    }
+
+    private bool TryGetScrollViewerContentYForControl(out double controlTopInContent)
+    {
+        controlTopInContent = 0;
+        if (_scrollViewer is null)
+        {
+            return false;
+        }
+
         try
         {
             // Convert control-local Y into ScrollViewer content Y.
             // viewportY = controlContentY - VerticalOffset  => controlContentY = viewportY + VerticalOffset
             var transform = TransformToVisual(_scrollViewer);
             var topLeftInViewport = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
-            var controlTopInContent = _scrollViewer.VerticalOffset + topLeftInViewport.Y;
-
-            var linkTop = controlTopInContent + b.Y;
-            var linkBottom = linkTop + b.Height;
-
-            var viewTop = _scrollViewer.VerticalOffset;
-            var viewBottom = viewTop + _scrollViewer.ViewportHeight;
-
-            const double padding = 16;
-            double? target = null;
-
-            if (linkTop < viewTop + padding)
-            {
-                target = linkTop - padding;
-            }
-            else if (linkBottom > viewBottom - padding)
-            {
-                target = linkBottom - (_scrollViewer.ViewportHeight - padding);
-            }
-
-            if (target is null)
-            {
-                return;
-            }
-
-            var clamped = Math.Max(0, Math.Min(_scrollViewer.ScrollableHeight, target.Value));
-            _scrollViewer.ChangeView(horizontalOffset: null, verticalOffset: clamped, zoomFactor: null, disableAnimation: true);
+            controlTopInContent = _scrollViewer.VerticalOffset + topLeftInViewport.Y;
+            return true;
         }
         catch
         {
-            // Ignore: platform-specific transform/ChangeView failures.
+            return false;
         }
     }
 
@@ -1066,7 +980,7 @@ public class SkiaMarkdownView : ContentControl
         Height = _layout.Height;
 
         // Layout changed; clear any keyboard link focus bounds.
-        _keyboardInteraction.Selection = _pointerInteraction.Selection;
+        SyncSelectionFromPointerToKeyboard();
         ClearKeyboardLinkFocus();
 
         UpdateViewportFromScrollViewer();
