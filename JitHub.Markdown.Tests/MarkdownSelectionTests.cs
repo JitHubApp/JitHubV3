@@ -76,4 +76,83 @@ public sealed class MarkdownSelectionTests
             b.Y.Should().BeApproximately(a.Bottom, 0.01f);
         }
     }
+
+    [Test]
+    public void Source_mapping_for_emphasis_maps_inside_markers()
+    {
+        var markdown = "Hello **world**.";
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse(markdown);
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var runIndex = line.Runs.ToList().FindIndex(r => r.Text == "world");
+        runIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        var run = line.Runs[runIndex];
+
+        var anchor = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 0, CaretX: MarkdownHitTester.GetCaretX(run, 0));
+        var active = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 5, CaretX: MarkdownHitTester.GetCaretX(run, 5));
+        var sel = new SelectionRange(anchor, active);
+
+        SelectionSourceMapper.TryMapToSource(markdown, doc, sel, out var sourceSel).Should().BeTrue();
+        sourceSel.Slice(markdown).Should().Be("world");
+    }
+
+    [Test]
+    public void Source_mapping_for_inline_code_maps_to_inner_code_only()
+    {
+        var markdown = "Inline `code` here.";
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse(markdown);
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var runIndex = line.Runs.ToList().FindIndex(r => r.Kind == NodeKind.InlineCode && r.Text == "code");
+        runIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        var run = line.Runs[runIndex];
+        var anchor = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 0, CaretX: MarkdownHitTester.GetCaretX(run, 0));
+        var active = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 4, CaretX: MarkdownHitTester.GetCaretX(run, 4));
+        var sel = new SelectionRange(anchor, active);
+
+        SelectionSourceMapper.TryMapToSource(markdown, doc, sel, out var sourceSel).Should().BeTrue();
+        sourceSel.Slice(markdown).Should().Be("code");
+    }
+
+    [Test]
+    public void Source_mapping_for_fenced_code_block_maps_to_code_content()
+    {
+        var markdown = "```csharp\nvar x = 1;\nvar y = 2;\n```";
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse(markdown);
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var code = layout.Blocks.OfType<CodeBlockLayout>().Single();
+        code.Lines.Length.Should().BeGreaterThanOrEqualTo(2);
+
+        var firstLine = code.Lines[0];
+        var firstRun = firstLine.Runs.Single();
+        firstRun.IsCodeBlockLine.Should().BeTrue();
+
+        // Select the character 'x' in "var x = 1;".
+        var offset = firstRun.Text.IndexOf('x');
+        offset.Should().BeGreaterThan(0);
+
+        var anchor = new MarkdownHitTestResult(0, 0, firstRun, firstLine, TextOffset: offset, CaretX: MarkdownHitTester.GetCaretX(firstRun, offset));
+        var active = new MarkdownHitTestResult(0, 0, firstRun, firstLine, TextOffset: offset + 1, CaretX: MarkdownHitTester.GetCaretX(firstRun, offset + 1));
+        var sel = new SelectionRange(anchor, active);
+
+        SelectionSourceMapper.TryMapToSource(markdown, doc, sel, out var sourceSel).Should().BeTrue();
+        sourceSel.Slice(markdown).Should().Be("x");
+    }
 }

@@ -5,7 +5,11 @@ namespace JitHub.Markdown;
 public sealed class SelectionGeometry
 {
     public required ImmutableArray<RectF> Rects { get; init; }
+
+    public required ImmutableArray<SelectionSegment> Segments { get; init; }
 }
+
+public readonly record struct SelectionSegment(RectF Rect, NodeKind Kind, bool IsCodeBlockLine);
 
 public static class SelectionGeometryBuilder
 {
@@ -20,6 +24,7 @@ public static class SelectionGeometryBuilder
         var end = normalized.End;
 
         var rects = ImmutableArray.CreateBuilder<RectF>();
+        var segments = ImmutableArray.CreateBuilder<SelectionSegment>();
 
         var lineIndex = 0;
         foreach (var line in EnumerateLines(layout))
@@ -70,12 +75,30 @@ public static class SelectionGeometryBuilder
             if (w > 0)
             {
                 rects.Add(new RectF(x1, line.Y, w, line.Height));
+
+                // Per-run segments for element-aware overlays.
+                for (var ri = 0; ri < line.Runs.Length; ri++)
+                {
+                    var run = line.Runs[ri];
+                    var rx1 = Math.Max(x1, run.Bounds.X);
+                    var rx2 = Math.Min(x2, run.Bounds.Right);
+                    var rw = Math.Max(0, rx2 - rx1);
+                    if (rw <= 0)
+                    {
+                        continue;
+                    }
+
+                    segments.Add(new SelectionSegment(
+                        Rect: new RectF(rx1, line.Y, rw, line.Height),
+                        Kind: run.Kind,
+                        IsCodeBlockLine: run.IsCodeBlockLine));
+                }
             }
 
             lineIndex++;
         }
 
-        return new SelectionGeometry { Rects = rects.ToImmutable() };
+        return new SelectionGeometry { Rects = rects.ToImmutable(), Segments = segments.ToImmutable() };
     }
 
     private static (float minX, float maxX) GetLineExtents(LineLayout line)

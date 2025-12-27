@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.ApplicationModel.DataTransfer;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -47,6 +48,16 @@ public sealed partial class MarkdownView : ContentControl
         set => SetValue(ImageBaseUriProperty, value);
     }
 
+    public SelectionRange? Selection
+    {
+        get => _selection;
+        set
+        {
+            _selection = value;
+            InvalidateRender();
+        }
+    }
+
     public MarkdownView()
     {
         _engine = MarkdownEngine.CreateDefault();
@@ -80,6 +91,7 @@ public sealed partial class MarkdownView : ContentControl
 
     private MarkdownDocumentModel? _document;
     private MarkdownLayout? _layout;
+    private SelectionRange? _selection;
 
     private ScrollViewer? _scrollViewer;
     private double _viewportTop;
@@ -275,6 +287,7 @@ public sealed partial class MarkdownView : ContentControl
                 Scale = 1, // already applied via canvas.Scale(scale)
                 Overscan = 48,
                 ImageResolver = ResolveImage,
+                Selection = _selection,
             });
 
             canvas.Restore();
@@ -289,6 +302,41 @@ public sealed partial class MarkdownView : ContentControl
         stream.Position = 0;
         stream.Write(buffer, 0, buffer.Length);
         bitmap.Invalidate();
+    }
+
+    public async Task CopySelectionToClipboardAsync(bool includePlainText = true)
+    {
+        if (_document is null || _layout is null || _selection is null)
+        {
+            return;
+        }
+
+        if (!SelectionSourceMapper.TryMapToSource(Markdown ?? string.Empty, _document, _selection.Value, out var sourceSel))
+        {
+            return;
+        }
+
+        var selectedMarkdown = sourceSel.Slice(Markdown ?? string.Empty);
+        if (string.IsNullOrEmpty(selectedMarkdown))
+        {
+            return;
+        }
+
+        var plain = includePlainText ? MarkdownPlainTextExtractor.Extract(selectedMarkdown) : selectedMarkdown;
+
+        var package = new DataPackage();
+        package.RequestedOperation = DataPackageOperation.Copy;
+
+        // Always provide markdown in a custom format.
+        package.SetData("text/markdown", selectedMarkdown);
+
+        // Primary text payload.
+        package.SetText(plain);
+
+        Clipboard.SetContent(package);
+        Clipboard.Flush();
+
+        await Task.CompletedTask;
     }
 
     private SKImage? ResolveImage(Uri uri)

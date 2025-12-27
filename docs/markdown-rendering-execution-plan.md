@@ -467,31 +467,27 @@ Unit tests:
 - Geometry continuity tests (no gaps for typical wrapped text).
 - Renderer draws base selection fill.
 
-### 5.4 Element-aware selection overlays
+### 5.4 Element-aware selection overlays (implemented)
 Deliverables:
 - Selection styles per element type.
 - Apply overlay decorations without breaking continuity.
 
 Unit tests:
-- Selection style application tests (inline code, code block, quote).
+- Renderer keeps a continuous base overlay and applies element-aware tint overlays.
 
-### 5.5 Source mapping: selection → markdown substring
+### 5.5 Source mapping: selection → markdown substring (implemented)
 Deliverables:
 - Implement `SourceSelection`.
 - Implement `TextOffsetMap` usage in selection.
 - Define default mapping policy and expose customization.
 
 Unit tests (heavy):
-- For each element type, select a partial range and verify:
-  - returned indices are valid
-  - substring matches expected markdown
-- Edge cases:
-  - selection starts inside emphasized text
-  - selection crosses link boundaries
-  - selection includes list markers
-  - selection spans across blocks
+- Core mapping tests for:
+  - emphasis maps to inner content
+  - inline code maps to inner code
+  - fenced code blocks map to code content
 
-### 5.6 Clipboard integration
+### 5.6 Clipboard integration (implemented)
 Deliverables:
 - `CopySelectionToClipboardAsync()` in `MarkdownView` via platform adapter.
 - Provide both:

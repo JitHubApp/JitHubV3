@@ -16,53 +16,53 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         context.Canvas.Save();
         context.Canvas.ClipRect(new SKRect(context.Viewport.X, context.Viewport.Y, context.Viewport.Right, context.Viewport.Bottom));
 
-        var selectionRects = context.Selection is not null
-            ? SelectionGeometryBuilder.Build(layout, context.Selection.Value).Rects
-            : System.Collections.Immutable.ImmutableArray<RectF>.Empty;
+        var selectionGeometry = context.Selection is not null
+            ? SelectionGeometryBuilder.Build(layout, context.Selection.Value)
+            : null;
 
         var visible = layout.GetVisibleBlockIndices(context.Viewport.Y, context.Viewport.Height, context.Overscan);
         for (var i = 0; i < visible.Length; i++)
         {
             var block = layout.Blocks[visible[i]];
-            RenderBlock(block, context, selectionRects);
+            RenderBlock(block, context, selectionGeometry, isInQuote: false);
         }
 
         context.Canvas.Restore();
     }
 
-    private static void RenderBlock(BlockLayout block, RenderContext context, System.Collections.Immutable.ImmutableArray<RectF> selectionRects)
+    private static void RenderBlock(BlockLayout block, RenderContext context, SelectionGeometry? selectionGeometry, bool isInQuote)
     {
         DrawBlockBackground(block, context);
 
         switch (block)
         {
             case ParagraphLayout p:
-                RenderLines(p.Lines, context, selectionRects);
+                RenderLines(p.Lines, context, selectionGeometry, isInQuote);
                 break;
             case HeadingLayout h:
-                RenderLines(h.Lines, context, selectionRects);
+                RenderLines(h.Lines, context, selectionGeometry, isInQuote);
                 break;
             case CodeBlockLayout c:
-                RenderLines(c.Lines, context, selectionRects);
+                RenderLines(c.Lines, context, selectionGeometry, isInQuote);
                 break;
             case BlockQuoteLayout q:
                 DrawBlockQuoteStripe(q, context);
                 foreach (var child in q.Blocks)
                 {
-                    RenderBlock(child, context, selectionRects);
+                    RenderBlock(child, context, selectionGeometry, isInQuote: true);
                 }
                 break;
             case ListLayout l:
                 foreach (var item in l.Items)
                 {
-                    RenderBlock(item, context, selectionRects);
+                    RenderBlock(item, context, selectionGeometry, isInQuote);
                 }
                 break;
             case ListItemLayout li:
                 DrawListMarker(li, context);
                 foreach (var child in li.Blocks)
                 {
-                    RenderBlock(child, context, selectionRects);
+                    RenderBlock(child, context, selectionGeometry, isInQuote);
                 }
                 break;
             case TableLayout t:
@@ -75,7 +75,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
                         var cell = row.Cells[c];
                         for (var bi = 0; bi < cell.Blocks.Length; bi++)
                         {
-                            RenderBlock(cell.Blocks[bi], context, selectionRects);
+                            RenderBlock(cell.Blocks[bi], context, selectionGeometry, isInQuote);
                         }
                     }
                 }
@@ -226,7 +226,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
     }
 
-    private static void RenderLines(System.Collections.Immutable.ImmutableArray<LineLayout> lines, RenderContext context, System.Collections.Immutable.ImmutableArray<RectF> selectionRects)
+    private static void RenderLines(System.Collections.Immutable.ImmutableArray<LineLayout> lines, RenderContext context, SelectionGeometry? selectionGeometry, bool isInQuote)
     {
         for (var i = 0; i < lines.Length; i++)
         {
@@ -240,9 +240,9 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             }
 
             // Pass 2: selection overlay (continuous base fill).
-            if (!selectionRects.IsDefaultOrEmpty)
+            if (selectionGeometry is not null)
             {
-                DrawSelectionForLine(line, selectionRects, context);
+                DrawSelectionForLine(line, selectionGeometry, context, isInQuote);
             }
 
             // Pass 3: run foreground (text + decorations).
@@ -254,32 +254,91 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
     }
 
-    private static void DrawSelectionForLine(LineLayout line, System.Collections.Immutable.ImmutableArray<RectF> selectionRects, RenderContext context)
+    private static void DrawSelectionForLine(LineLayout line, SelectionGeometry selectionGeometry, RenderContext context, bool isInQuote)
     {
-        // selectionRects are in layout coordinates; canvas is already clipped to viewport.
+        // Selection geometry is in layout coordinates; canvas is already clipped to viewport.
         var lineTop = line.Y;
         var lineBottom = line.Y + line.Height;
 
-        var fill = context.Theme.Selection.SelectionFill.ToSKColor();
-        using var paint = new SKPaint
+        var baseFill = context.Theme.Selection.SelectionFill;
+        var hasStrongFill = baseFill.A >= 200;
+
+        using var basePaint = new SKPaint
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            Color = fill,
+            Color = baseFill.ToSKColor(),
         };
 
-        for (var i = 0; i < selectionRects.Length; i++)
+        // Base continuous overlay.
+        for (var i = 0; i < selectionGeometry.Rects.Length; i++)
         {
-            var r = selectionRects[i];
+            var r = selectionGeometry.Rects[i];
             if (r.Bottom <= lineTop || r.Y >= lineBottom)
             {
                 continue;
             }
 
             var rr = new SKRect(r.X, r.Y, r.Right, r.Bottom);
-            context.Canvas.DrawRect(rr, paint);
+            context.Canvas.DrawRect(rr, basePaint);
+        }
+
+        // Element-aware overlay decorations (do not break continuity since base fill is already drawn).
+        if (hasStrongFill)
+        {
+            return;
+        }
+
+        ColorRgba? quoteOverlay = isInQuote ? WithAlpha(context.Theme.Colors.QuoteBackground, baseFill.A) : null;
+        using var quotePaint = quoteOverlay is not null
+            ? new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill, Color = quoteOverlay.Value.ToSKColor() }
+            : null;
+
+        using var inlineCodePaint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = WithAlpha(context.Theme.Colors.InlineCodeBackground, baseFill.A).ToSKColor(),
+        };
+
+        using var codeBlockPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = WithAlpha(context.Theme.Colors.CodeBlockBackground, baseFill.A).ToSKColor(),
+        };
+
+        for (var i = 0; i < selectionGeometry.Segments.Length; i++)
+        {
+            var seg = selectionGeometry.Segments[i];
+            var r = seg.Rect;
+            if (r.Bottom <= lineTop || r.Y >= lineBottom)
+            {
+                continue;
+            }
+
+            // Quote overlay (applies to all selected segments within the quote container).
+            if (quotePaint is not null)
+            {
+                context.Canvas.DrawRect(new SKRect(r.X, r.Y, r.Right, r.Bottom), quotePaint);
+            }
+
+            // Inline code overlay.
+            if (seg.Kind == NodeKind.InlineCode && !seg.IsCodeBlockLine)
+            {
+                context.Canvas.DrawRect(new SKRect(r.X, r.Y, r.Right, r.Bottom), inlineCodePaint);
+                continue;
+            }
+
+            // Code block line overlay.
+            if (seg.IsCodeBlockLine)
+            {
+                context.Canvas.DrawRect(new SKRect(r.X, r.Y, r.Right, r.Bottom), codeBlockPaint);
+            }
         }
     }
+
+    private static ColorRgba WithAlpha(ColorRgba c, byte a) => new(c.R, c.G, c.B, a);
 
     private static void DrawRunBackground(InlineRunLayout run, RenderContext context)
     {

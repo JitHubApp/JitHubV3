@@ -129,4 +129,5 @@ public sealed record InlineRunLayout(
     string? Url,
     bool IsStrikethrough,
     bool IsCodeBlockLine,
-    ImmutableArray<float> GlyphX = default);
+    ImmutableArray<float> GlyphX = default,
+    int NodeTextOffset = 0);

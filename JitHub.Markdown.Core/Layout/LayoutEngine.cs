@@ -195,6 +195,7 @@ public sealed class MarkdownLayoutEngine
         var runsBuilder = ImmutableArray.CreateBuilder<LineLayout>(linesText.Length);
 
         var localY = y + padding;
+        var nodeTextOffset = 0;
         for (var i = 0; i < linesText.Length; i++)
         {
             var text = linesText[i];
@@ -211,10 +212,15 @@ public sealed class MarkdownLayoutEngine
                 Url: null,
                 IsStrikethrough: false,
                 IsCodeBlockLine: true,
-                GlyphX: BuildGlyphX(text, textStyle, scale, textMeasurer, runBounds.X, extraLeft: 0));
+                GlyphX: BuildGlyphX(text, textStyle, scale, textMeasurer, runBounds.X, extraLeft: 0),
+                NodeTextOffset: nodeTextOffset);
             runsBuilder.Add(new LineLayout(localY, lineHeight, ImmutableArray.Create(run)));
 
             localY += lineHeight;
+
+            // Offset into the logical code content (not including fences).
+            // Lines were split on '\n', so add 1 for the delimiter between lines.
+            nodeTextOffset += text.Length + 1;
         }
 
         var contentHeight = Math.Max(0, runsBuilder.Count * lineHeight);
@@ -841,6 +847,18 @@ public sealed class MarkdownLayoutEngine
     private static IEnumerable<Token> Tokenize(InlineSegment segment)
     {
         var s = segment.Text ?? string.Empty;
+
+        // InlineCodeNode renders as its inner code text, but its SourceSpan includes the backticks.
+        // Do NOT slice the span based on rendered text offsets; keep it as the original node span.
+        // Also treat inline code as a single unbreakable token for determinism.
+        if (segment.Kind == NodeKind.InlineCode && !segment.IsCodeBlockLine)
+        {
+            if (s.Length > 0)
+            {
+                yield return new Token(segment.Id, segment.Kind, segment.Span, segment.Style, s, segment.Url, segment.IsStrikethrough, segment.IsCodeBlockLine, IsWhitespace: false);
+            }
+            yield break;
+        }
 
         if (s == "\n")
         {
