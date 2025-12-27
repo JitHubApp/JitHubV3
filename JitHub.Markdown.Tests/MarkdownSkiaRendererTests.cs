@@ -145,4 +145,79 @@ public sealed class MarkdownSkiaRendererTests
 
         bitmap.GetPixel(x, y).Should().Be(expected);
     }
+
+    [Test]
+    public void Blockquote_renders_stripe_and_background_surface()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("> Quote\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        var quote = layout.Blocks.OfType<BlockQuoteLayout>().First();
+
+        using var bitmap = new SKBitmap(800, 240);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 240),
+            Scale = 1,
+        });
+
+        var pad = theme.Metrics.BlockPadding;
+        var stripeX = (int)MathF.Floor(quote.Bounds.X + MathF.Round(pad * 0.35f) + 1);
+        var stripeY = (int)MathF.Floor(quote.Bounds.Y + MathF.Round(pad * 0.25f) + 1);
+        stripeX = Math.Clamp(stripeX, 0, bitmap.Width - 1);
+        stripeY = Math.Clamp(stripeY, 0, bitmap.Height - 1);
+
+        var stripeColor = theme.Colors.ThematicBreak;
+        var expectedStripe = new SKColor((byte)stripeColor.R, (byte)stripeColor.G, (byte)stripeColor.B, (byte)stripeColor.A);
+        bitmap.GetPixel(stripeX, stripeY).Should().Be(expectedStripe);
+
+        var bgX = (int)MathF.Floor(quote.Bounds.X + pad + 2);
+        var bgY = stripeY;
+        bgX = Math.Clamp(bgX, 0, bitmap.Width - 1);
+        bgY = Math.Clamp(bgY, 0, bitmap.Height - 1);
+
+        var bgColor = theme.Colors.QuoteBackground;
+        var expectedBg = new SKColor((byte)bgColor.R, (byte)bgColor.G, (byte)bgColor.B, (byte)bgColor.A);
+        bitmap.GetPixel(bgX, bgY).Should().Be(expectedBg);
+    }
+
+    [Test]
+    public void Renderer_renders_lists_without_throwing()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("- one\n- two\n- [ ] todo\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        layout.Blocks.OfType<ListLayout>().Should().NotBeEmpty();
+
+        using var bitmap = new SKBitmap(800, 300);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 300),
+            Scale = 1,
+        });
+
+        bitmap.Width.Should().Be(800);
+    }
 }

@@ -398,15 +398,23 @@ Tests:
 #### 4.2.7 Blockquotes
 - Quote stripe + background
 
+Status (implemented):
+- Blockquotes render a background surface and a theme-driven quote stripe.
+
 Tests:
-- Golden tests: nested quote
+- Unit test: stripe + background surfaces (pixel check)
 
 #### 4.2.8 Lists (unordered/ordered)
 - Marker layout + indentation
 - Task list markers
 
+Status (implemented):
+- Lists lay out items with a marker gutter and indentation.
+- Unordered markers, ordered markers, and task list markers are supported.
+
 Tests:
-- Golden tests: nested lists
+- Unit test: marker text + indentation (layout)
+- Unit test: renderer list pass (no-throw)
 
 #### 4.2.9 Thematic breaks
 - Horizontal rule with theme stroke

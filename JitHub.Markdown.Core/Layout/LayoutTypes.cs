@@ -62,6 +62,25 @@ public sealed record BlockQuoteLayout(
     ImmutableArray<BlockLayout> Blocks)
     : BlockLayout(Id, NodeKind.BlockQuote, Span, Bounds, Style);
 
+public sealed record ListLayout(
+    NodeId Id,
+    SourceSpan Span,
+    RectF Bounds,
+    MarkdownBlockStyle Style,
+    bool IsOrdered,
+    ImmutableArray<ListItemLayout> Items)
+    : BlockLayout(Id, NodeKind.List, Span, Bounds, Style);
+
+public sealed record ListItemLayout(
+    NodeId Id,
+    SourceSpan Span,
+    RectF Bounds,
+    MarkdownBlockStyle Style,
+    string MarkerText,
+    RectF MarkerBounds,
+    ImmutableArray<BlockLayout> Blocks)
+    : BlockLayout(Id, NodeKind.ListItem, Span, Bounds, Style);
+
 public sealed record ThematicBreakLayout(
     NodeId Id,
     SourceSpan Span,

@@ -124,4 +124,31 @@ public sealed class MarkdownLayoutTests
 
         runs.Any(r => r.Text.Contains("deleted", StringComparison.Ordinal) && r.IsStrikethrough).Should().BeTrue();
     }
+
+    [Test]
+    public void Lists_layout_with_markers_and_task_state()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("- one\n- [ ] todo\n- [x] done\n\n1. first\n2. second\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var lists = layout.Blocks.OfType<ListLayout>().ToArray();
+        lists.Should().HaveCountGreaterThanOrEqualTo(2);
+
+        var unordered = lists.First(l => !l.IsOrdered);
+        unordered.Items.Length.Should().Be(3);
+        unordered.Items[0].MarkerText.Should().Be("•");
+        unordered.Items[1].MarkerText.Should().Be("☐");
+        unordered.Items[2].MarkerText.Should().Be("☑");
+
+        unordered.Items[0].Blocks.Should().NotBeEmpty();
+        unordered.Items[0].Blocks[0].Bounds.X.Should().BeGreaterThan(0);
+
+        var ordered = lists.First(l => l.IsOrdered);
+        ordered.Items.Length.Should().Be(2);
+        ordered.Items[0].MarkerText.Should().Be("1.");
+        ordered.Items[1].MarkerText.Should().Be("2.");
+    }
 }

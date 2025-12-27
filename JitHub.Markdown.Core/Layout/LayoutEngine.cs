@@ -105,6 +105,7 @@ public sealed class MarkdownLayoutEngine
             HeadingBlockNode h => LayoutHeading(h, width, contentWidth, theme, scale, textMeasurer, style, padding, spacingAfter, ref y),
             CodeBlockNode c => LayoutCodeBlock(c, width, contentWidth, theme, scale, textMeasurer, style, padding, spacingAfter, ref y),
             BlockQuoteBlockNode q => LayoutBlockQuote(q, width, contentWidth, theme, themeHash, scale, textMeasurer, style, padding, spacingAfter, ref y),
+            ListBlockNode l => LayoutList(l, width, theme, themeHash, scale, textMeasurer, style, padding, spacingAfter, ref y),
             ThematicBreakBlockNode hr => LayoutThematicBreak(hr, width, theme, scale, style, padding, spacingAfter, ref y),
             _ => LayoutUnknown(block, width, theme, scale, style, padding, spacingAfter, ref y),
         };
@@ -264,6 +265,134 @@ public sealed class MarkdownLayoutEngine
         return new BlockQuoteLayout(quote.Id, quote.Span, bounds, blockStyle, innerBlocks.ToImmutable());
     }
 
+    private ListLayout LayoutList(
+        ListBlockNode list,
+        float width,
+        MarkdownTheme theme,
+        int themeHash,
+        float scale,
+        ITextMeasurer textMeasurer,
+        MarkdownBlockStyle blockStyle,
+        float padding,
+        float spacingAfter,
+        ref float y)
+    {
+        // Phase 4.2.8: lists are a container that lays out items with a marker gutter.
+        // Spacing is handled by child blocks; list itself only adds a trailing spacingAfter.
+        var markerStyle = theme.Typography.Paragraph;
+        var markerGap = Math.Max(4f, theme.Metrics.BlockPadding / 2f) * scale;
+
+        // Compute a uniform marker gutter width so item content aligns.
+        var markerTexts = new string[list.Items.Length];
+        var markerWidths = new float[list.Items.Length];
+        var maxMarkerWidth = 0f;
+        for (var i = 0; i < list.Items.Length; i++)
+        {
+            var item = list.Items[i];
+
+            var markerText = item.IsTask
+                ? (item.IsChecked == true ? "☑" : "☐")
+                : (list.IsOrdered ? $"{i + 1}." : "•");
+
+            markerTexts[i] = markerText;
+
+            var m = textMeasurer.Measure(markerText, markerStyle, scale);
+            var w = Math.Max(0, m.Width);
+            markerWidths[i] = w;
+            maxMarkerWidth = Math.Max(maxMarkerWidth, w);
+        }
+
+        var markerGutterWidth = maxMarkerWidth + markerGap;
+        var itemContentWidth = Math.Max(0, width - markerGutterWidth);
+
+        var items = ImmutableArray.CreateBuilder<ListItemLayout>(list.Items.Length);
+
+        var listTop = y;
+        var localY = y;
+
+        var fallbackLineHeight = Math.Max(textMeasurer.GetLineHeight(markerStyle, scale), 0);
+
+        for (var i = 0; i < list.Items.Length; i++)
+        {
+            var item = list.Items[i];
+            var itemTop = localY;
+
+            // Lay out item blocks into the content area.
+            var childBlocks = ImmutableArray.CreateBuilder<BlockLayout>(item.Blocks.Length);
+            var childY = itemTop;
+            foreach (var child in item.Blocks)
+            {
+                var childLayout = LayoutBlock(child, itemContentWidth, theme, themeHash, scale, textMeasurer, ref childY);
+                childBlocks.Add(RebaseX(childLayout, xOffset: markerGutterWidth));
+            }
+
+            localY = childY;
+
+            // Marker aligns to the first available line in the first child block.
+            var markerY = itemTop;
+            var markerHeight = fallbackLineHeight;
+
+            if (childBlocks.Count > 0)
+            {
+                var first = childBlocks[0];
+                (markerY, markerHeight) = GetFirstLineYAndHeight(first, fallbackLineHeight);
+            }
+
+            var markerBounds = new RectF(0, markerY, markerWidths[i], markerHeight);
+
+            var itemBounds = new RectF(0, itemTop, width, Math.Max(0, localY - itemTop));
+            items.Add(new ListItemLayout(
+                item.Id,
+                item.Span,
+                itemBounds,
+                _styleResolver.ResolveBlockStyle(item, theme),
+                MarkerText: markerTexts[i],
+                MarkerBounds: markerBounds,
+                Blocks: childBlocks.ToImmutable()));
+        }
+
+        var bounds = new RectF(0, listTop, width, Math.Max(0, localY - listTop));
+        y = localY + spacingAfter;
+
+        return new ListLayout(list.Id, list.Span, bounds, blockStyle, list.IsOrdered, items.ToImmutable());
+    }
+
+    private static BlockLayout RebaseX(BlockLayout layout, float xOffset)
+        => layout switch
+        {
+            ParagraphLayout p => p with { Bounds = p.Bounds with { X = p.Bounds.X + xOffset } },
+            HeadingLayout h => h with { Bounds = h.Bounds with { X = h.Bounds.X + xOffset } },
+            CodeBlockLayout c => c with { Bounds = c.Bounds with { X = c.Bounds.X + xOffset } },
+            ThematicBreakLayout hr => hr with { Bounds = hr.Bounds with { X = hr.Bounds.X + xOffset } },
+            UnknownBlockLayout u => u with { Bounds = u.Bounds with { X = u.Bounds.X + xOffset } },
+            BlockQuoteLayout q => q with
+            {
+                Bounds = q.Bounds with { X = q.Bounds.X + xOffset },
+                Blocks = q.Blocks.Select(b => RebaseX(b, xOffset)).ToImmutableArray(),
+            },
+            ListLayout l => l with
+            {
+                Bounds = l.Bounds with { X = l.Bounds.X + xOffset },
+                Items = l.Items.Select(it => (ListItemLayout)RebaseX(it, xOffset)).ToImmutableArray(),
+            },
+            ListItemLayout li => li with
+            {
+                Bounds = li.Bounds with { X = li.Bounds.X + xOffset },
+                MarkerBounds = li.MarkerBounds with { X = li.MarkerBounds.X + xOffset },
+                Blocks = li.Blocks.Select(b => RebaseX(b, xOffset)).ToImmutableArray(),
+            },
+            _ => layout,
+        };
+
+    private static (float Y, float Height) GetFirstLineYAndHeight(BlockLayout block, float fallbackLineHeight)
+        => block switch
+        {
+            ParagraphLayout p when p.Lines.Length > 0 => (p.Lines[0].Y, p.Lines[0].Height),
+            HeadingLayout h when h.Lines.Length > 0 => (h.Lines[0].Y, h.Lines[0].Height),
+            CodeBlockLayout c when c.Lines.Length > 0 => (c.Lines[0].Y, c.Lines[0].Height),
+            _ => (block.Bounds.Y, fallbackLineHeight),
+        };
+
     private static int ComputeThemeHash(MarkdownTheme theme)
     {
         // Deterministic enough for caching in Phase 3; can evolve to a formal theme hash later.
@@ -332,6 +461,8 @@ public sealed class MarkdownLayoutEngine
             ThematicBreakLayout hr => hr with { Bounds = bounds },
             UnknownBlockLayout u => u with { Bounds = bounds },
             BlockQuoteLayout q => q with { Bounds = bounds },
+            ListLayout l => l with { Bounds = bounds },
+            ListItemLayout li => li with { Bounds = bounds },
             _ => layout,
         };
 

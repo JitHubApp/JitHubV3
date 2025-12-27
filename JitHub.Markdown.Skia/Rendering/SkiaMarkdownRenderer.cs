@@ -42,7 +42,21 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
                 RenderLines(c.Lines, context);
                 break;
             case BlockQuoteLayout q:
+                DrawBlockQuoteStripe(q, context);
                 foreach (var child in q.Blocks)
+                {
+                    RenderBlock(child, context);
+                }
+                break;
+            case ListLayout l:
+                foreach (var item in l.Items)
+                {
+                    RenderBlock(item, context);
+                }
+                break;
+            case ListItemLayout li:
+                DrawListMarker(li, context);
+                foreach (var child in li.Blocks)
                 {
                     RenderBlock(child, context);
                 }
@@ -53,6 +67,53 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             default:
                 break;
         }
+    }
+
+    private static void DrawBlockQuoteStripe(BlockQuoteLayout quote, RenderContext context)
+    {
+        // Phase 4.2.7: quote stripe + background (background is handled via block style).
+        var padding = Math.Max(0, quote.Style.Padding) * context.Scale;
+        if (padding <= 0)
+        {
+            return;
+        }
+
+        var stripeWidth = Math.Max(2f, MathF.Round(padding * 0.2f));
+        var stripeX = quote.Bounds.X + MathF.Round(padding * 0.35f);
+        var stripeTop = quote.Bounds.Y + MathF.Round(padding * 0.2f);
+        var stripeBottom = quote.Bounds.Bottom - MathF.Round(padding * 0.2f);
+
+        if (stripeBottom <= stripeTop)
+        {
+            return;
+        }
+
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = context.Theme.Colors.ThematicBreak.ToSKColor(),
+        };
+
+        var r = new SKRect(stripeX, stripeTop, stripeX + stripeWidth, stripeBottom);
+        context.Canvas.DrawRect(r, paint);
+    }
+
+    private static void DrawListMarker(ListItemLayout item, RenderContext context)
+    {
+        if (string.IsNullOrWhiteSpace(item.MarkerText))
+        {
+            return;
+        }
+
+        var style = context.Theme.Typography.Paragraph;
+        using var paint = CreateTextPaint(style, context.Scale);
+        paint.GetFontMetrics(out var metrics);
+
+        var x = item.MarkerBounds.X;
+        var baselineY = item.MarkerBounds.Y - metrics.Ascent;
+
+        context.Canvas.DrawText(item.MarkerText, x, baselineY, paint);
     }
 
     private static void DrawBlockBackground(BlockLayout block, RenderContext context)

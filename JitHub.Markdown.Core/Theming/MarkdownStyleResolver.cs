@@ -31,6 +31,22 @@ public sealed class MarkdownStyleResolver : IMarkdownStyleResolver
 
         return block.Kind switch
         {
+            NodeKind.List => baseStyle with
+            {
+                Background = ColorRgba.Transparent,
+                CornerRadius = 0,
+                Padding = 0,
+                SpacingAfter = theme.Metrics.BlockSpacing,
+            },
+
+            NodeKind.ListItem => baseStyle with
+            {
+                Background = ColorRgba.Transparent,
+                CornerRadius = 0,
+                Padding = 0,
+                SpacingAfter = 0,
+            },
+
             NodeKind.CodeBlock => baseStyle with
             {
                 Background = theme.Colors.CodeBlockBackground,
