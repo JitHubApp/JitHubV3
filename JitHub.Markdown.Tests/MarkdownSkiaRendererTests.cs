@@ -24,6 +24,7 @@ public sealed class MarkdownSkiaRendererTests
         renderer.Render(layout, new RenderContext
         {
             Canvas = canvas,
+            Theme = MarkdownTheme.Light,
             Viewport = new RectF(0, 0, 800, 600),
             Scale = 1,
             Overscan = 0,
@@ -62,11 +63,86 @@ public sealed class MarkdownSkiaRendererTests
         renderer.Render(layout, new RenderContext
         {
             Canvas = canvas,
+            Theme = MarkdownTheme.Light,
             Viewport = new RectF(0, 0, 800, 200),
             Scale = 1,
             HitRegions = hitRegions,
         });
 
         hitRegions.Any(r => r.Kind == NodeKind.Link && r.Url == "https://platform.uno").Should().BeTrue();
+    }
+
+    [Test]
+    public void Inline_code_renders_background_surface()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("Inline `code` here.");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        var inlineCodeRun = layout.Blocks
+            .OfType<ParagraphLayout>()
+            .SelectMany(p => p.Lines)
+            .SelectMany(l => l.Runs)
+            .First(r => r.Kind == NodeKind.InlineCode && !r.IsCodeBlockLine);
+
+        using var bitmap = new SKBitmap(800, 200);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 200),
+            Scale = 1,
+        });
+
+        var bg = theme.Colors.InlineCodeBackground;
+        var expected = new SKColor((byte)bg.R, (byte)bg.G, (byte)bg.B, (byte)bg.A);
+        var pad = theme.Metrics.InlineCodePadding;
+        var x = Math.Clamp((int)MathF.Floor(inlineCodeRun.Bounds.X + MathF.Max(1, pad + 1)), 0, bitmap.Width - 1);
+        var y = Math.Clamp((int)MathF.Floor(inlineCodeRun.Bounds.Y + MathF.Max(1, pad + 1)), 0, bitmap.Height - 1);
+
+        bitmap.GetPixel(x, y).Should().Be(expected);
+    }
+
+    [Test]
+    public void Code_block_renders_background_surface()
+    {
+        var theme = MarkdownTheme.Light;
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("```csharp\nvar x = 1;\n```");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: 1, textMeasurer: measurer);
+
+        var codeBlock = layout.Blocks.OfType<CodeBlockLayout>().First();
+
+        using var bitmap = new SKBitmap(800, 240);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        var renderer = new SkiaMarkdownRenderer();
+        renderer.Render(layout, new RenderContext
+        {
+            Canvas = canvas,
+            Theme = theme,
+            Viewport = new RectF(0, 0, 800, 240),
+            Scale = 1,
+        });
+
+        var bg = theme.Colors.CodeBlockBackground;
+        var expected = new SKColor((byte)bg.R, (byte)bg.G, (byte)bg.B, (byte)bg.A);
+        var inset = MathF.Max(2, theme.Metrics.BlockPadding / 2);
+        var x = Math.Clamp((int)MathF.Floor(codeBlock.Bounds.X + inset), 0, bitmap.Width - 1);
+        var y = Math.Clamp((int)MathF.Floor(codeBlock.Bounds.Y + inset), 0, bitmap.Height - 1);
+
+        bitmap.GetPixel(x, y).Should().Be(expected);
     }
 }

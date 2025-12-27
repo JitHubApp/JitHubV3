@@ -377,15 +377,23 @@ Tests:
 #### 4.2.5 Inline code
 - Background brush + corner radius + padding
 
+Status (implemented):
+- Inline code runs are laid out with theme-driven padding.
+- Skia renderer draws an inline-code surface using `MarkdownTheme.Colors.InlineCodeBackground` and inline-code metrics.
+
 Tests:
-- Golden tests: inline code background aligns with text
+- Unit test: renders inline-code background surface (pixel check)
 
 #### 4.2.6 Code blocks
 - Monospace typography
 - Background surface, padding, optional border
 
+Status (implemented):
+- Code blocks use monospace typography via `MarkdownTheme.Typography.InlineCode`.
+- Block background + padding are applied via `MarkdownStyleResolver` and rendered as a single surface behind the code.
+
 Tests:
-- Golden tests: fenced code blocks
+- Unit test: renders code block background surface (pixel check)
 
 #### 4.2.7 Blockquotes
 - Quote stripe + background

@@ -9,6 +9,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         if (layout is null) throw new ArgumentNullException(nameof(layout));
         if (context is null) throw new ArgumentNullException(nameof(context));
         if (context.Canvas is null) throw new ArgumentException("Canvas is required", nameof(context));
+        if (context.Theme is null) throw new ArgumentException("Theme is required", nameof(context));
         if (context.Scale <= 0) throw new ArgumentOutOfRangeException(nameof(context.Scale));
 
         // Clip to viewport and render visible blocks only.
@@ -123,6 +124,33 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         var x = run.Bounds.X;
         var baselineY = run.Bounds.Y - metrics.Ascent;
+
+        // Phase 4.2.5: inline code surface.
+        if (run.Kind == NodeKind.InlineCode && !run.IsCodeBlockLine)
+        {
+            var pad = Math.Max(0, context.Theme.Metrics.InlineCodePadding) * context.Scale;
+            var radius = Math.Max(0, context.Theme.Metrics.InlineCodeCornerRadius) * context.Scale;
+
+            using var bgPaint = new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill,
+                Color = context.Theme.Colors.InlineCodeBackground.ToSKColor(),
+            };
+
+            var r = new SKRect(run.Bounds.X, run.Bounds.Y, run.Bounds.Right, run.Bounds.Bottom);
+            if (radius <= 0)
+            {
+                context.Canvas.DrawRect(r, bgPaint);
+            }
+            else
+            {
+                context.Canvas.DrawRoundRect(r, radius, radius, bgPaint);
+            }
+
+            x += pad;
+            baselineY = (run.Bounds.Y + pad) - metrics.Ascent;
+        }
 
         context.Canvas.DrawText(run.Text, x, baselineY, paint);
 

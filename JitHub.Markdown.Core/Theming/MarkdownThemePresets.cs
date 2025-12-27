@@ -15,6 +15,8 @@ public static class MarkdownThemePresets
         Metrics = new MarkdownMetrics
         {
             CornerRadius = 8,
+            InlineCodeCornerRadius = 6,
+            InlineCodePadding = 3,
             BlockSpacing = 12,
             BlockPadding = 12,
         },
@@ -50,6 +52,8 @@ public static class MarkdownThemePresets
         Metrics = new MarkdownMetrics
         {
             CornerRadius = 8,
+            InlineCodeCornerRadius = 6,
+            InlineCodePadding = 3,
             BlockSpacing = 12,
             BlockPadding = 12,
         },
@@ -85,6 +89,8 @@ public static class MarkdownThemePresets
         Metrics = new MarkdownMetrics
         {
             CornerRadius = 0,
+            InlineCodeCornerRadius = 0,
+            InlineCodePadding = 0,
             BlockSpacing = 12,
             BlockPadding = 12,
         },

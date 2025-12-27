@@ -52,6 +52,10 @@ public sealed class MarkdownMetrics
 {
     public required float CornerRadius { get; init; }
 
+    public required float InlineCodeCornerRadius { get; init; }
+
+    public required float InlineCodePadding { get; init; }
+
     public required float BlockSpacing { get; init; }
 
     public required float BlockPadding { get; init; }

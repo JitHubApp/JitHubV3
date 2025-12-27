@@ -199,7 +199,16 @@ public sealed class MarkdownLayoutEngine
             var m = textMeasurer.Measure(text, textStyle, scale);
             var runBounds = new RectF(padding, localY, Math.Min(m.Width, contentWidth), lineHeight);
 
-            var run = new InlineRunLayout(codeBlock.Id, NodeKind.InlineCode, codeBlock.Span, runBounds, textStyle, text, Url: null, IsStrikethrough: false);
+            var run = new InlineRunLayout(
+                codeBlock.Id,
+                NodeKind.InlineCode,
+                codeBlock.Span,
+                runBounds,
+                textStyle,
+                text,
+                Url: null,
+                IsStrikethrough: false,
+                IsCodeBlockLine: true);
             runsBuilder.Add(new LineLayout(localY, lineHeight, ImmutableArray.Create(run)));
 
             localY += lineHeight;
@@ -261,6 +270,8 @@ public sealed class MarkdownLayoutEngine
         var h = new HashCode();
 
         h.Add(theme.Metrics.CornerRadius);
+        h.Add(theme.Metrics.InlineCodeCornerRadius);
+        h.Add(theme.Metrics.InlineCodePadding);
         h.Add(theme.Metrics.BlockPadding);
         h.Add(theme.Metrics.BlockSpacing);
 
@@ -399,6 +410,14 @@ public sealed class MarkdownLayoutEngine
                 var tokenWidth = Math.Max(0, m.Width);
                 var tokenHeight = Math.Max(0, m.Height);
 
+                // Phase 4.2.5: inline-code gets a background surface with padding.
+                if (token.Kind == NodeKind.InlineCode && !token.IsCodeBlockLine)
+                {
+                    var inlinePad = Math.Max(0, theme.Metrics.InlineCodePadding) * scale;
+                    tokenWidth += inlinePad * 2;
+                    tokenHeight += inlinePad * 2;
+                }
+
                 var isWhitespace = token.IsWhitespace;
 
                 // Wrap only on non-leading, non-whitespace tokens.
@@ -408,7 +427,16 @@ public sealed class MarkdownLayoutEngine
                 }
 
                 var runBounds = new RectF(x, lineY, tokenWidth, tokenHeight);
-                currentRuns.Add(new InlineRunLayout(token.Id, token.Kind, token.Span, runBounds, token.Style, token.Text, token.Url, token.IsStrikethrough));
+                currentRuns.Add(new InlineRunLayout(
+                    token.Id,
+                    token.Kind,
+                    token.Span,
+                    runBounds,
+                    token.Style,
+                    token.Text,
+                    token.Url,
+                    token.IsStrikethrough,
+                    token.IsCodeBlockLine));
 
                 x += tokenWidth;
                 lineHeight = Math.Max(lineHeight, tokenHeight);
@@ -448,15 +476,16 @@ public sealed class MarkdownLayoutEngine
                             Style: current,
                             Text: t.Text,
                             Url: url,
-                            IsStrikethrough: isStrikethrough));
+                            IsStrikethrough: isStrikethrough,
+                            IsCodeBlockLine: false));
                         break;
 
                     case InlineCodeNode code:
-                        builder.Add(new InlineSegment(code.Id, code.Kind, code.Span, theme.Typography.InlineCode, code.Code, Url: null, IsStrikethrough: isStrikethrough));
+                        builder.Add(new InlineSegment(code.Id, code.Kind, code.Span, theme.Typography.InlineCode, code.Code, Url: null, IsStrikethrough: isStrikethrough, IsCodeBlockLine: false));
                         break;
 
                     case LineBreakInlineNode br:
-                        builder.Add(new InlineSegment(br.Id, br.Kind, br.Span, current, "\n", Url: null, IsStrikethrough: isStrikethrough));
+                        builder.Add(new InlineSegment(br.Id, br.Kind, br.Span, current, "\n", Url: null, IsStrikethrough: isStrikethrough, IsCodeBlockLine: false));
                         break;
 
                     case EmphasisInlineNode e:
@@ -497,7 +526,7 @@ public sealed class MarkdownLayoutEngine
         if (s == "\n")
         {
             // Explicit hard break.
-            yield return new Token(segment.Id, segment.Kind, segment.Span, segment.Style, string.Empty, segment.Url, segment.IsStrikethrough, IsWhitespace: true);
+            yield return new Token(segment.Id, segment.Kind, segment.Span, segment.Style, string.Empty, segment.Url, segment.IsStrikethrough, segment.IsCodeBlockLine, IsWhitespace: true);
             yield break;
         }
 
@@ -514,12 +543,12 @@ public sealed class MarkdownLayoutEngine
             var text = s.Substring(start, end - start);
             var span = new SourceSpan(segment.Span.Start + start, segment.Span.Start + end);
 
-            yield return new Token(segment.Id, segment.Kind, span, segment.Style, text, segment.Url, segment.IsStrikethrough, IsWhitespace: isSpace);
+            yield return new Token(segment.Id, segment.Kind, span, segment.Style, text, segment.Url, segment.IsStrikethrough, segment.IsCodeBlockLine, IsWhitespace: isSpace);
             start = end;
         }
     }
 
-    private readonly record struct InlineSegment(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, string? Url, bool IsStrikethrough);
+    private readonly record struct InlineSegment(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, string? Url, bool IsStrikethrough, bool IsCodeBlockLine);
 
-    private readonly record struct Token(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, string? Url, bool IsStrikethrough, bool IsWhitespace);
+    private readonly record struct Token(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, string? Url, bool IsStrikethrough, bool IsCodeBlockLine, bool IsWhitespace);
 }

@@ -165,6 +165,8 @@ This section reflects what currently exists in the repo (not the full end-state 
 ### Rendering coverage (so far)
 - Paragraphs and headings render from `InlineRunLayout` runs (text + basic underline support).
 - Block backgrounds are filled using `MarkdownBlockStyle.Background` + corner radius.
+- Inline code renders with a theme-driven background surface (padding + corner radius) without affecting code block rendering.
+- Code blocks render as a single background surface with padding using the resolved block style.
 
 ### Decorations + links (so far)
 - Strikethrough is propagated into layout runs and rendered as a strike line.
@@ -173,6 +175,7 @@ This section reflects what currently exists in the repo (not the full end-state 
 ### Tests (gate)
 - `JitHub.Markdown.Tests/MarkdownSkiaRendererTests.cs` exercises an offscreen render pass (no-throw) for paragraph + heading input.
 - Link hit region behavior is unit-tested (URL present and collected).
+- Inline code + code block background rendering are unit-tested with pixel checks.
 
 ---
 

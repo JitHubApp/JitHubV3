@@ -87,4 +87,5 @@ public sealed record InlineRunLayout(
     MarkdownTextStyle Style,
     string Text,
     string? Url,
-    bool IsStrikethrough);
+    bool IsStrikethrough,
+    bool IsCodeBlockLine);
