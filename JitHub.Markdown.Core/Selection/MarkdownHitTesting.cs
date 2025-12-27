@@ -59,7 +59,7 @@ public static class MarkdownHitTester
         return TryHitTestLine(band.LineIndex, band.Line, x, out result);
     }
 
-    public static bool TryHitTestLine(int lineIndex, LineLayout line, float x, out MarkdownHitTestResult result)
+    internal static bool TryHitTestLine(int lineIndex, LineLayout line, float x, out MarkdownHitTestResult result)
     {
         if (line.Runs.Length == 0)
         {

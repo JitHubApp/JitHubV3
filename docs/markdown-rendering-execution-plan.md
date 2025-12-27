@@ -639,7 +639,7 @@ Implemented notes:
 - Pointer-move hit testing fast-paths same-line moves using `TryHitTestLine(...)`.
 - Added regression tests comparing `TryHitTestNearest` against a reference scan algorithm.
 
-#### 6.6.5 API + structure tidy-up
+#### 6.6.5 API + structure tidy-up (implemented)
 Deliverables:
 - Review public surface area:
   - Confirm what is public vs internal across Core/Uno.
@@ -647,8 +647,17 @@ Deliverables:
 - Remove “implementation scar tissue”:
   - Remove temporary hacks/no-ops, keep comments only where they capture platform invariants.
 
+Implemented notes:
+- Tightened hit-testing helper API surface by making `MarkdownHitTester.TryHitTestLine(...)` internal again.
+- Added `InternalsVisibleTo` for `JitHub.Markdown.Uno` and `JitHub.Markdown.Tests` so perf-critical fast paths and tests can still use internal helpers without forcing them public.
+
 Output:
 - Short “Phase 6 lessons learned” note in this plan section to document platform quirks we had to account for.
+
+Phase 6 lessons learned:
+- Pointer/selection interactions have a true hot path; avoid logging, allocations, or enumerations there.
+- Layout-derived indices (cached per-layout) are a good lever for perf without changing behavior.
+- A small, explicit internal API surface (with `InternalsVisibleTo` for trusted consumers) prevents “perf helpers” from accidentally becoming public contracts.
 
 ---
 
