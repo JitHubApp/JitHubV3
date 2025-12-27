@@ -7,10 +7,11 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       xmlns:md="using:JitHub.Markdown.Uno"
       mc:Ignorable="d"
+  IsTabStop="False"
       NavigationCacheMode="Required"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-  <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+  <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12" Loaded="OnLoaded">
 
     <utu:NavigationBar Content="{Binding Title}" />
 
@@ -22,7 +23,7 @@
           TextWrapping="Wrap"
           Text="{Binding Markdown, Mode=TwoWay}" />
 
-        <md:MarkdownView Markdown="{Binding Markdown}" />
+        <md:MarkdownView x:Name="MarkdownPreview" Markdown="{Binding Markdown}" />
       </StackPanel>
     </ScrollViewer>
 

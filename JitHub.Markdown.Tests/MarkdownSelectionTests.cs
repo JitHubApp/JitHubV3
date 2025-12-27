@@ -31,6 +31,28 @@ public sealed class MarkdownSelectionTests
     }
 
     [Test]
+    public void Hit_test_nearest_succeeds_in_vertical_gaps()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("Hello world");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var helloRun = line.Runs.First(r => r.Text == "Hello");
+
+        var x = (helloRun.Bounds.X + helloRun.Bounds.Right) / 2f;
+        var yBetweenLines = line.Y - 1f;
+
+        MarkdownHitTester.TryHitTest(layout, x, yBetweenLines, out _).Should().BeFalse("TryHitTest requires Y to fall inside a line band");
+
+        MarkdownHitTester.TryHitTestNearest(layout, x, yBetweenLines, out var hit).Should().BeTrue("nearest hit-test should clamp to the closest line");
+        hit.Run.Text.Should().Be("Hello");
+    }
+
+    [Test]
     public void Selection_geometry_spans_wrapped_lines_without_vertical_gaps()
     {
         var engine = MarkdownEngine.CreateDefault();

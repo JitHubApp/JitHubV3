@@ -37,6 +37,72 @@ public static class MarkdownHitTester
         return false;
     }
 
+    /// <summary>
+    /// Attempts to hit-test the layout at the given coordinates. If the Y coordinate falls between
+    /// lines (e.g., block spacing), this method clamps to the nearest line so clicks in vertical
+    /// gaps still map to a valid caret/selection position.
+    /// </summary>
+    public static bool TryHitTestNearest(MarkdownLayout layout, float x, float y, out MarkdownHitTestResult result)
+    {
+        if (layout is null) throw new ArgumentNullException(nameof(layout));
+
+        var bestLineIndex = -1;
+        LineLayout? bestLine = null;
+        var bestDistance = float.PositiveInfinity;
+
+        var lineIndex = 0;
+        foreach (var line in EnumerateLines(layout))
+        {
+            // Skip empty lines (no runs) when searching for a usable caret target.
+            if (line.Runs.Length == 0)
+            {
+                lineIndex++;
+                continue;
+            }
+
+            var top = line.Y;
+            var bottom = line.Y + line.Height;
+
+            float distance;
+            if (y < top)
+            {
+                distance = top - y;
+            }
+            else if (y > bottom)
+            {
+                distance = y - bottom;
+            }
+            else
+            {
+                // Within this line's vertical band.
+                distance = 0f;
+            }
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestLineIndex = lineIndex;
+                bestLine = line;
+
+                // Can't do better than an exact match.
+                if (distance == 0f)
+                {
+                    break;
+                }
+            }
+
+            lineIndex++;
+        }
+
+        if (bestLineIndex >= 0 && bestLine is not null)
+        {
+            return TryHitTestLine(bestLineIndex, bestLine, x, out result);
+        }
+
+        result = default;
+        return false;
+    }
+
     private static bool TryHitTestLine(int lineIndex, LineLayout line, float x, out MarkdownHitTestResult result)
     {
         if (line.Runs.Length == 0)

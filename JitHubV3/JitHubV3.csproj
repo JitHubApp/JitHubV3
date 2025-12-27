@@ -6,7 +6,7 @@
       WebAssembly or Windows as the debug target.
       Use CLI/CI builds (where BuildingInsideVisualStudio is false) to build the full matrix.
     -->
-    <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'=='true'">net10.0-desktop;net10.0-windows10.0.26100;net10.0-browserwasm</TargetFrameworks>
+    <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100;net10.0-browserwasm;net10.0-desktop</TargetFrameworks>
     <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'!='true'">net10.0-android;net10.0-ios;net10.0-windows10.0.26100;net10.0-browserwasm;net10.0-desktop;net10.0</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
@@ -53,6 +53,16 @@
       ThemeService;
       SkiaRenderer;
     </UnoFeatures>
+  </PropertyGroup>
+
+  <!--
+    Enable packaged WinAppSDK debugging support in Visual Studio (MsixPackage launch profile).
+    IMPORTANT: This must be set at project-load time. Conditioning on $(TargetFramework) prevents
+    VS from recognizing the MsixPackage command for the launch profile.
+  -->
+  <PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
   </PropertyGroup>
 
   <ItemDefinitionGroup>

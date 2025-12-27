@@ -6,8 +6,12 @@ using Windows.System;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.Extensions.Logging;
 using SkiaSharp;
+using Uno.Extensions;
 
 namespace JitHub.Markdown.Uno;
 
@@ -73,26 +77,46 @@ public class SkiaMarkdownView : ContentControl
 
     public SkiaMarkdownView()
     {
+        IsTabStop = true;
+        Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        // Uno docs: when nested in a ScrollViewer, a control can receive PointerCancelled as soon as scrolling is detected.
+        // Setting ManipulationMode to something other than System prevents that behavior.
+        ManipulationMode = ManipulationModes.None;
+
+        // Uno docs (Routed Events): ensure pointer events bubble in managed code for this subtree.
+        // We use reflection to avoid hard dependency on Uno.UI.Xaml types in targets where they're not referenced.
+        TryEnableManagedPointerBubbling(this);
+
         _engine = MarkdownEngine.CreateDefault();
         _layoutEngine = new MarkdownLayoutEngine();
         _textMeasurer = new SkiaTextMeasurer();
         _renderer = new SkiaMarkdownRenderer();
 
-        _canvas = new Canvas();
+        _canvas = new Grid
+        {
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+        };
         _image = new Image
         {
             Stretch = Microsoft.UI.Xaml.Media.Stretch.None,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
+            IsHitTestVisible = true,
         };
         _canvas.Children.Add(_image);
         Content = _canvas;
 
-        _canvas.PointerPressed += OnPointerPressed;
-        _canvas.PointerMoved += OnPointerMoved;
-        _canvas.PointerReleased += OnPointerReleased;
-        _canvas.PointerCanceled += OnPointerCanceled;
-        _canvas.PointerCaptureLost += OnPointerCaptureLost;
+        // Ensure we can receive pointer events even when the hit-test source is this ContentControl.
+        AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(OnPointerPressed), true);
+        AddHandler(UIElement.PointerMovedEvent, new PointerEventHandler(OnPointerMoved), true);
+        AddHandler(UIElement.PointerReleasedEvent, new PointerEventHandler(OnPointerReleased), true);
+        AddHandler(UIElement.PointerCanceledEvent, new PointerEventHandler(OnPointerCanceled), true);
+        AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler(OnPointerCaptureLost), true);
+
+        // NOTE: Do not register the same handlers multiple times on the subtree.
+        // This control uses AddHandler(..., handledEventsToo: true) on itself plus managed bubbling.
+        // Duplicating handlers on _canvas/_image will cause every input event to be processed multiple times,
+        // which breaks selection reliability and severely harms performance (especially on WASM).
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -105,7 +129,7 @@ public class SkiaMarkdownView : ContentControl
     private readonly MarkdownLayoutEngine _layoutEngine;
     private readonly SkiaTextMeasurer _textMeasurer;
     private readonly SkiaMarkdownRenderer _renderer;
-    private readonly Canvas _canvas;
+    private readonly Grid _canvas;
     private readonly Image _image;
 
     private MarkdownDocumentModel? _document;
@@ -126,6 +150,7 @@ public class SkiaMarkdownView : ContentControl
 
     private readonly SelectionPointerInteraction _pointerInteraction = new();
     private bool _hasPointerCapture;
+    private bool _isSelecting;
 
     private uint? _activePointerId;
     private Microsoft.UI.Xaml.Input.Pointer? _activePointer;
@@ -140,6 +165,39 @@ public class SkiaMarkdownView : ContentControl
 
     private const float TouchMoveCancelThreshold = 8f;
     private static readonly TimeSpan TouchLongPressDelay = TimeSpan.FromMilliseconds(500);
+
+    private static void TryEnableManagedPointerBubbling(DependencyObject element)
+    {
+        try
+        {
+            var prop = element.GetType().GetProperty("EventsBubblingInManagedCode");
+            if (prop is null || !prop.CanWrite)
+            {
+                return;
+            }
+
+            var enumType = prop.PropertyType;
+            if (!enumType.IsEnum)
+            {
+                return;
+            }
+
+            var flags = new[] { "PointerPressed", "PointerMoved", "PointerReleased", "PointerCanceled" };
+            ulong value = 0;
+            foreach (var flag in flags)
+            {
+                var parsed = Enum.Parse(enumType, flag);
+                value |= Convert.ToUInt64(parsed);
+            }
+
+            var boxed = Enum.ToObject(enumType, value);
+            prop.SetValue(element, boxed);
+        }
+        catch
+        {
+            // Ignore: feature not available on this target.
+        }
+    }
 
     private static void OnMarkdownChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -192,22 +250,43 @@ public class SkiaMarkdownView : ContentControl
 
     private void OnPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        this.Log().LogWarning("[SkiaMarkdownView] PointerPressed id={PointerId} type={PointerType} selectionEnabled={SelectionEnabled}",
+            e.Pointer.PointerId,
+            e.Pointer.PointerDeviceType,
+            SelectionEnabled);
+
         if (_layout is null)
         {
+            this.Log().LogWarning("[SkiaMarkdownView] PointerPressed ignored (no layout yet)");
             return;
         }
 
-        var p = e.GetCurrentPoint(_canvas);
-        var pos = p.Position;
+        // Ensure keyboard focus moves here (TextBox above can otherwise keep focus).
+        _ = Focus(FocusState.Pointer);
+
+        var pos = GetPointerPositionForHitTest(e);
+
+        if (string.Equals(e.Pointer.PointerDeviceType.ToString(), "Mouse", StringComparison.OrdinalIgnoreCase))
+        {
+            var props = e.GetCurrentPoint(this).Properties;
+            if (!props.IsLeftButtonPressed)
+            {
+                return;
+            }
+        }
+
+        if (!MarkdownHitTester.TryHitTestNearest(_layout, (float)pos.X, (float)pos.Y, out var hit))
+        {
+            this.Log().LogWarning("[SkiaMarkdownView] PointerPressed hit-test miss at ({X},{Y})", pos.X, pos.Y);
+            // Important on WASM: if we leave _isPointerDown=true on a miss, we may never receive PointerReleased,
+            // and then PointerMoved keeps extending selection indefinitely.
+            ResetPointerTracking();
+            return;
+        }
 
         _isPointerDown = true;
         _activePointerId = e.Pointer.PointerId;
         _activePointer = e.Pointer;
-
-        if (!MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var hit))
-        {
-            return;
-        }
 
         var isTouch = IsTouchPointer(e);
         if (isTouch)
@@ -250,6 +329,12 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
+        this.Log().LogWarning("[SkiaMarkdownView] PointerDown selectionChanged={SelectionChanged} selection={Selection}",
+            result.SelectionChanged,
+            Selection?.ToString() ?? "<null>");
+
+        _isSelecting = SelectionEnabled && result.SelectionChanged;
+
         if (!_hasPointerCapture)
         {
             _hasPointerCapture = _canvas.CapturePointer(e.Pointer);
@@ -265,18 +350,46 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        if (!_isPointerDown)
-        {
-            return;
-        }
-
         if (_activePointerId.HasValue && e.Pointer.PointerId != _activePointerId.Value)
         {
             return;
         }
 
-        var p = e.GetCurrentPoint(_canvas);
-        var pos = p.Position;
+        if (!_isPointerDown)
+        {
+            return;
+        }
+
+        // WASM quirk: sometimes PointerReleased is not delivered (or capture is lost). If the pointer is no
+        // longer pressed/in contact, treat this as an implicit release so selection can't get stuck.
+        try
+        {
+            var pp = e.GetCurrentPoint(this);
+            var props = pp.Properties;
+
+            var device = e.Pointer.PointerDeviceType.ToString();
+            var isStillDown = pp.IsInContact;
+
+            // For mouse we prefer the explicit left-button state.
+            if (string.Equals(device, "Mouse", StringComparison.OrdinalIgnoreCase))
+            {
+                isStillDown = props.IsLeftButtonPressed;
+            }
+
+            if (!isStillDown)
+            {
+                this.Log().LogWarning("[SkiaMarkdownView] PointerMoved observed no buttons down; canceling stuck gesture (id={PointerId})", e.Pointer.PointerId);
+                ReleaseCapture(e);
+                ResetPointerTracking();
+                return;
+            }
+        }
+        catch
+        {
+            // If anything about pointer properties isn't supported on this target, ignore.
+        }
+
+        var pos = GetPointerPositionForHitTest(e);
 
         // Touch: before long-press triggers, avoid handling (lets ScrollViewer pan).
         var isTouch = IsTouchPointer(e);
@@ -290,7 +403,7 @@ public class SkiaMarkdownView : ContentControl
                 CancelTouchLongPress();
             }
 
-            if (MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var moveHitForCancel))
+            if (MarkdownHitTester.TryHitTestNearest(_layout, (float)pos.X, (float)pos.Y, out var moveHitForCancel))
             {
                 _pointerInteraction.OnPointerMove(
                     moveHitForCancel,
@@ -302,7 +415,7 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        if (!MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var hit))
+        if (!MarkdownHitTester.TryHitTestNearest(_layout, (float)pos.X, (float)pos.Y, out var hit))
         {
             return;
         }
@@ -316,11 +429,12 @@ public class SkiaMarkdownView : ContentControl
         if (result.SelectionChanged)
         {
             Selection = result.Selection;
+            _isSelecting = true;
         }
 
-        // Handle moves when we're actively interacting (selection). This is important on WASM
-        // where CapturePointer may not be supported.
-        if (_hasPointerCapture || _touchSelectionStarted)
+        // Handle moves when we're actively selecting. This is important on WASM/Desktop
+        // where CapturePointer may not be supported consistently.
+        if (_hasPointerCapture || _touchSelectionStarted || _isSelecting)
         {
             e.Handled = true;
         }
@@ -328,6 +442,7 @@ public class SkiaMarkdownView : ContentControl
 
     private void OnPointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        this.Log().LogWarning("[SkiaMarkdownView] PointerReleased id={PointerId}", e.Pointer.PointerId);
         if (_layout is null)
         {
             return;
@@ -340,10 +455,9 @@ public class SkiaMarkdownView : ContentControl
 
         CancelTouchLongPress();
 
-        var p = e.GetCurrentPoint(_canvas);
-        var pos = p.Position;
+        var pos = GetPointerPositionForHitTest(e);
 
-        if (!MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var hit))
+        if (!MarkdownHitTester.TryHitTestNearest(_layout, (float)pos.X, (float)pos.Y, out var hit))
         {
             ReleaseCapture(e);
             ResetPointerTracking();
@@ -356,16 +470,22 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
+        this.Log().LogWarning("[SkiaMarkdownView] PointerUp selectionChanged={SelectionChanged} activateLink={ActivateLink}",
+            result.SelectionChanged,
+            string.IsNullOrWhiteSpace(result.ActivateLinkUrl) ? "<none>" : result.ActivateLinkUrl);
+
         if (!string.IsNullOrWhiteSpace(result.ActivateLinkUrl))
         {
             _ = OpenLinkAsync(result.ActivateLinkUrl);
         }
 
+        // Decide handled *before* we clear capture/flags.
+        var shouldHandle = _hasPointerCapture || _touchSelectionStarted || _isSelecting || !string.IsNullOrWhiteSpace(result.ActivateLinkUrl);
+        e.Handled = shouldHandle;
+
         ReleaseCapture(e);
         _isPointerDown = false;
-
-        // Only handle release when we actually performed an interaction.
-        e.Handled = _hasPointerCapture || _touchSelectionStarted || !string.IsNullOrWhiteSpace(result.ActivateLinkUrl);
+        _isSelecting = false;
 
         ResetPointerTracking();
     }
@@ -374,13 +494,20 @@ public class SkiaMarkdownView : ContentControl
     {
         CancelTouchLongPress();
         ReleaseCapture(e);
+        _isSelecting = false;
         ResetPointerTracking();
         e.Handled = true;
     }
 
     private void OnPointerCaptureLost(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        // Critical: on WASM, capture can be lost without a corresponding PointerReleased.
+        // If we don't reset, the control keeps thinking the pointer is down and selection continues forever.
+        CancelTouchLongPress();
         _hasPointerCapture = false;
+        _isSelecting = false;
+        ResetPointerTracking();
+        e.Handled = true;
     }
 
     private void ReleaseCapture(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -394,11 +521,28 @@ public class SkiaMarkdownView : ContentControl
 
     private void ResetPointerTracking()
     {
+        _pointerInteraction.CancelPointer();
         _activePointerId = null;
         _activePointer = null;
         _isPointerDown = false;
         _touchLongPressArmed = false;
         _touchSelectionStarted = false;
+        _isSelecting = false;
+    }
+
+    private Windows.Foundation.Point GetPointerPositionForHitTest(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        // The rendered bitmap is displayed in _image, whose Margin is adjusted for viewport offset.
+        // Hit-testing must be done in the same coordinate space as the layout (image-local), otherwise
+        // clicks will randomly miss (especially when _image.Margin.Top != 0 under ScrollViewer).
+        try
+        {
+            return e.GetCurrentPoint(_image).Position;
+        }
+        catch
+        {
+            return e.GetCurrentPoint(this).Position;
+        }
     }
 
     private void ArmTouchLongPress()
@@ -451,6 +595,7 @@ public class SkiaMarkdownView : ContentControl
         }
 
         _touchSelectionStarted = true;
+        _isSelecting = true;
         _touchLongPressArmed = false;
 
         if (!_hasPointerCapture && _activePointer is not null)
@@ -542,7 +687,7 @@ public class SkiaMarkdownView : ContentControl
             _viewportTop = Math.Max(0, visible.Y - controlRectInViewport.Y);
             _viewportHeight = Math.Max(0, visible.Height);
 
-            Canvas.SetTop(_image, _viewportTop);
+            _image.Margin = new Thickness(0, _viewportTop, 0, 0);
         }
         catch
         {
@@ -550,7 +695,7 @@ public class SkiaMarkdownView : ContentControl
             _viewportTop = 0;
             _viewportHeight = ActualHeight;
             _image.Visibility = Visibility.Visible;
-            Canvas.SetTop(_image, 0);
+            _image.Margin = new Thickness(0);
         }
     }
 

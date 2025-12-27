@@ -31,6 +31,16 @@ public sealed class SelectionPointerInteraction
         ResetPointerState();
     }
 
+    /// <summary>
+    /// Cancels the current pointer gesture without changing the existing selection.
+    /// Useful when the platform does not reliably raise PointerReleased/PointerCanceled
+    /// (e.g. capture lost, browser quirks).
+    /// </summary>
+    public void CancelPointer()
+    {
+        ResetPointerState();
+    }
+
     public PointerInteractionResult OnPointerDown(MarkdownHitTestResult hit, float x, float y, bool selectionEnabled, PointerModifiers modifiers)
     {
         _isPressed = true;

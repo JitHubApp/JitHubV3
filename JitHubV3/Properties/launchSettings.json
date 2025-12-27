@@ -11,6 +11,7 @@
     // This profile is first in order for dotnet run to pick it up by default
     "JitHubV3 (WebAssembly)": {
       "commandName": "Project",
+      "compatibleTargetFramework": "browserwasm",
       "dotnetRunMessages": true,
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5000",
@@ -21,6 +22,7 @@
     },
     "JitHubV3 (WebAssembly IIS Express)": {
       "commandName": "IISExpress",
+      "compatibleTargetFramework": "browserwasm",
       "launchBrowser": true,
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
       "environmentVariables": {

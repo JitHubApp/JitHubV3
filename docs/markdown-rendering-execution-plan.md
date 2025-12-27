@@ -535,6 +535,13 @@ Tests:
 - Pointer events via Uno/WASM
 - Ensure selection feels like web selection (dragging)
 
+Deferred (later phase):
+- Performance + reliability pass for WASM input/rendering:
+  - Ensure pointer handlers are registered once (no duplicate processing)
+  - Coalesce/throttle `PointerMoved` handling to reduce per-move hit-test + selection churn
+  - Reduce log volume in hot paths (move/drag)
+  - Profile hit-test + selection update hot paths and remove avoidable allocations
+
 Tests:
 - Manual parity verification with harness; core tests cover logic.
 

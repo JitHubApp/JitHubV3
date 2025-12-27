@@ -94,6 +94,11 @@ public static class SelectionGeometryBuilder
                         IsCodeBlockLine: run.IsCodeBlockLine));
                 }
             }
+            else if (start.LineIndex == end.LineIndex && lineIndex == start.LineIndex)
+            {
+                // Collapsed selection (caret). Draw a 1px-wide rect so users can see the caret.
+                rects.Add(new RectF(x1, line.Y, 1f, line.Height));
+            }
 
             lineIndex++;
         }
