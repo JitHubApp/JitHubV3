@@ -1,0 +1,603 @@
+# JitHub Markdown Rendering Library — Execution Plan (Phase-by-Phase)
+
+This plan is derived from [docs/markdown-rendering-architecture.md](docs/markdown-rendering-architecture.md) and is intentionally deep, with sub-phases and testing gates. The goal is to execute like a major product: stable API surfaces, deterministic behavior, cross-platform parity, and “no-regression” test coverage throughout.
+
+---
+
+## Guiding principles (applies to every phase)
+
+1) **Parity-first**
+- If a feature is implemented, it must behave identically on all targets where it’s supported.
+- Differences must be explicitly documented as “platform gaps” with owners and deadlines.
+
+2) **Source-traceability is a hard invariant**
+- Every rendered artifact must be traceable to original markdown source spans.
+- Selection and copy must remain correct as features grow.
+
+3) **Performance is a first-class deliverable**
+- Every phase that adds rendering capabilities includes perf profiling and regression checks.
+- Lazy rendering/virtualization is not optional.
+
+4) **Tests are the gate**
+- Each sub-phase ends with unit tests + (where relevant) golden render tests.
+- No large refactors without first freezing behavior via tests.
+
+5) **API stability by layers**
+- `Core` APIs stabilize first.
+- Render/plugin APIs stabilize next.
+- Platform view APIs stabilize last.
+
+---
+
+## Definition of Done (global)
+
+A phase is “done” when:
+- Unit tests added and green.
+- Any golden tests introduced have baselines + stable tolerances.
+- Benchmarks (if applicable) are added and pass on CI.
+- Documentation updated (developer doc + public API notes).
+- Sample/test page updated to demonstrate the feature.
+
+---
+
+## Phase 0 — Project foundation and repo integration
+
+### 0.1 Create project skeletons
+Deliverables:
+- New projects (initial empty or minimal compilable):
+  - `JitHub.Markdown.Core`
+  - `JitHub.Markdown.Skia`
+  - `JitHub.Markdown.Uno`
+  - `JitHub.Markdown.Tests` (unit tests)
+  - `JitHub.Markdown.GoldenTests` (optional initially, can be introduced in Phase 2/3)
+  - `JitHub.Markdown.Benchmarks` (optional initially, can be introduced in Phase 3)
+- Add projects to the solution structure (`JitHubV3.slnx`).
+
+Unit tests:
+- “Project compiles” isn’t a test, but we add a minimal `Core` test verifying the test harness works.
+
+### 0.2 Dependency selection + version pinning
+Deliverables:
+- Add Markdig reference.
+- Add SkiaSharp references consistent with Uno targets.
+- Decide target frameworks (recommended approach):
+  - `JitHub.Markdown.Core`: net8.0 (or netstandard2.0 if required by Uno setup; decide early)
+  - `JitHub.Markdown.Skia`: net8.0
+  - `JitHub.Markdown.Uno`: uses Uno-compatible TFMs via existing Uno setup.
+- Confirm licensing compatibility for dependencies.
+
+Unit tests:
+- Validate Markdig pipeline builds with intended extensions.
+
+### 0.3 Add “Markdown Test Page” harness to `JitHubV3`
+Deliverables:
+- A developer page in app that hosts the control and loads sample markdown strings.
+- Basic input toggles through VM (not extra UX):
+  - Set markdown text
+  - Switch between theme presets (light/dark/high contrast)
+  - Show selection start/end indices and selected markdown
+
+Unit tests:
+- App-level unit tests are optional; keep this as a dev harness.
+
+---
+
+## Phase 1 — Parsing layer and source mapping foundation
+
+### 1.1 Markdig pipeline configuration (GFM baseline)
+Deliverables:
+- `MarkdownParserOptions` with:
+  - pipeline configuration hook
+  - default GFM extension set
+  - HTML policy flag (disabled by default)
+- A `MarkdownEngine.Parse()` that returns a `MarkdownDocumentModel`.
+
+Unit tests:
+- Parse basic GFM cases and assert node types/spans exist:
+  - headings, emphasis, strong, strikethrough
+  - lists (ordered/unordered)
+  - task list items
+  - fenced code blocks
+  - blockquotes
+  - tables
+  - links/images
+
+### 1.2 Establish SourceSpan preservation rules
+Deliverables:
+- Define a consistent mapping strategy:
+  - Every `BlockNode`/`InlineNode` includes a source span.
+  - Every “rendered run” references a source span.
+- Introduce `SourceMap` and store `SourceSpanEntry[]`.
+
+Unit tests:
+- For each element type: assert spans cover the correct substring.
+- Regression tests for tricky spans:
+  - nested emphasis markers
+  - lists with indentation
+  - tables with pipes
+  - code fences
+
+### 1.3 Document model normalization
+Deliverables:
+- Implement `DocumentBuilder` converting Markdig AST → our nodes.
+- Define stable `NodeId` strategy:
+  - derived from `(kind, sourceSpan, structural index)` or similar deterministic hashing.
+
+Unit tests:
+- “Stable NodeId” tests for identical inputs.
+- “Small edits” tests (edit markdown) ensure most unchanged blocks keep ids.
+
+### 1.4 Text mapping scaffolding (rendered text vs source text)
+Deliverables:
+- Introduce `TextOffsetMap` concept.
+- Establish default behavior:
+  - if mapping is ambiguous (e.g., link destination), map selection to node span.
+
+Unit tests:
+- Link mapping tests:
+  - selection inside link text maps to correct source substring.
+- Emphasis mapping tests:
+  - selecting emphasized word should either:
+    - map to inside the markers, or
+    - map to full node span depending on policy.
+  (Implement one as default and keep it consistent.)
+
+---
+
+## Phase 2 — Styling system and theme infrastructure
+
+### 2.1 Theme object model
+Deliverables:
+- Implement `MarkdownTheme` with:
+  - typography per element type
+  - colors (inline code background, code block background, quote background, selection base overlay)
+  - metrics (spacing scale, corner radius)
+  - `ImageBaseUri`
+
+Unit tests:
+- Theme serialization/deserialization (if supported).
+- Style lookup tests for each element.
+
+### 2.2 Style resolution rules
+Deliverables:
+- `IMarkdownStyleResolver` + default implementation.
+- Define precedence rules:
+  - global → element → inline modifier.
+
+Unit tests:
+- Ensure emphasis/strong/link modifies base style without losing typography.
+
+### 2.3 Theme presets
+Deliverables:
+- Provide built-in presets:
+  - Light
+  - Dark
+  - HighContrast
+  - RTL-friendly baseline settings
+
+Unit tests:
+- Ensure presets satisfy minimum contrast thresholds (approximate checks).
+
+---
+
+## Phase 3 — Layout engine (virtualization-first)
+
+### 3.1 Define layout primitives
+Deliverables:
+- Layout tree types:
+  - `MarkdownLayout`
+  - `BlockLayout` (position, size, child inlines)
+  - `InlineRunLayout` (text runs, inline code runs, link runs)
+- Deterministic measurement for a given width/theme.
+
+Unit tests:
+- Layout invariants:
+  - no negative sizes
+  - deterministic output for same input
+
+### 3.2 Inline text layout (simple)
+Deliverables:
+- Implement text wrapping for paragraphs/headings.
+- Introduce `ITextMeasurer/ITextShaper` abstraction.
+
+Unit tests:
+- Wrapping behavior tests with known widths.
+- RTL baseline tests: text direction influences shaping.
+
+### 3.3 Block virtualization model
+Deliverables:
+- `Viewport` concept:
+  - visible rect
+  - prefetch margin
+- Layout only blocks intersecting viewport.
+- Cache layout per block:
+  - key includes width + theme hash + scale.
+
+Unit tests:
+- Cache correctness tests (same key returns same object or equivalent).
+- Virtualization tests: offscreen blocks not laid out.
+
+### 3.4 Incremental update strategy
+Deliverables:
+- Parse + diff documents; reuse block layouts for unchanged blocks.
+
+Unit tests:
+- “Edit in middle” test: only affected blocks recomputed.
+
+---
+
+## Phase 4 — Skia renderer (core visuals)
+
+### 4.1 Rendering pipeline skeleton
+Deliverables:
+- `IMarkdownRenderer` + `RenderContext`.
+- Render only visible layout slices.
+
+Unit tests:
+- Minimal render smoke test (does not throw) using an offscreen Skia surface.
+
+### 4.2 Element-by-element rendering (sub-phases)
+We implement each element type as a discrete sub-phase with tests.
+
+#### 4.2.1 Paragraphs
+- Render text runs
+- Apply inline modifiers
+
+Tests:
+- Golden tests for paragraph wrapping.
+- Unit tests for run ordering.
+
+#### 4.2.2 Headings (H1–H6)
+- Element-specific typography
+- Spacing rules
+
+Tests:
+- Golden tests (H1–H6)
+
+#### 4.2.3 Emphasis / Strong / Strikethrough
+- Font weight/decoration
+
+Tests:
+- Golden tests for nested emphasis.
+
+#### 4.2.4 Links
+- Link style + hover/pressed (platform dependent)
+- Hit test region creation for accessibility and activation
+
+Tests:
+- Unit tests: link run bounds exist
+- Golden tests: link visuals
+
+#### 4.2.5 Inline code
+- Background brush + corner radius + padding
+
+Tests:
+- Golden tests: inline code background aligns with text
+
+#### 4.2.6 Code blocks
+- Monospace typography
+- Background surface, padding, optional border
+
+Tests:
+- Golden tests: fenced code blocks
+
+#### 4.2.7 Blockquotes
+- Quote stripe + background
+
+Tests:
+- Golden tests: nested quote
+
+#### 4.2.8 Lists (unordered/ordered)
+- Marker layout + indentation
+- Task list markers
+
+Tests:
+- Golden tests: nested lists
+
+#### 4.2.9 Thematic breaks
+- Horizontal rule with theme stroke
+
+Tests:
+- Golden tests
+
+#### 4.2.10 Tables (GFM)
+- Grid layout
+- Cell padding
+
+Tests:
+- Golden tests: table alignment
+
+#### 4.2.11 Images
+- Placeholder
+- Async load + cache
+- Base URI resolution
+
+Tests:
+- Unit tests for URL resolution
+- Golden tests with placeholder (deterministic)
+
+---
+
+## Phase 5 — Selection engine (revolutionized) + clipboard
+
+### 5.1 Hit testing infrastructure
+Deliverables:
+- Map pointer coordinates → `DocumentPosition`.
+- Create per-run glyph boundaries for hit testing.
+
+Unit tests:
+- Hit testing returns correct run for known layouts.
+
+### 5.2 Range model and normalization
+Deliverables:
+- `SelectionRange` in layout coordinates.
+- `ISelectionNormalizer` with default behavior.
+
+Unit tests:
+- Drag selection across blocks yields continuous range.
+- Word snapping rules (if enabled) behave deterministically.
+
+### 5.3 Visual selection geometry
+Deliverables:
+- Generate selection rects/paths per line.
+- Render continuous base overlay.
+
+Unit tests:
+- Geometry continuity tests (no gaps for typical cases).
+
+### 5.4 Element-aware selection overlays
+Deliverables:
+- Selection styles per element type.
+- Apply overlay decorations without breaking continuity.
+
+Unit tests:
+- Selection style application tests (inline code, code block, quote).
+
+### 5.5 Source mapping: selection → markdown substring
+Deliverables:
+- Implement `SourceSelection`.
+- Implement `TextOffsetMap` usage in selection.
+- Define default mapping policy and expose customization.
+
+Unit tests (heavy):
+- For each element type, select a partial range and verify:
+  - returned indices are valid
+  - substring matches expected markdown
+- Edge cases:
+  - selection starts inside emphasized text
+  - selection crosses link boundaries
+  - selection includes list markers
+  - selection spans across blocks
+
+### 5.6 Clipboard integration
+Deliverables:
+- `CopySelectionToClipboardAsync()` in `MarkdownView` via platform adapter.
+- Provide both:
+  - markdown copy
+  - optional plain text copy
+
+Unit tests:
+- Core returns correct payload. (Platform clipboard tests are integration tests.)
+
+---
+
+## Phase 6 — Uno Platform view + input (all platforms)
+
+### 6.1 `MarkdownView` control skeleton
+Deliverables:
+- Skia surface hosting
+- Bindable properties:
+  - `Markdown`
+  - `Theme`
+  - `SelectionEnabled`
+- Renders a document and supports scroll.
+
+Unit tests:
+- Basic control lifecycle tests (where feasible).
+
+### 6.2 Input handling: pointer
+Sub-phases per platform differences.
+
+#### 6.2.1 Shared pointer model
+- Pointer down/move/up to update selection
+- Tap/click to activate link
+
+Tests:
+- Unit tests for gesture state machine.
+
+#### 6.2.2 Windows (WinUI/Uno)
+- Mouse selection with drag
+- Shift+click selection extension
+- Right-click context possibility (optional later)
+
+Tests:
+- Integration tests if possible; otherwise manual harness checks + core tests.
+
+#### 6.2.3 WebAssembly
+- Pointer events via Uno/WASM
+- Ensure selection feels like web selection (dragging)
+
+Tests:
+- Manual parity verification with harness; core tests cover logic.
+
+#### 6.2.4 iOS/Android
+- Touch selection handles are complex; plan as staged:
+  - MVP: long-press to start selection, drag to extend.
+  - Later: selection handles + magnifier (optional).
+
+Tests:
+- Core tests + manual UX verification.
+
+### 6.3 Keyboard navigation
+Deliverables:
+- Arrow keys move selection caret (if selection enabled)
+- Tab navigates focusable elements (links)
+- Enter activates link
+
+Unit tests:
+- Command routing tests in core.
+
+---
+
+## Phase 7 — Accessibility (per platform) + RTL
+
+### 7.1 Core accessibility semantic tree
+Deliverables:
+- Produce `AccessibilityNode` tree for visible layout.
+- Stable node ids.
+
+Unit tests:
+- Tree correctness tests for sample markdown:
+  - headings
+  - lists
+  - link presence
+
+### 7.2 Platform accessibility bridges
+Sub-phases per platform.
+
+#### 7.2.1 Windows (UIA)
+- Map semantic nodes to UI automation structure.
+- Focus and activation actions.
+
+Tests:
+- Automation smoke tests if possible; otherwise manual screen reader checks.
+
+#### 7.2.2 WebAssembly (ARIA overlay)
+- Optional ARIA overlay for screen readers.
+- Keep overlays aligned with layout bounds.
+
+Tests:
+- Manual screen reader checks + DOM snapshot tests (if feasible).
+
+#### 7.2.3 iOS (UIAccessibility)
+- Provide accessibility elements and labels.
+
+Tests:
+- Manual VoiceOver verification + core tree tests.
+
+#### 7.2.4 Android (TalkBack)
+- Provide accessibility nodes.
+
+Tests:
+- Manual TalkBack verification + core tree tests.
+
+### 7.3 RTL support end-to-end
+Deliverables:
+- Text shaping respects RTL.
+- Layout aligns correctly.
+
+Unit tests:
+- RTL shaping/layout tests with known samples.
+
+### 7.4 High contrast theme support
+Deliverables:
+- High contrast preset + style overrides.
+
+Unit tests:
+- Contrast checks and ensuring selection overlays remain readable.
+
+---
+
+## Phase 8 — Plugins and advanced rendering
+
+### 8.1 Plugin registry
+Deliverables:
+- `IMarkdownRenderPlugin` + registry
+- Allow plugins to:
+  - extend parser pipeline
+  - register custom renderers
+  - register selection mappers
+
+Unit tests:
+- Plugin registration ordering tests.
+
+### 8.2 Syntax highlighting plugin (optional but planned)
+Sub-phases:
+- 8.2.1 Identify highlighter (TextMate grammar, etc.)
+- 8.2.2 Implement `ICodeHighlighter`
+- 8.2.3 Cache highlighted output
+
+Tests:
+- Golden tests for highlighted blocks.
+
+### 8.3 GitHub-specific enrichments (future)
+- mentions, issue links, PR links, commit hashes
+
+Tests:
+- Parser + renderer plugin tests.
+
+---
+
+## Phase 9 — Quality: golden tests, benchmarks, CI
+
+### 9.1 Golden render tests
+Deliverables:
+- Deterministic font selection for tests.
+- Render markdown → bitmap on CI.
+- Image diff tolerance policy.
+
+Unit tests:
+- Golden baselines for each element type.
+
+### 9.2 Benchmarks
+Deliverables:
+- Benchmark parsing, layout, and render for large docs.
+- Track allocations.
+
+Pass criteria:
+- Set target thresholds per platform (mobile emphasis).
+
+### 9.3 Continuous integration gates
+Deliverables:
+- CI pipeline runs:
+  - unit tests
+  - golden tests (where supported)
+  - benchmarks (optional nightly)
+
+---
+
+## Phase 10 — Documentation and API stabilization
+
+### 10.1 Public API review
+Deliverables:
+- Define what is public vs internal.
+- Add docs for extension points.
+
+### 10.2 Developer documentation
+Deliverables:
+- How to embed `MarkdownView`
+- How to theme
+- How to create plugins
+- How selection mapping policies work
+
+### 10.3 Release strategy
+Deliverables:
+- Versioning policy
+- Compatibility notes
+
+---
+
+## Phase-by-phase acceptance milestones
+
+Milestone A (end of Phase 2):
+- Parse GFM, preserve spans, theme model exists, no rendering yet.
+
+Milestone B (end of Phase 4):
+- Visible rendering for core elements + virtualization works.
+
+Milestone C (end of Phase 5):
+- Selection works across arbitrary ranges and copy returns exact markdown substring + indices.
+
+Milestone D (end of Phase 7):
+- Accessibility works on Windows + WASM + mobile with semantic tree + keyboard nav.
+
+Milestone E (end of Phase 9):
+- Golden tests + perf benchmarks + CI gates prevent regressions.
+
+---
+
+## Immediate next steps (ready to execute)
+
+1) Scaffold the new projects and add them to `JitHubV3.slnx`.
+2) Add the `MarkdownTestPage` in `JitHubV3` to host the future `MarkdownView`.
+3) Implement Phase 1.1–1.2 with Markdig pipeline + spans, plus unit tests.
