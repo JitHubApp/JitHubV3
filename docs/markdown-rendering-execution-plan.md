@@ -737,17 +737,27 @@ Manual verification (WebAssembly):
 Tests:
 - Manual screen reader checks only.
 
-#### 7.2.3 iOS (UIAccessibility)
+#### 7.2.3 iOS (UIAccessibility) (blocked under Skia renderer)
 - Provide accessibility elements and labels.
 
-Tests:
-- Manual VoiceOver verification + core tree tests.
+Current status / findings:
+- This app enables `SkiaRenderer` (see `UnoFeatures` in `JitHubV3.csproj`), and Skia is the default renderer for iOS/Android/WASM in Uno.Sdk 6+.
+- Because Skia does not rely on native controls, Uno documents screen reader accessibility as a work in progress for the Skia renderer:
+  - https://platform.uno/docs/articles/features/using-skia-rendering.html#limitations
+- As a result, implementing a reliable UIAccessibility-backed experience for this Skia-based markdown renderer is currently blocked.
 
-#### 7.2.4 Android (TalkBack)
+Tests:
+- Manual VoiceOver verification only (expected to be limited under Skia).
+
+#### 7.2.4 Android (TalkBack) (blocked under Skia renderer)
 - Provide accessibility nodes.
 
+Current status / findings:
+- Same limitation as iOS when using the Skia renderer (no native views; screen reader support is WIP per Uno docs).
+  - https://platform.uno/docs/articles/features/using-skia-rendering.html#limitations
+
 Tests:
-- Manual TalkBack verification + core tree tests.
+- Manual TalkBack verification only (expected to be limited under Skia).
 
 ### 7.3 RTL support end-to-end
 Deliverables:
