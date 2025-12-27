@@ -330,15 +330,48 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        _viewportTop = _scrollViewer.VerticalOffset;
-        _viewportHeight = _scrollViewer.ViewportHeight;
-
-        if (_viewportHeight <= 0)
+        // Compute the intersection of this control with the ScrollViewer viewport.
+        // IMPORTANT: the ScrollViewer's VerticalOffset is for the full content; this control may not start at y=0
+        // (e.g. when a TextBox/header exists above it). We therefore calculate the visible region relative to *this* control.
+        try
         {
-            _viewportHeight = ActualHeight;
-        }
+            var transform = TransformToVisual(_scrollViewer);
+            var topLeftInViewport = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
 
-        Canvas.SetTop(_image, _viewportTop);
+            var viewportRect = new Windows.Foundation.Rect(0, 0, _scrollViewer.ViewportWidth, _scrollViewer.ViewportHeight);
+            var controlRectInViewport = new Windows.Foundation.Rect(topLeftInViewport.X, topLeftInViewport.Y, ActualWidth, ActualHeight);
+
+            var x1 = Math.Max(viewportRect.X, controlRectInViewport.X);
+            var y1 = Math.Max(viewportRect.Y, controlRectInViewport.Y);
+            var x2 = Math.Min(viewportRect.X + viewportRect.Width, controlRectInViewport.X + controlRectInViewport.Width);
+            var y2 = Math.Min(viewportRect.Y + viewportRect.Height, controlRectInViewport.Y + controlRectInViewport.Height);
+
+            if (x2 <= x1 || y2 <= y1)
+            {
+                _viewportTop = 0;
+                _viewportHeight = 0;
+                _image.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            var visible = new Windows.Foundation.Rect(x1, y1, x2 - x1, y2 - y1);
+
+            _image.Visibility = Visibility.Visible;
+
+            // Convert visible rect from ScrollViewer viewport space into control-local coordinates.
+            _viewportTop = Math.Max(0, visible.Y - controlRectInViewport.Y);
+            _viewportHeight = Math.Max(0, visible.Height);
+
+            Canvas.SetTop(_image, _viewportTop);
+        }
+        catch
+        {
+            // If transforms fail for any reason, fall back to rendering the whole control.
+            _viewportTop = 0;
+            _viewportHeight = ActualHeight;
+            _image.Visibility = Visibility.Visible;
+            Canvas.SetTop(_image, 0);
+        }
     }
 
     private void RebuildDocumentAndLayout()
@@ -393,6 +426,11 @@ public class SkiaMarkdownView : ContentControl
     private void InvalidateRender()
     {
         if (_layout is null)
+        {
+            return;
+        }
+
+        if (_viewportHeight <= 0 || ActualWidth <= 0)
         {
             return;
         }
