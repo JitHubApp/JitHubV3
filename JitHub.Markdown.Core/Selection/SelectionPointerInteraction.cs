@@ -71,19 +71,26 @@ public sealed class SelectionPointerInteraction
 
     public PointerInteractionResult OnPointerMove(MarkdownHitTestResult hit, float x, float y, bool selectionEnabled)
     {
-        if (!_isPressed || !selectionEnabled)
+        if (!_isPressed)
         {
             return new PointerInteractionResult(SelectionChanged: false, Selection: Selection, ActivateLinkUrl: null);
         }
 
         if (!_startedSelection)
         {
-            // We pressed on a link; if the pointer starts dragging, switch to selection mode.
+            // We pressed on a link; if the pointer starts dragging, either switch to selection mode
+            // (when enabled) or cancel activation (when disabled).
             var dx = x - _pressX;
             var dy = y - _pressY;
             var dist2 = (dx * dx) + (dy * dy);
             if (dist2 < (DragThreshold * DragThreshold))
             {
+                return new PointerInteractionResult(SelectionChanged: false, Selection: Selection, ActivateLinkUrl: null);
+            }
+
+            if (!selectionEnabled)
+            {
+                _pendingLinkHit = null;
                 return new PointerInteractionResult(SelectionChanged: false, Selection: Selection, ActivateLinkUrl: null);
             }
 
@@ -94,6 +101,11 @@ public sealed class SelectionPointerInteraction
             _startedSelection = true;
             Selection = new SelectionRange(anchor, hit);
             return new PointerInteractionResult(SelectionChanged: true, Selection: Selection, ActivateLinkUrl: null);
+        }
+
+        if (!selectionEnabled)
+        {
+            return new PointerInteractionResult(SelectionChanged: false, Selection: Selection, ActivateLinkUrl: null);
         }
 
         var next = new SelectionRange(_anchor, hit);

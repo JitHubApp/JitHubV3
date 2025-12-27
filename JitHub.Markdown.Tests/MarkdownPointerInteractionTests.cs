@@ -65,6 +65,35 @@ public sealed class MarkdownPointerInteractionTests
     }
 
     [Test]
+    public void Drag_on_link_does_not_activate_when_selection_disabled()
+    {
+        var markdown = "Click [here](https://example.com).";
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse(markdown);
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var runIndex = line.Runs.ToList().FindIndex(r => r.Kind == NodeKind.Link && r.Url == "https://example.com" && r.Text == "here");
+        runIndex.Should().BeGreaterThanOrEqualTo(0);
+
+        var run = line.Runs[runIndex];
+        var downHit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 0, CaretX: MarkdownHitTester.GetCaretX(run, 0));
+        var moveHit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 4, CaretX: MarkdownHitTester.GetCaretX(run, 4));
+
+        var sm = new SelectionPointerInteraction();
+        sm.OnPointerDown(downHit, x: 10, y: 10, selectionEnabled: false, modifiers: new PointerModifiers(Shift: false));
+
+        // Move far enough to exceed drag threshold.
+        sm.OnPointerMove(moveHit, x: 30, y: 10, selectionEnabled: false);
+
+        var up = sm.OnPointerUp(moveHit, selectionEnabled: false);
+        up.ActivateLinkUrl.Should().BeNull();
+    }
+
+    [Test]
     public void Shift_click_extends_existing_selection_anchor()
     {
         var markdown = "Hello world";

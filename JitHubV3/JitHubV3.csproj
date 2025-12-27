@@ -2,10 +2,11 @@
   <PropertyGroup>
     <!--
       Building inside Visual Studio (WinAppSDK/WinUI tooling):
-      Build only the Windows TFM to avoid multi-target ordering issues and missing cross-TFM outputs.
+      Keep a small set of TFMs to preserve a good IDE experience while still allowing choosing
+      WebAssembly or Windows as the debug target.
       Use CLI/CI builds (where BuildingInsideVisualStudio is false) to build the full matrix.
     -->
-    <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100</TargetFrameworks>
+    <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'=='true'">net10.0-desktop;net10.0-windows10.0.26100;net10.0-browserwasm</TargetFrameworks>
     <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'!='true'">net10.0-android;net10.0-ios;net10.0-windows10.0.26100;net10.0-browserwasm;net10.0-desktop;net10.0</TargetFrameworks>
 
     <OutputType>Exe</OutputType>

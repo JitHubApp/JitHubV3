@@ -127,6 +127,20 @@ public class SkiaMarkdownView : ContentControl
     private readonly SelectionPointerInteraction _pointerInteraction = new();
     private bool _hasPointerCapture;
 
+    private uint? _activePointerId;
+    private Microsoft.UI.Xaml.Input.Pointer? _activePointer;
+    private bool _isPointerDown;
+
+    private bool _touchLongPressArmed;
+    private bool _touchSelectionStarted;
+    private float _touchPressX;
+    private float _touchPressY;
+    private MarkdownHitTestResult _touchPressHit;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _touchLongPressTimer;
+
+    private const float TouchMoveCancelThreshold = 8f;
+    private static readonly TimeSpan TouchLongPressDelay = TimeSpan.FromMilliseconds(500);
+
     private static void OnMarkdownChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((SkiaMarkdownView)d).RebuildDocumentAndLayout();
@@ -186,8 +200,39 @@ public class SkiaMarkdownView : ContentControl
         var p = e.GetCurrentPoint(_canvas);
         var pos = p.Position;
 
+        _isPointerDown = true;
+        _activePointerId = e.Pointer.PointerId;
+        _activePointer = e.Pointer;
+
         if (!MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var hit))
         {
+            return;
+        }
+
+        var isTouch = IsTouchPointer(e);
+        if (isTouch)
+        {
+            // Mobile MVP: long-press to start selection; allow scroll/pan until long-press triggers.
+            // Still arm link activation on tap, but cancel it if the user drags (scrolls).
+            _touchPressX = (float)pos.X;
+            _touchPressY = (float)pos.Y;
+            _touchPressHit = hit;
+            _touchSelectionStarted = false;
+            _touchLongPressArmed = true;
+
+            var down = _pointerInteraction.OnPointerDown(
+                hit,
+                x: (float)pos.X,
+                y: (float)pos.Y,
+                selectionEnabled: false,
+                modifiers: new PointerModifiers(Shift: false));
+
+            if (down.SelectionChanged)
+            {
+                Selection = down.Selection;
+            }
+
+            ArmTouchLongPress();
             return;
         }
 
@@ -215,13 +260,47 @@ public class SkiaMarkdownView : ContentControl
 
     private void OnPointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        if (!_hasPointerCapture || _layout is null)
+        if (_layout is null)
+        {
+            return;
+        }
+
+        if (!_isPointerDown)
+        {
+            return;
+        }
+
+        if (_activePointerId.HasValue && e.Pointer.PointerId != _activePointerId.Value)
         {
             return;
         }
 
         var p = e.GetCurrentPoint(_canvas);
         var pos = p.Position;
+
+        // Touch: before long-press triggers, avoid handling (lets ScrollViewer pan).
+        var isTouch = IsTouchPointer(e);
+        if (isTouch && _touchLongPressArmed && !_touchSelectionStarted)
+        {
+            var dx = (float)pos.X - _touchPressX;
+            var dy = (float)pos.Y - _touchPressY;
+            var dist2 = (dx * dx) + (dy * dy);
+            if (dist2 > (TouchMoveCancelThreshold * TouchMoveCancelThreshold))
+            {
+                CancelTouchLongPress();
+            }
+
+            if (MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var moveHitForCancel))
+            {
+                _pointerInteraction.OnPointerMove(
+                    moveHitForCancel,
+                    x: (float)pos.X,
+                    y: (float)pos.Y,
+                    selectionEnabled: false);
+            }
+
+            return;
+        }
 
         if (!MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var hit))
         {
@@ -239,7 +318,12 @@ public class SkiaMarkdownView : ContentControl
             Selection = result.Selection;
         }
 
-        e.Handled = true;
+        // Handle moves when we're actively interacting (selection). This is important on WASM
+        // where CapturePointer may not be supported.
+        if (_hasPointerCapture || _touchSelectionStarted)
+        {
+            e.Handled = true;
+        }
     }
 
     private void OnPointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -249,12 +333,20 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
+        if (_activePointerId.HasValue && e.Pointer.PointerId != _activePointerId.Value)
+        {
+            return;
+        }
+
+        CancelTouchLongPress();
+
         var p = e.GetCurrentPoint(_canvas);
         var pos = p.Position;
 
         if (!MarkdownHitTester.TryHitTest(_layout, (float)pos.X, (float)pos.Y, out var hit))
         {
             ReleaseCapture(e);
+            ResetPointerTracking();
             return;
         }
 
@@ -270,12 +362,19 @@ public class SkiaMarkdownView : ContentControl
         }
 
         ReleaseCapture(e);
-        e.Handled = true;
+        _isPointerDown = false;
+
+        // Only handle release when we actually performed an interaction.
+        e.Handled = _hasPointerCapture || _touchSelectionStarted || !string.IsNullOrWhiteSpace(result.ActivateLinkUrl);
+
+        ResetPointerTracking();
     }
 
     private void OnPointerCanceled(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
+        CancelTouchLongPress();
         ReleaseCapture(e);
+        ResetPointerTracking();
         e.Handled = true;
     }
 
@@ -293,6 +392,73 @@ public class SkiaMarkdownView : ContentControl
         }
     }
 
+    private void ResetPointerTracking()
+    {
+        _activePointerId = null;
+        _activePointer = null;
+        _isPointerDown = false;
+        _touchLongPressArmed = false;
+        _touchSelectionStarted = false;
+    }
+
+    private void ArmTouchLongPress()
+    {
+        CancelTouchLongPress();
+
+        var dq = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        if (dq is null)
+        {
+            return;
+        }
+
+        _touchLongPressTimer = dq.CreateTimer();
+        _touchLongPressTimer.Interval = TouchLongPressDelay;
+        _touchLongPressTimer.IsRepeating = false;
+        _touchLongPressTimer.Tick += OnTouchLongPress;
+        _touchLongPressTimer.Start();
+    }
+
+    private void CancelTouchLongPress()
+    {
+        if (_touchLongPressTimer is not null)
+        {
+            _touchLongPressTimer.Tick -= OnTouchLongPress;
+            _touchLongPressTimer.Stop();
+            _touchLongPressTimer = null;
+        }
+
+        _touchLongPressArmed = false;
+    }
+
+    private void OnTouchLongPress(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args)
+    {
+        if (!_isPointerDown || !_touchLongPressArmed || _layout is null)
+        {
+            return;
+        }
+
+        // Start selection at the original touch-down hit.
+        var result = _pointerInteraction.OnPointerDown(
+            _touchPressHit,
+            x: _touchPressX,
+            y: _touchPressY,
+            selectionEnabled: SelectionEnabled,
+            modifiers: new PointerModifiers(Shift: false));
+
+        if (result.SelectionChanged)
+        {
+            Selection = result.Selection;
+        }
+
+        _touchSelectionStarted = true;
+        _touchLongPressArmed = false;
+
+        if (!_hasPointerCapture && _activePointer is not null)
+        {
+            _hasPointerCapture = _canvas.CapturePointer(_activePointer);
+        }
+    }
+
     private static async Task OpenLinkAsync(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
@@ -307,6 +473,20 @@ public class SkiaMarkdownView : ContentControl
         catch
         {
             // Ignore launch failures.
+        }
+    }
+
+    private static bool IsTouchPointer(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        // Uno/WinUI expose PointerDeviceType in slightly different API shapes across targets.
+        // Using ToString() keeps this compile-safe and avoids comparing different enums with the same name.
+        try
+        {
+            return string.Equals(e.Pointer.PointerDeviceType.ToString(), "Touch", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
         }
     }
 
