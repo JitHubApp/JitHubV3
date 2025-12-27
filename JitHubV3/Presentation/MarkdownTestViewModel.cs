@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Globalization;
 
 namespace JitHubV3.Presentation;
@@ -16,7 +17,7 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
     private bool _forceRtl;
 
     [ObservableProperty]
-    private FlowDirection _previewFlowDirection = GetPlatformFlowDirection();
+    private TextAlignment _previewTextAlignment = GetPlatformIsRtl() ? TextAlignment.Right : TextAlignment.Left;
 
     [ObservableProperty]
     private bool _previewIsRightToLeft = GetPlatformIsRtl();
@@ -39,7 +40,7 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
         }
 
         PreviewIsRightToLeft = value || GetPlatformIsRtl();
-        PreviewFlowDirection = PreviewIsRightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        PreviewTextAlignment = PreviewIsRightToLeft ? TextAlignment.Right : TextAlignment.Left;
     }
 
     partial void OnMarkdownChanged(string value)
@@ -53,9 +54,6 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
             _markdownLtrDraft = value;
         }
     }
-
-    private static FlowDirection GetPlatformFlowDirection()
-        => CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
 
     private static bool GetPlatformIsRtl()
         => CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft;

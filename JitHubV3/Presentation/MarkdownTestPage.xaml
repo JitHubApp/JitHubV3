@@ -27,7 +27,7 @@
           Header="Markdown"
           AcceptsReturn="True"
           TextWrapping="Wrap"
-          FlowDirection="{Binding PreviewFlowDirection}"
+          TextAlignment="{Binding PreviewTextAlignment}"
           Text="{Binding Markdown, Mode=TwoWay}" />
 
         <md:MarkdownView

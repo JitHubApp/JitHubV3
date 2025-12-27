@@ -1,12 +1,19 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using System.Globalization;
 
 namespace JitHub.Markdown.Uno;
 
 public sealed partial class MarkdownView : UserControl
 {
     private readonly SkiaMarkdownView _host;
+
+    public static readonly DependencyProperty IsRightToLeftProperty = DependencyProperty.Register(
+        nameof(IsRightToLeft),
+        typeof(bool),
+        typeof(MarkdownView),
+        new PropertyMetadata(GetPlatformIsRtl(), OnIsRightToLeftChanged));
 
     public static readonly DependencyProperty MarkdownProperty = DependencyProperty.Register(
         nameof(Markdown),
@@ -31,6 +38,12 @@ public sealed partial class MarkdownView : UserControl
         typeof(bool),
         typeof(MarkdownView),
         new PropertyMetadata(true, OnSelectionEnabledChanged));
+
+    public bool IsRightToLeft
+    {
+        get => (bool)GetValue(IsRightToLeftProperty);
+        set => SetValue(IsRightToLeftProperty, value);
+    }
 
     public string Markdown
     {
@@ -84,6 +97,9 @@ public sealed partial class MarkdownView : UserControl
         SyncAll();
     }
 
+    private static bool GetPlatformIsRtl()
+        => CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft;
+
     private static void OnMarkdownChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         ((MarkdownView)d).SyncMarkdown();
@@ -99,11 +115,17 @@ public sealed partial class MarkdownView : UserControl
         ((MarkdownView)d).SyncSelectionEnabled();
     }
 
+    private static void OnIsRightToLeftChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((MarkdownView)d).SyncIsRightToLeft();
+    }
+
     private void SyncAll()
     {
         SyncMarkdown();
         SyncTheme();
         SyncSelectionEnabled();
+        SyncIsRightToLeft();
     }
 
     private void SyncMarkdown()
@@ -120,6 +142,11 @@ public sealed partial class MarkdownView : UserControl
     private void SyncSelectionEnabled()
     {
         _host.SelectionEnabled = SelectionEnabled;
+    }
+
+    private void SyncIsRightToLeft()
+    {
+        _host.IsRightToLeft = IsRightToLeft;
     }
 
     public Task CopySelectionToClipboardAsync(bool includePlainText = true)
