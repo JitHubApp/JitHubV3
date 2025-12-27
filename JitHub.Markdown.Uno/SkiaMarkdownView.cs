@@ -71,7 +71,7 @@ public class SkiaMarkdownView : ContentControl
         set
         {
             _selection = value;
-            InvalidateRender();
+            RequestRender();
         }
     }
 
@@ -138,6 +138,7 @@ public class SkiaMarkdownView : ContentControl
         SizeChanged += OnSizeChanged;
 
         KeyDown += OnKeyDown;
+        KeyUp += OnKeyUp;
 
         RebuildDocumentAndLayout();
     }
@@ -161,6 +162,9 @@ public class SkiaMarkdownView : ContentControl
     private WriteableBitmap? _bitmap;
     private int _bitmapPixelWidth;
     private int _bitmapPixelHeight;
+
+    private bool _renderQueued;
+    private byte[]? _renderPixelBuffer;
 
     private readonly ConcurrentDictionary<Uri, SKImage> _imageCache = new();
     private readonly ConcurrentDictionary<Uri, Task> _imageLoads = new();
@@ -248,7 +252,7 @@ public class SkiaMarkdownView : ContentControl
             UpdateViewportFromScrollViewer();
         }
 
-        InvalidateRender();
+        RequestRender();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -266,18 +270,31 @@ public class SkiaMarkdownView : ContentControl
         }
         _imageCache.Clear();
         _imageLoads.Clear();
+
+        if (_renderPixelBuffer is not null)
+        {
+            System.Buffers.ArrayPool<byte>.Shared.Return(_renderPixelBuffer);
+            _renderPixelBuffer = null;
+        }
     }
 
     private void OnPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        this.Log().LogWarning("[SkiaMarkdownView] PointerPressed id={PointerId} type={PointerType} selectionEnabled={SelectionEnabled}",
-            e.Pointer.PointerId,
-            e.Pointer.PointerDeviceType,
-            SelectionEnabled);
+        var log = this.Log();
+        if (log.IsEnabled(LogLevel.Debug))
+        {
+            log.LogDebug("[SkiaMarkdownView] PointerPressed id={PointerId} type={PointerType} selectionEnabled={SelectionEnabled}",
+                e.Pointer.PointerId,
+                e.Pointer.PointerDeviceType,
+                SelectionEnabled);
+        }
 
         if (_layout is null)
         {
-            this.Log().LogWarning("[SkiaMarkdownView] PointerPressed ignored (no layout yet)");
+            if (log.IsEnabled(LogLevel.Debug))
+            {
+                log.LogDebug("[SkiaMarkdownView] PointerPressed ignored (no layout yet)");
+            }
             return;
         }
 
@@ -297,7 +314,10 @@ public class SkiaMarkdownView : ContentControl
 
         if (!MarkdownHitTester.TryHitTestNearest(_layout, (float)pos.X, (float)pos.Y, out var hit))
         {
-            this.Log().LogWarning("[SkiaMarkdownView] PointerPressed hit-test miss at ({X},{Y})", pos.X, pos.Y);
+            if (log.IsEnabled(LogLevel.Debug))
+            {
+                log.LogDebug("[SkiaMarkdownView] PointerPressed hit-test miss at ({X},{Y})", pos.X, pos.Y);
+            }
             // Important on WASM: if we leave _isPointerDown=true on a miss, we may never receive PointerReleased,
             // and then PointerMoved keeps extending selection indefinitely.
             ResetPointerTracking();
@@ -352,9 +372,12 @@ public class SkiaMarkdownView : ContentControl
         SyncSelectionFromPointerToKeyboard();
         ClearKeyboardLinkFocus();
 
-        this.Log().LogWarning("[SkiaMarkdownView] PointerDown selectionChanged={SelectionChanged} selection={Selection}",
-            result.SelectionChanged,
-            Selection?.ToString() ?? "<null>");
+        if (log.IsEnabled(LogLevel.Debug))
+        {
+            log.LogDebug("[SkiaMarkdownView] PointerDown selectionChanged={SelectionChanged} selection={Selection}",
+                result.SelectionChanged,
+                Selection?.ToString() ?? "<null>");
+        }
 
         _isSelecting = SelectionEnabled && result.SelectionChanged;
 
@@ -401,7 +424,11 @@ public class SkiaMarkdownView : ContentControl
 
             if (!isStillDown)
             {
-                this.Log().LogWarning("[SkiaMarkdownView] PointerMoved observed no buttons down; canceling stuck gesture (id={PointerId})", e.Pointer.PointerId);
+                var log = this.Log();
+                if (log.IsEnabled(LogLevel.Debug))
+                {
+                    log.LogDebug("[SkiaMarkdownView] PointerMoved observed no buttons down; canceling stuck gesture (id={PointerId})", e.Pointer.PointerId);
+                }
                 ReleaseCapture(e);
                 ResetPointerTracking();
                 return;
@@ -467,7 +494,11 @@ public class SkiaMarkdownView : ContentControl
 
     private void OnPointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        this.Log().LogWarning("[SkiaMarkdownView] PointerReleased id={PointerId}", e.Pointer.PointerId);
+        var log = this.Log();
+        if (log.IsEnabled(LogLevel.Debug))
+        {
+            log.LogDebug("[SkiaMarkdownView] PointerReleased id={PointerId}", e.Pointer.PointerId);
+        }
         if (_layout is null)
         {
             return;
@@ -497,9 +528,12 @@ public class SkiaMarkdownView : ContentControl
 
         SyncSelectionFromPointerToKeyboard();
 
-        this.Log().LogWarning("[SkiaMarkdownView] PointerUp selectionChanged={SelectionChanged} activateLink={ActivateLink}",
-            result.SelectionChanged,
-            string.IsNullOrWhiteSpace(result.ActivateLinkUrl) ? "<none>" : result.ActivateLinkUrl);
+        if (log.IsEnabled(LogLevel.Debug))
+        {
+            log.LogDebug("[SkiaMarkdownView] PointerUp selectionChanged={SelectionChanged} activateLink={ActivateLink}",
+                result.SelectionChanged,
+                string.IsNullOrWhiteSpace(result.ActivateLinkUrl) ? "<none>" : result.ActivateLinkUrl);
+        }
 
         if (!string.IsNullOrWhiteSpace(result.ActivateLinkUrl))
         {
@@ -978,7 +1012,7 @@ public class SkiaMarkdownView : ContentControl
     private void OnScrollViewerViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
         UpdateViewportFromScrollViewer();
-        InvalidateRender();
+        RequestRender();
     }
 
     private void UpdateViewportFromScrollViewer()
@@ -1061,7 +1095,34 @@ public class SkiaMarkdownView : ContentControl
         ClearKeyboardLinkFocus();
 
         UpdateViewportFromScrollViewer();
-        InvalidateRender();
+        RequestRender();
+    }
+
+    private void RequestRender()
+    {
+        if (_layout is null)
+        {
+            return;
+        }
+
+        // Phase 6.6.3: coalesce invalidations (scroll/drag can fire very frequently).
+        if (_renderQueued)
+        {
+            return;
+        }
+
+        _renderQueued = true;
+
+        var queue = DispatcherQueue;
+        if (!queue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+            {
+                _renderQueued = false;
+                InvalidateRender();
+            }))
+        {
+            _renderQueued = false;
+            InvalidateRender();
+        }
     }
 
     private float GetScale()
@@ -1126,7 +1187,19 @@ public class SkiaMarkdownView : ContentControl
         var info = new SKImageInfo(pixelWidth, pixelHeight, SKColorType.Bgra8888, SKAlphaType.Premul);
         var rowBytes = info.RowBytes;
 
-        var buffer = new byte[rowBytes * pixelHeight];
+        // Phase 6.6.3: avoid per-render allocations.
+        var required = checked(rowBytes * pixelHeight);
+        var buffer = _renderPixelBuffer;
+        if (buffer is null || buffer.Length < required)
+        {
+            if (buffer is not null)
+            {
+                System.Buffers.ArrayPool<byte>.Shared.Return(buffer);
+            }
+
+            buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(required);
+            _renderPixelBuffer = buffer;
+        }
 
         var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         try
@@ -1168,7 +1241,7 @@ public class SkiaMarkdownView : ContentControl
 
         using var stream = bitmap.PixelBuffer.AsStream();
         stream.Position = 0;
-        stream.Write(buffer, 0, buffer.Length);
+        stream.Write(buffer, 0, required);
         bitmap.Invalidate();
     }
 

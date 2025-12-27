@@ -600,7 +600,7 @@ Tests:
   - Long documents with many links.
   - Verify auto-scroll correctness when the markdown view is not at content origin (header above it).
 
-#### 6.6.3 Rendering performance low-hanging fruits
+#### 6.6.3 Rendering performance low-hanging fruits (implemented)
 Deliverables:
 - Reduce per-render allocations:
   - Reuse the render pixel buffer (e.g., `ArrayPool<byte>` or a cached `byte[]` sized to current bitmap).
@@ -610,6 +610,11 @@ Deliverables:
   - Prefer one render per UI frame/tick when multiple events occur.
 - Logging hygiene:
   - Remove or gate hot-path logs (pointer move/drag) behind a debug flag or log level checks.
+
+Implemented notes:
+- `SkiaMarkdownView` now reuses a pooled pixel buffer for `RenderToBitmap`.
+- Rendering invalidations are coalesced via `DispatcherQueue` (scroll/drag bursts schedule one render).
+- Pointer event logs are gated behind `LogLevel.Debug` checks to avoid hot-path overhead.
 
 Acceptance:
 - No regression in selection/link activation correctness.
