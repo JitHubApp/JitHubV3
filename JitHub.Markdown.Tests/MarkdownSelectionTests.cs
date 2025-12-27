@@ -5,6 +5,128 @@ namespace JitHub.Markdown.Tests;
 [TestFixture]
 public sealed class MarkdownSelectionTests
 {
+    private static IEnumerable<(int lineIndex, LineLayout line)> EnumerateLinesWithIndex(MarkdownLayout layout)
+    {
+        var i = 0;
+        for (var bi = 0; bi < layout.Blocks.Length; bi++)
+        {
+            foreach (var line in EnumerateLines(layout.Blocks[bi]))
+            {
+                yield return (i, line);
+                i++;
+            }
+        }
+    }
+
+    private static IEnumerable<LineLayout> EnumerateLines(BlockLayout block)
+    {
+        switch (block)
+        {
+            case ParagraphLayout p:
+                foreach (var l in p.Lines) yield return l;
+                yield break;
+
+            case HeadingLayout h:
+                foreach (var l in h.Lines) yield return l;
+                yield break;
+
+            case CodeBlockLayout c:
+                foreach (var l in c.Lines) yield return l;
+                yield break;
+
+            case BlockQuoteLayout q:
+                foreach (var child in q.Blocks)
+                {
+                    foreach (var l in EnumerateLines(child)) yield return l;
+                }
+                yield break;
+
+            case ListLayout l:
+                foreach (var item in l.Items)
+                {
+                    foreach (var ll in EnumerateLines(item)) yield return ll;
+                }
+                yield break;
+
+            case ListItemLayout li:
+                foreach (var child in li.Blocks)
+                {
+                    foreach (var ll in EnumerateLines(child)) yield return ll;
+                }
+                yield break;
+
+            case TableLayout t:
+                for (var r = 0; r < t.Rows.Length; r++)
+                {
+                    var row = t.Rows[r];
+                    for (var c = 0; c < row.Cells.Length; c++)
+                    {
+                        var cell = row.Cells[c];
+                        for (var bi = 0; bi < cell.Blocks.Length; bi++)
+                        {
+                            foreach (var ll in EnumerateLines(cell.Blocks[bi])) yield return ll;
+                        }
+                    }
+                }
+                yield break;
+
+            default:
+                yield break;
+        }
+    }
+
+    private static bool ReferenceTryHitTestNearest(MarkdownLayout layout, float x, float y, out MarkdownHitTestResult result)
+    {
+        var bestLineIndex = -1;
+        LineLayout? bestLine = null;
+        var bestDistance = float.PositiveInfinity;
+
+        foreach (var (lineIndex, line) in EnumerateLinesWithIndex(layout))
+        {
+            if (line.Runs.Length == 0)
+            {
+                continue;
+            }
+
+            var top = line.Y;
+            var bottom = line.Y + line.Height;
+
+            float distance;
+            if (y < top)
+            {
+                distance = top - y;
+            }
+            else if (y > bottom)
+            {
+                distance = y - bottom;
+            }
+            else
+            {
+                distance = 0f;
+            }
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestLineIndex = lineIndex;
+                bestLine = line;
+
+                if (distance == 0f)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (bestLineIndex >= 0 && bestLine is not null)
+        {
+            return MarkdownHitTester.TryHitTestLine(bestLineIndex, bestLine, x, out result);
+        }
+
+        result = default;
+        return false;
+    }
+
     [Test]
     public void Hit_test_returns_correct_run_and_offset()
     {
@@ -50,6 +172,73 @@ public sealed class MarkdownSelectionTests
 
         MarkdownHitTester.TryHitTestNearest(layout, x, yBetweenLines, out var hit).Should().BeTrue("nearest hit-test should clamp to the closest line");
         hit.Run.Text.Should().Be("Hello");
+    }
+
+    [Test]
+    public void Hit_test_nearest_matches_reference_scan_for_many_y_samples()
+    {
+        var markdown = "First paragraph with a link [A](https://example.com).\n\nSecond paragraph with a link [B](https://example.com).\n\nThird paragraph.";
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse(markdown);
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 320, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var allLines = EnumerateLinesWithIndex(layout).ToList();
+        allLines.Count.Should().BeGreaterThan(0);
+
+        // Pick an X that is likely to land inside text for most lines.
+        var firstNonEmpty = allLines.First(l => l.line.Runs.Length > 0);
+        var firstRun = firstNonEmpty.line.Runs.First(r => !string.IsNullOrEmpty(r.Text) || r.Kind == NodeKind.Image);
+        var x = (firstRun.Bounds.X + firstRun.Bounds.Right) / 2f;
+
+        var minY = allLines.Min(l => l.line.Y) - 40;
+        var maxY = allLines.Max(l => l.line.Y + l.line.Height) + 40;
+
+        for (var y = minY; y <= maxY; y += 7.5f)
+        {
+            var ok1 = MarkdownHitTester.TryHitTestNearest(layout, x, y, out var h1);
+            var ok2 = ReferenceTryHitTestNearest(layout, x, y, out var h2);
+
+            ok1.Should().Be(ok2, $"y={y}");
+            if (ok1)
+            {
+                h1.LineIndex.Should().Be(h2.LineIndex, $"y={y}");
+                h1.RunIndex.Should().Be(h2.RunIndex, $"y={y}");
+                h1.TextOffset.Should().Be(h2.TextOffset, $"y={y}");
+            }
+        }
+    }
+
+    [Test]
+    public void Hit_test_nearest_prefers_earlier_line_on_exact_tie_in_gap()
+    {
+        var markdown = "First paragraph.\n\nSecond paragraph.";
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse(markdown);
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var nonEmpty = EnumerateLinesWithIndex(layout).Where(l => l.line.Runs.Length > 0).ToList();
+        nonEmpty.Count.Should().BeGreaterThanOrEqualTo(2);
+
+        var first = nonEmpty[0];
+        var second = nonEmpty[1];
+
+        var gapTop = first.line.Y + first.line.Height;
+        var gapBottom = second.line.Y;
+
+        (gapBottom > gapTop).Should().BeTrue("paragraph spacing should create a vertical gap between the two lines");
+
+        var yMid = (gapTop + gapBottom) / 2f;
+        var run = first.line.Runs[0];
+        var x = (run.Bounds.X + run.Bounds.Right) / 2f;
+
+        MarkdownHitTester.TryHitTestNearest(layout, x, yMid, out var hit).Should().BeTrue();
+        hit.LineIndex.Should().Be(first.lineIndex, "on an exact distance tie, nearest hit-test should keep the first encountered line");
     }
 
     [Test]

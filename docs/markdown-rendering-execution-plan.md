@@ -620,7 +620,7 @@ Acceptance:
 - No regression in selection/link activation correctness.
 - Noticeably reduced GC pressure during scroll/drag on WASM.
 
-#### 6.6.4 Hit-testing performance + structure
+#### 6.6.4 Hit-testing performance + structure (implemented)
 Deliverables:
 - Accelerate nearest-line hit testing:
   - Precompute a flattened “lines index” (line bounds/vertical ranges) during layout.
@@ -632,6 +632,12 @@ Deliverables:
 
 Tests:
 - Add a couple of micro regression tests (core) verifying hit-test correctness is unchanged.
+
+Implemented notes:
+- Added a cached flattened line index (per layout) and binary-search nearest-line selection.
+- Keyboard caret movement now reuses cached line arrays (no per-key `ToList()` enumeration).
+- Pointer-move hit testing fast-paths same-line moves using `TryHitTestLine(...)`.
+- Added regression tests comparing `TryHitTestNearest` against a reference scan algorithm.
 
 #### 6.6.5 API + structure tidy-up
 Deliverables:

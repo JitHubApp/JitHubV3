@@ -179,6 +179,7 @@ public class SkiaMarkdownView : ContentControl
     private uint? _activePointerId;
     private Microsoft.UI.Xaml.Input.Pointer? _activePointer;
     private bool _isPointerDown;
+    private MarkdownHitTestResult? _lastPointerMoveHit;
 
     private bool _touchLongPressArmed;
     private bool _touchSelectionStarted;
@@ -465,15 +466,38 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        if (!MarkdownHitTester.TryHitTestNearest(_layout, (float)pos.X, (float)pos.Y, out var hit))
+        var x = (float)pos.X;
+        var y = (float)pos.Y;
+
+        MarkdownHitTestResult hit;
+
+        // Phase 6.6.4: fast-path when staying within the same line band.
+        // PointerMoved is very hot (especially on WASM), so avoid nearest-line lookup if we can.
+        if (_lastPointerMoveHit is { } last && y >= last.Line.Y && y <= (last.Line.Y + last.Line.Height))
         {
-            return;
+            if (!MarkdownHitTester.TryHitTestLine(last.LineIndex, last.Line, x, out hit))
+            {
+                // Fallback if something about the cached line is no longer usable.
+                if (!MarkdownHitTester.TryHitTestNearest(_layout, x, y, out hit))
+                {
+                    return;
+                }
+            }
         }
+        else
+        {
+            if (!MarkdownHitTester.TryHitTestNearest(_layout, x, y, out hit))
+            {
+                return;
+            }
+        }
+
+        _lastPointerMoveHit = hit;
 
         var result = _pointerInteraction.OnPointerMove(
             hit,
-            x: (float)pos.X,
-            y: (float)pos.Y,
+            x: x,
+            y: y,
             selectionEnabled: SelectionEnabled);
 
         if (result.SelectionChanged)
@@ -587,6 +611,7 @@ public class SkiaMarkdownView : ContentControl
         _activePointerId = null;
         _activePointer = null;
         _isPointerDown = false;
+        _lastPointerMoveHit = null;
         _touchLongPressArmed = false;
         _touchSelectionStarted = false;
         _isSelecting = false;
@@ -1089,6 +1114,8 @@ public class SkiaMarkdownView : ContentControl
 
         _layout = _layoutEngine.Layout(_document, width: width, theme: theme, scale: scale, textMeasurer: _textMeasurer);
         Height = _layout.Height;
+
+        _lastPointerMoveHit = null;
 
         // Layout changed; clear any keyboard link focus bounds.
         SyncSelectionFromPointerToKeyboard();

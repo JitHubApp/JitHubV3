@@ -221,8 +221,11 @@ public sealed class SelectionKeyboardInteraction
         // Collect link runs and merge multi-run links (same NodeId) into single focus target.
         var dict = new Dictionary<(NodeId id, string url), (RectF bounds, MarkdownHitTestResult caret)>();
 
-        foreach (var (lineIndex, line) in EnumerateLinesWithIndex(layout))
+        var lines = MarkdownLineIndexCache.Get(layout).Lines;
+
+        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
+            var line = lines[lineIndex];
             if (line.Runs.Length == 0)
             {
                 continue;
@@ -288,8 +291,10 @@ public sealed class SelectionKeyboardInteraction
 
     private static bool TryGetFirstCaret(MarkdownLayout layout, out MarkdownHitTestResult caret)
     {
-        foreach (var (lineIndex, line) in EnumerateLinesWithIndex(layout))
+        var lines = MarkdownLineIndexCache.Get(layout).Lines;
+        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
+            var line = lines[lineIndex];
             if (line.Runs.Length == 0)
             {
                 continue;
@@ -314,8 +319,10 @@ public sealed class SelectionKeyboardInteraction
     {
         MarkdownHitTestResult? last = null;
 
-        foreach (var (lineIndex, line) in EnumerateLinesWithIndex(layout))
+        var lines = MarkdownLineIndexCache.Get(layout).Lines;
+        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
+            var line = lines[lineIndex];
             if (line.Runs.Length == 0)
             {
                 continue;
@@ -346,8 +353,8 @@ public sealed class SelectionKeyboardInteraction
 
     private static bool TryMoveCaret(MarkdownLayout layout, MarkdownHitTestResult caret, MarkdownKeyCommand move, out MarkdownHitTestResult next)
     {
-        var lines = EnumerateLinesWithIndex(layout).ToList();
-        if (lines.Count == 0)
+        var lines = MarkdownLineIndexCache.Get(layout).Lines;
+        if (lines.Length == 0)
         {
             next = default;
             return false;
@@ -373,15 +380,16 @@ public sealed class SelectionKeyboardInteraction
         }
     }
 
-    private static bool TryMoveLeft(List<(int lineIndex, LineLayout line)> lines, MarkdownHitTestResult caret, out MarkdownHitTestResult next)
+    private static bool TryMoveLeft(ImmutableArray<LineLayout> lines, MarkdownHitTestResult caret, out MarkdownHitTestResult next)
     {
-        if (!TryFindLine(lines, caret.LineIndex, out var linePos))
+        var linePos = caret.LineIndex;
+        if (linePos < 0 || linePos >= lines.Length)
         {
             next = default;
             return false;
         }
 
-        var line = lines[linePos].line;
+        var line = lines[linePos];
         if (line.Runs.Length == 0)
         {
             next = default;
@@ -411,7 +419,7 @@ public sealed class SelectionKeyboardInteraction
         // Move to previous non-empty line.
         for (var i = linePos - 1; i >= 0; i--)
         {
-            var pl = lines[i].line;
+            var pl = lines[i];
             if (pl.Runs.Length == 0)
             {
                 continue;
@@ -420,7 +428,7 @@ public sealed class SelectionKeyboardInteraction
             var lastRunIndex = pl.Runs.Length - 1;
             var lastRun = pl.Runs[lastRunIndex];
             var offset = GetRunLogicalLength(lastRun);
-            next = new MarkdownHitTestResult(lines[i].lineIndex, lastRunIndex, lastRun, pl, offset, MarkdownHitTester.GetCaretX(lastRun, offset));
+            next = new MarkdownHitTestResult(i, lastRunIndex, lastRun, pl, offset, MarkdownHitTester.GetCaretX(lastRun, offset));
             return true;
         }
 
@@ -429,15 +437,16 @@ public sealed class SelectionKeyboardInteraction
         return false;
     }
 
-    private static bool TryMoveRight(List<(int lineIndex, LineLayout line)> lines, MarkdownHitTestResult caret, out MarkdownHitTestResult next)
+    private static bool TryMoveRight(ImmutableArray<LineLayout> lines, MarkdownHitTestResult caret, out MarkdownHitTestResult next)
     {
-        if (!TryFindLine(lines, caret.LineIndex, out var linePos))
+        var linePos = caret.LineIndex;
+        if (linePos < 0 || linePos >= lines.Length)
         {
             next = default;
             return false;
         }
 
-        var line = lines[linePos].line;
+        var line = lines[linePos];
         if (line.Runs.Length == 0)
         {
             next = default;
@@ -465,16 +474,16 @@ public sealed class SelectionKeyboardInteraction
         }
 
         // Move to next non-empty line.
-        for (var i = linePos + 1; i < lines.Count; i++)
+        for (var i = linePos + 1; i < lines.Length; i++)
         {
-            var nl = lines[i].line;
+            var nl = lines[i];
             if (nl.Runs.Length == 0)
             {
                 continue;
             }
 
             var firstRun = nl.Runs[0];
-            next = new MarkdownHitTestResult(lines[i].lineIndex, 0, firstRun, nl, 0, MarkdownHitTester.GetCaretX(firstRun, 0));
+            next = new MarkdownHitTestResult(i, 0, firstRun, nl, 0, MarkdownHitTester.GetCaretX(firstRun, 0));
             return true;
         }
 
@@ -483,9 +492,10 @@ public sealed class SelectionKeyboardInteraction
         return false;
     }
 
-    private static bool TryMoveVertical(List<(int lineIndex, LineLayout line)> lines, MarkdownHitTestResult caret, int delta, out MarkdownHitTestResult next)
+    private static bool TryMoveVertical(ImmutableArray<LineLayout> lines, MarkdownHitTestResult caret, int delta, out MarkdownHitTestResult next)
     {
-        if (!TryFindLine(lines, caret.LineIndex, out var linePos))
+        var linePos = caret.LineIndex;
+        if (linePos < 0 || linePos >= lines.Length)
         {
             next = default;
             return false;
@@ -493,10 +503,10 @@ public sealed class SelectionKeyboardInteraction
 
         var targetX = caret.CaretX;
 
-        for (var i = linePos + delta; i >= 0 && i < lines.Count; i += delta)
+        for (var i = linePos + delta; i >= 0 && i < lines.Length; i += delta)
         {
-            var lineIndex = lines[i].lineIndex;
-            var line = lines[i].line;
+            var lineIndex = i;
+            var line = lines[i];
             if (line.Runs.Length == 0)
             {
                 continue;
@@ -511,21 +521,6 @@ public sealed class SelectionKeyboardInteraction
         }
 
         next = caret;
-        return false;
-    }
-
-    private static bool TryFindLine(List<(int lineIndex, LineLayout line)> lines, int lineIndex, out int position)
-    {
-        for (var i = 0; i < lines.Count; i++)
-        {
-            if (lines[i].lineIndex == lineIndex)
-            {
-                position = i;
-                return true;
-            }
-        }
-
-        position = -1;
         return false;
     }
 
@@ -609,73 +604,5 @@ public sealed class SelectionKeyboardInteraction
         return Math.Clamp(lo - 1, 0, run.Text.Length);
     }
 
-    private static IEnumerable<(int lineIndex, LineLayout line)> EnumerateLinesWithIndex(MarkdownLayout layout)
-    {
-        var i = 0;
-        for (var bi = 0; bi < layout.Blocks.Length; bi++)
-        {
-            foreach (var line in EnumerateLines(layout.Blocks[bi]))
-            {
-                yield return (i, line);
-                i++;
-            }
-        }
-    }
-
-    private static IEnumerable<LineLayout> EnumerateLines(BlockLayout block)
-    {
-        switch (block)
-        {
-            case ParagraphLayout p:
-                foreach (var l in p.Lines) yield return l;
-                yield break;
-
-            case HeadingLayout h:
-                foreach (var l in h.Lines) yield return l;
-                yield break;
-
-            case CodeBlockLayout c:
-                foreach (var l in c.Lines) yield return l;
-                yield break;
-
-            case BlockQuoteLayout q:
-                foreach (var child in q.Blocks)
-                {
-                    foreach (var l in EnumerateLines(child)) yield return l;
-                }
-                yield break;
-
-            case ListLayout l:
-                foreach (var item in l.Items)
-                {
-                    foreach (var ll in EnumerateLines(item)) yield return ll;
-                }
-                yield break;
-
-            case ListItemLayout li:
-                foreach (var child in li.Blocks)
-                {
-                    foreach (var ll in EnumerateLines(child)) yield return ll;
-                }
-                yield break;
-
-            case TableLayout t:
-                for (var r = 0; r < t.Rows.Length; r++)
-                {
-                    var row = t.Rows[r];
-                    for (var c = 0; c < row.Cells.Length; c++)
-                    {
-                        var cell = row.Cells[c];
-                        for (var bi = 0; bi < cell.Blocks.Length; bi++)
-                        {
-                            foreach (var ll in EnumerateLines(cell.Blocks[bi])) yield return ll;
-                        }
-                    }
-                }
-                yield break;
-
-            default:
-                yield break;
-        }
-    }
+    // Note: line enumeration is centralized in MarkdownLineIndexCache.
 }

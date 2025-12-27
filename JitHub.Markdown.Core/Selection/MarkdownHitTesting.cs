@@ -16,9 +16,11 @@ public static class MarkdownHitTester
     {
         if (layout is null) throw new ArgumentNullException(nameof(layout));
 
-        var lineIndex = 0;
-        foreach (var line in EnumerateLines(layout))
+        var index = MarkdownLineIndexCache.Get(layout);
+        var lines = index.Lines;
+        for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
+            var line = lines[lineIndex];
             if (y >= line.Y && y <= (line.Y + line.Height))
             {
                 if (TryHitTestLine(lineIndex, line, x, out result))
@@ -29,8 +31,6 @@ public static class MarkdownHitTester
                 // Line exists but has no runs: no hit.
                 break;
             }
-
-            lineIndex++;
         }
 
         result = default;
@@ -46,64 +46,20 @@ public static class MarkdownHitTester
     {
         if (layout is null) throw new ArgumentNullException(nameof(layout));
 
-        var bestLineIndex = -1;
-        LineLayout? bestLine = null;
-        var bestDistance = float.PositiveInfinity;
-
-        var lineIndex = 0;
-        foreach (var line in EnumerateLines(layout))
+        var index = MarkdownLineIndexCache.Get(layout);
+        var bands = index.NonEmptyBands;
+        if (bands.Length == 0)
         {
-            // Skip empty lines (no runs) when searching for a usable caret target.
-            if (line.Runs.Length == 0)
-            {
-                lineIndex++;
-                continue;
-            }
-
-            var top = line.Y;
-            var bottom = line.Y + line.Height;
-
-            float distance;
-            if (y < top)
-            {
-                distance = top - y;
-            }
-            else if (y > bottom)
-            {
-                distance = y - bottom;
-            }
-            else
-            {
-                // Within this line's vertical band.
-                distance = 0f;
-            }
-
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                bestLineIndex = lineIndex;
-                bestLine = line;
-
-                // Can't do better than an exact match.
-                if (distance == 0f)
-                {
-                    break;
-                }
-            }
-
-            lineIndex++;
+            result = default;
+            return false;
         }
 
-        if (bestLineIndex >= 0 && bestLine is not null)
-        {
-            return TryHitTestLine(bestLineIndex, bestLine, x, out result);
-        }
-
-        result = default;
-        return false;
+        var bandIndex = FindNearestBandIndex(bands, y);
+        var band = bands[bandIndex];
+        return TryHitTestLine(band.LineIndex, band.Line, x, out result);
     }
 
-    private static bool TryHitTestLine(int lineIndex, LineLayout line, float x, out MarkdownHitTestResult result)
+    public static bool TryHitTestLine(int lineIndex, LineLayout line, float x, out MarkdownHitTestResult result)
     {
         if (line.Runs.Length == 0)
         {
@@ -126,6 +82,48 @@ public static class MarkdownHitTester
             CaretX: caretX);
 
         return true;
+    }
+
+    private static int FindNearestBandIndex(ImmutableArray<LineBand> bands, float y)
+    {
+        // bands are ordered top-to-bottom by construction.
+        // Find the last band with Top <= y.
+        var lo = 0;
+        var hi = bands.Length - 1;
+        while (lo <= hi)
+        {
+            var mid = lo + ((hi - lo) / 2);
+            if (bands[mid].Top <= y)
+            {
+                lo = mid + 1;
+            }
+            else
+            {
+                hi = mid - 1;
+            }
+        }
+
+        var idx = hi;
+        if (idx < 0)
+        {
+            return 0;
+        }
+
+        var current = bands[idx];
+        if (y <= current.Bottom)
+        {
+            return idx;
+        }
+
+        if (idx >= bands.Length - 1)
+        {
+            return bands.Length - 1;
+        }
+
+        var next = bands[idx + 1];
+        var distDown = y - current.Bottom;
+        var distUp = next.Top - y;
+        return distUp < distDown ? idx + 1 : idx;
     }
 
     private static int FindRunIndex(ImmutableArray<InlineRunLayout> runs, float x)
@@ -221,71 +219,5 @@ public static class MarkdownHitTester
         return gx[i];
     }
 
-    private static IEnumerable<LineLayout> EnumerateLines(MarkdownLayout layout)
-    {
-        for (var i = 0; i < layout.Blocks.Length; i++)
-        {
-            foreach (var line in EnumerateLines(layout.Blocks[i]))
-            {
-                yield return line;
-            }
-        }
-    }
-
-    private static IEnumerable<LineLayout> EnumerateLines(BlockLayout block)
-    {
-        switch (block)
-        {
-            case ParagraphLayout p:
-                foreach (var l in p.Lines) yield return l;
-                yield break;
-
-            case HeadingLayout h:
-                foreach (var l in h.Lines) yield return l;
-                yield break;
-
-            case CodeBlockLayout c:
-                foreach (var l in c.Lines) yield return l;
-                yield break;
-
-            case BlockQuoteLayout q:
-                foreach (var child in q.Blocks)
-                {
-                    foreach (var l in EnumerateLines(child)) yield return l;
-                }
-                yield break;
-
-            case ListLayout l:
-                foreach (var item in l.Items)
-                {
-                    foreach (var ll in EnumerateLines(item)) yield return ll;
-                }
-                yield break;
-
-            case ListItemLayout li:
-                foreach (var child in li.Blocks)
-                {
-                    foreach (var ll in EnumerateLines(child)) yield return ll;
-                }
-                yield break;
-
-            case TableLayout t:
-                for (var r = 0; r < t.Rows.Length; r++)
-                {
-                    var row = t.Rows[r];
-                    for (var c = 0; c < row.Cells.Length; c++)
-                    {
-                        var cell = row.Cells[c];
-                        for (var bi = 0; bi < cell.Blocks.Length; bi++)
-                        {
-                            foreach (var ll in EnumerateLines(cell.Blocks[bi])) yield return ll;
-                        }
-                    }
-                }
-                yield break;
-
-            default:
-                yield break;
-        }
-    }
+    // Note: line enumeration is centralized in MarkdownLineIndexCache.
 }
