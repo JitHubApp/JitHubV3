@@ -310,6 +310,22 @@ Unit tests:
 
 ## Phase 4 — Skia renderer (core visuals)
 
+### Phase 4 status (implemented so far: 4.1 + 4.2.1 + 4.2.2)
+
+Implemented artifacts:
+- `JitHub.Markdown.Skia`
+  - Rendering pipeline skeleton:
+    - `IMarkdownRenderer`
+    - `RenderContext` (Skia canvas + viewport + scale)
+    - `SkiaMarkdownRenderer` renders visible blocks only (viewport clip + layout’s visible indices)
+  - `SkiaTextMeasurer` implements `ITextMeasurer` using Skia measurement primitives.
+- `JitHub.Markdown.Tests/MarkdownSkiaRendererTests.cs`
+  - Offscreen render smoke test (no-throw) for headings + paragraphs.
+
+Notes:
+- Only paragraphs, headings, code blocks, blockquotes, and thematic breaks render in baseline form.
+- The current SkiaSharp API usage emits obsolescence warnings; we can migrate to `SKFont` APIs once we lock the rendering behaviors.
+
 ### 4.1 Rendering pipeline skeleton
 Deliverables:
 - `IMarkdownRenderer` + `RenderContext`.

@@ -154,6 +154,23 @@ This section reflects what currently exists in the repo (not the full end-state 
 
 ---
 
+## Implemented so far (Phase 4)
+
+### Skia renderer skeleton
+- `JitHub.Markdown.Skia/Rendering/*` contains:
+  - `IMarkdownRenderer` + `RenderContext`
+  - `SkiaMarkdownRenderer` that clips to a viewport and renders only visible layout blocks.
+- `JitHub.Markdown.Skia/Text/*` contains `SkiaTextMeasurer` implementing `ITextMeasurer`.
+
+### Rendering coverage (so far)
+- Paragraphs and headings render from `InlineRunLayout` runs (text + basic underline support).
+- Block backgrounds are filled using `MarkdownBlockStyle.Background` + corner radius.
+
+### Tests (gate)
+- `JitHub.Markdown.Tests/MarkdownSkiaRendererTests.cs` exercises an offscreen render pass (no-throw) for paragraph + heading input.
+
+---
+
 ## Core architecture
 
 ### 1) Pipeline overview

@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JitHub.Markdown.Core\JitHub.Markdown.Core.csproj" />
+    <ProjectReference Include="..\JitHub.Markdown.Skia\JitHub.Markdown.Skia.csproj" />
   </ItemGroup>
 
 </Project>
