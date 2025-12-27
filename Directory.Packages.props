@@ -21,6 +21,7 @@
     <PackageVersion Include="Markdig" Version="0.42.0" />
     <PackageVersion Include="SkiaSharp" Version="3.119.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+    <PackageVersion Include="SkiaSharp.HarfBuzz" Version="3.119.1" />
   </ItemGroup>
 
   <ItemGroup Condition="$(UsingUnoSdk) != 'true'">

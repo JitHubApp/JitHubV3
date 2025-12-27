@@ -165,19 +165,25 @@ public static class MarkdownHitTester
             // Fallback: proportional mapping across the run width.
             var w = Math.Max(1f, run.Bounds.Width);
             var t = Math.Clamp((x - run.Bounds.X) / w, 0f, 1f);
-            return (int)MathF.Round(t * run.Text.Length);
+            var visualOffset = (int)MathF.Round(t * run.Text.Length);
+            if (run.IsRightToLeft)
+            {
+                return Math.Clamp(run.Text.Length - visualOffset, 0, run.Text.Length);
+            }
+
+            return Math.Clamp(visualOffset, 0, run.Text.Length);
         }
 
-        // gx contains absolute x boundaries for each text offset.
+        // gx contains absolute x boundaries for each *visual* offset (increasing X).
         if (x <= gx[0])
         {
-            return 0;
+            return run.IsRightToLeft ? run.Text.Length : 0;
         }
 
         var last = gx[gx.Length - 1];
         if (x >= last)
         {
-            return run.Text.Length;
+            return run.IsRightToLeft ? 0 : run.Text.Length;
         }
 
         // Find the first boundary strictly greater than x.
@@ -197,7 +203,13 @@ public static class MarkdownHitTester
             }
         }
 
-        return Math.Clamp(lo - 1, 0, run.Text.Length);
+        var visual = Math.Clamp(lo - 1, 0, run.Text.Length);
+        if (run.IsRightToLeft)
+        {
+            return Math.Clamp(run.Text.Length - visual, 0, run.Text.Length);
+        }
+
+        return visual;
     }
 
     public static float GetCaretX(InlineRunLayout run, int textOffset)
@@ -211,11 +223,22 @@ public static class MarkdownHitTester
         if (gx.IsDefault || gx.Length == 0)
         {
             var w = Math.Max(0, run.Bounds.Width);
-            var t = run.Text.Length == 0 ? 0 : Math.Clamp((float)textOffset / run.Text.Length, 0f, 1f);
+            if (run.Text.Length == 0)
+            {
+                return run.Bounds.X;
+            }
+
+            var visualOffset = run.IsRightToLeft
+                ? Math.Clamp(run.Text.Length - textOffset, 0, run.Text.Length)
+                : Math.Clamp(textOffset, 0, run.Text.Length);
+
+            var t = Math.Clamp((float)visualOffset / run.Text.Length, 0f, 1f);
             return run.Bounds.X + (w * t);
         }
 
-        var i = Math.Clamp(textOffset, 0, gx.Length - 1);
+        var i = run.IsRightToLeft
+            ? Math.Clamp((run.Text?.Length ?? 0) - textOffset, 0, gx.Length - 1)
+            : Math.Clamp(textOffset, 0, gx.Length - 1);
         return gx[i];
     }
 

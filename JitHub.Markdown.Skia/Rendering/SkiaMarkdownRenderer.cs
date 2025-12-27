@@ -1,4 +1,6 @@
 using SkiaSharp;
+using HarfBuzzSharp;
+using SkiaSharp.HarfBuzz;
 
 namespace JitHub.Markdown;
 
@@ -498,11 +500,11 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             baselineY = (run.Bounds.Y + pad) - metrics.Ascent;
         }
 
-        context.Canvas.DrawText(run.Text, x, baselineY, paint);
+        DrawShapedText(context.Canvas, run.Text, x, baselineY, paint, run.IsRightToLeft);
 
         if (style.Underline)
         {
-            var w = paint.MeasureText(run.Text);
+            var w = MeasureShapedWidth(run.Text, paint, run.IsRightToLeft);
             using var underline = new SKPaint
             {
                 IsAntialias = true,
@@ -517,7 +519,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         if (run.IsStrikethrough)
         {
-            var w = paint.MeasureText(run.Text);
+            var w = MeasureShapedWidth(run.Text, paint, run.IsRightToLeft);
             using var strike = new SKPaint
             {
                 IsAntialias = true,
@@ -529,6 +531,67 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             var y = baselineY - Math.Max(1, style.FontSize * 0.3f * context.Scale);
             context.Canvas.DrawLine(x, y, x + w, y, strike);
         }
+    }
+
+    private static void DrawShapedText(SKCanvas canvas, string text, float x, float baselineY, SKPaint paint, bool isRightToLeft)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        // Use HarfBuzz shaping so complex scripts (Arabic/Hebrew) and RTL runs render correctly.
+        // We explicitly set buffer direction to match layout's run direction.
+        using var shaper = new SKShaper(paint.Typeface!);
+        using var buffer = new HarfBuzzSharp.Buffer
+        {
+            Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight,
+        };
+        buffer.AddUtf16(text);
+        buffer.GuessSegmentProperties();
+
+        var shaped = shaper.Shape(buffer, paint);
+        if (shaped.Codepoints is null || shaped.Points is null || shaped.Codepoints.Length == 0)
+        {
+            canvas.DrawText(text, x, baselineY, paint);
+            return;
+        }
+
+        var glyphs = new ushort[shaped.Codepoints.Length];
+        for (var i = 0; i < glyphs.Length; i++)
+        {
+            glyphs[i] = (ushort)shaped.Codepoints[i];
+        }
+
+        using var font = new SKFont(paint.Typeface, paint.TextSize);
+        using var blobBuilder = new SKTextBlobBuilder();
+        blobBuilder.AddPositionedRun(glyphs, font, shaped.Points);
+        using var blob = blobBuilder.Build();
+        if (blob is null)
+        {
+            canvas.DrawText(text, x, baselineY, paint);
+            return;
+        }
+
+        canvas.DrawText(blob, x, baselineY, paint);
+    }
+
+    private static float MeasureShapedWidth(string text, SKPaint paint, bool isRightToLeft)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return 0;
+        }
+
+        using var shaper = new SKShaper(paint.Typeface!);
+        using var buffer = new HarfBuzzSharp.Buffer
+        {
+            Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight,
+        };
+        buffer.AddUtf16(text);
+        buffer.GuessSegmentProperties();
+        var shaped = shaper.Shape(buffer, paint);
+        return Math.Max(0, shaped.Width);
     }
 
     private static void DrawImageRun(InlineRunLayout run, RenderContext context)

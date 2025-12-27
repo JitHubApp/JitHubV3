@@ -124,7 +124,7 @@ public class SkiaMarkdownView : ContentControl
         _engine = MarkdownEngine.CreateDefault();
         _layoutEngine = new MarkdownLayoutEngine();
         _layoutEngine.DefaultIsRtl = IsRightToLeft;
-        _textMeasurer = new SkiaTextMeasurer();
+        _textMeasurer = new SkiaTextShaper();
         _renderer = new SkiaMarkdownRenderer();
 
         _canvas = new Grid
@@ -186,7 +186,7 @@ public class SkiaMarkdownView : ContentControl
 
     private readonly MarkdownEngine _engine;
     private readonly MarkdownLayoutEngine _layoutEngine;
-    private readonly SkiaTextMeasurer _textMeasurer;
+    private readonly ITextMeasurer _textMeasurer;
     private readonly SkiaMarkdownRenderer _renderer;
     private readonly Grid _canvas;
     private readonly Image _image;

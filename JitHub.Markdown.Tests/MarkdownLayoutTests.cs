@@ -259,4 +259,26 @@ public sealed class MarkdownLayoutTests
         item.Blocks.Should().NotBeEmpty();
         item.Blocks[0].Bounds.X.Should().BeApproximately(0, 0.01f);
     }
+
+    [Test]
+    public void Mixed_direction_token_is_split_into_ltr_and_rtl_runs()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("abcשלום");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var para = layout.Blocks.OfType<ParagraphLayout>().Single();
+        var runs = para.Lines
+            .SelectMany(l => l.Runs)
+            .Where(r => !string.IsNullOrWhiteSpace(r.Text))
+            .ToArray();
+
+        runs.Length.Should().Be(2);
+        runs[0].Text.Should().Be("abc");
+        runs[0].IsRightToLeft.Should().BeFalse();
+        runs[1].Text.Should().Be("שלום");
+        runs[1].IsRightToLeft.Should().BeTrue();
+    }
 }

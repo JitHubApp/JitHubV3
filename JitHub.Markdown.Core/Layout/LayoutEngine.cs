@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text;
 
 namespace JitHub.Markdown;
@@ -219,7 +220,7 @@ public sealed class MarkdownLayoutEngine
                 Url: null,
                 IsStrikethrough: false,
                 IsCodeBlockLine: true,
-                GlyphX: BuildGlyphX(text, textStyle, scale, textMeasurer, runBounds.X, extraLeft: 0),
+                GlyphX: BuildGlyphX(text, textStyle, scale, textMeasurer, runBounds.X, extraLeft: 0, isRightToLeft: false),
                 NodeTextOffset: nodeTextOffset);
             runsBuilder.Add(new LineLayout(localY, lineHeight, ImmutableArray.Create(run)));
 
@@ -664,12 +665,22 @@ public sealed class MarkdownLayoutEngine
         var lineY = yTop + (paddingLeft); // reuse padding scale in Y direction for baseline simplicity
         var lineHeight = Math.Max(textMeasurer.GetLineHeight(baseTextStyle, scale), 0);
 
+        bool GetTokenIsRtl(Token token)
+        {
+            if (TryGetFirstStrongDirection(token.Text, out var rtl))
+            {
+                return rtl;
+            }
+
+            return isRtl;
+        }
+
         void FlushLine()
         {
             var runs = currentRuns.ToImmutable();
-            if (isRtl && runs.Length > 0)
+            if (runs.Length > 0)
             {
-                runs = AlignRunsRight(runs, paddingLeft, contentWidth);
+                runs = RelayoutBidiRuns(runs, isRtl, paddingLeft, contentWidth, theme, scale, textMeasurer);
             }
 
             lines.Add(new LineLayout(lineY, lineHeight, runs));
@@ -709,7 +720,8 @@ public sealed class MarkdownLayoutEngine
                         token.Url,
                         token.IsStrikethrough,
                         token.IsCodeBlockLine,
-                        GlyphX: default));
+                        GlyphX: default,
+                        IsRightToLeft: isRtl));
 
                     lineHeight = Math.Max(lineHeight, imageHeight);
                     FlushLine();
@@ -754,7 +766,8 @@ public sealed class MarkdownLayoutEngine
                     token.Url,
                     token.IsStrikethrough,
                     token.IsCodeBlockLine,
-                    GlyphX: BuildGlyphX(token.Text, token.Style, scale, textMeasurer, runBounds.X, extraLeft)));
+                    GlyphX: BuildGlyphX(token.Text, token.Style, scale, textMeasurer, runBounds.X, extraLeft, isRightToLeft: GetTokenIsRtl(token)),
+                    IsRightToLeft: GetTokenIsRtl(token)));
 
                 x += tokenWidth;
                 lineHeight = Math.Max(lineHeight, tokenHeight);
@@ -772,6 +785,636 @@ public sealed class MarkdownLayoutEngine
         }
 
         return lines.ToImmutable();
+    }
+
+    private static ImmutableArray<InlineRunLayout> RelayoutBidiRuns(
+        ImmutableArray<InlineRunLayout> runs,
+        bool baseIsRtl,
+        float paddingLeft,
+        float contentWidth,
+        MarkdownTheme theme,
+        float scale,
+        ITextMeasurer textMeasurer)
+    {
+        if (runs.Length == 0)
+        {
+            return runs;
+        }
+
+        // Images are already laid out as full-width runs and should not be bidi-reflowed.
+        if (runs.All(static r => r.Kind == NodeKind.Image))
+        {
+            return runs;
+        }
+
+        // If a line contains an image alongside text, do not attempt BiDi splitting/reordering.
+        // Images are laid out as dedicated full-width placeholder runs and are expected to be isolated.
+        if (runs.Any(static r => r.Kind == NodeKind.Image))
+        {
+            return runs;
+        }
+
+        var contentLeft = paddingLeft;
+        var contentRight = paddingLeft + Math.Max(0, contentWidth);
+
+        var lineText = string.Concat(runs.Select(static r => r.Text ?? string.Empty));
+        if (lineText.Length == 0)
+        {
+            return runs;
+        }
+
+        // Map each UTF-16 index in the concatenated line text back to a source run + offset.
+        var runAt = new int[lineText.Length];
+        var offsetAt = new int[lineText.Length];
+        var inlineCodeRun = new bool[runs.Length];
+
+        var pos = 0;
+        for (var r = 0; r < runs.Length; r++)
+        {
+            inlineCodeRun[r] = runs[r].Kind == NodeKind.InlineCode && !runs[r].IsCodeBlockLine;
+
+            var t = runs[r].Text ?? string.Empty;
+            for (var i = 0; i < t.Length; i++)
+            {
+                if (pos >= runAt.Length)
+                {
+                    break;
+                }
+
+                runAt[pos] = r;
+                offsetAt[pos] = i;
+                pos++;
+            }
+        }
+
+        // Compute BiDi classes.
+        var baseLevel = baseIsRtl ? 1 : 0;
+        var classes = new BidiClass[lineText.Length];
+        for (var i = 0; i < lineText.Length; i++)
+        {
+            var ch = lineText[i];
+
+            // Handle surrogate pairs (basic classification).
+            if (char.IsHighSurrogate(ch) && i + 1 < lineText.Length && char.IsLowSurrogate(lineText[i + 1]))
+            {
+                var rune = new Rune(ch, lineText[i + 1]);
+                classes[i] = Classify(rune.Value, ch);
+                classes[i + 1] = BidiClass.BN;
+                i++;
+            }
+            else
+            {
+                classes[i] = Classify(ch);
+            }
+
+            // Inline code spans include delimiters in source; keep them unbroken and treat their content as a single strong direction.
+            var r = runAt[i];
+            if (r >= 0 && r < runs.Length && inlineCodeRun[r])
+            {
+                classes[i] = runs[r].IsRightToLeft ? BidiClass.R : BidiClass.L;
+            }
+        }
+
+        // Resolve types + levels (UBA subset sufficient for mixed-direction text).
+        ResolveWeakAndNeutralTypes(classes, baseLevel);
+        var levels = ComputeImplicitLevels(classes, baseLevel);
+
+        // Reorder by levels (UAX#9 L2).
+        var order = ComputeVisualOrder(levels);
+
+        // Build visual runs by grouping contiguous characters that belong to the same source run.
+        var builder = ImmutableArray.CreateBuilder<InlineRunLayout>();
+
+        var lineY = runs[0].Bounds.Y;
+        var cursorX = contentLeft;
+
+        var consumedInlineCode = new bool[runs.Length];
+
+        var pIndex = 0;
+        while (pIndex < order.Length)
+        {
+            var logicalIndex = order[pIndex];
+            if ((uint)logicalIndex >= (uint)lineText.Length)
+            {
+                pIndex++;
+                continue;
+            }
+
+            var srcRunIndex = runAt[logicalIndex];
+            if ((uint)srcRunIndex >= (uint)runs.Length)
+            {
+                pIndex++;
+                continue;
+            }
+
+            var srcRun = runs[srcRunIndex];
+            var isInlineCode = inlineCodeRun[srcRunIndex];
+            if (isInlineCode)
+            {
+                // Keep inline code unbroken.
+                if (!consumedInlineCode[srcRunIndex])
+                {
+                    consumedInlineCode[srcRunIndex] = true;
+
+                    AddSegment(srcRunIndex, startOffset: 0, endOffsetInclusive: Math.Max(0, (srcRun.Text ?? string.Empty).Length - 1), isRightToLeft: (levels[logicalIndex] & 1) == 1);
+                }
+
+                // Skip all positions that map to this inline-code run.
+                while (pIndex < order.Length)
+                {
+                    var idx = order[pIndex];
+                    if ((uint)idx >= (uint)runAt.Length || runAt[idx] != srcRunIndex)
+                    {
+                        break;
+                    }
+                    pIndex++;
+                }
+
+                continue;
+            }
+
+            var start = offsetAt[logicalIndex];
+            var end = start;
+            var step = 0;
+
+            // Grow a contiguous (in-source) substring while we stay within the same source run.
+            var q = pIndex + 1;
+            while (q < order.Length)
+            {
+                var nextLogical = order[q];
+                if ((uint)nextLogical >= (uint)lineText.Length)
+                {
+                    break;
+                }
+
+                if (runAt[nextLogical] != srcRunIndex)
+                {
+                    break;
+                }
+
+                var nextOffset = offsetAt[nextLogical];
+                var delta = nextOffset - end;
+                if (step == 0)
+                {
+                    if (delta is 1 or -1)
+                    {
+                        step = delta;
+                        end = nextOffset;
+                        q++;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                if (delta == step)
+                {
+                    end = nextOffset;
+                    q++;
+                    continue;
+                }
+
+                break;
+            }
+
+            var segStart = Math.Min(start, end);
+            var segEnd = Math.Max(start, end);
+            AddSegment(srcRunIndex, segStart, segEnd, isRightToLeft: (levels[logicalIndex] & 1) == 1);
+
+            pIndex = q;
+        }
+
+        var visualRuns = builder.ToImmutable();
+
+        // Align RTL paragraphs/headings to the right edge (paragraph-level base direction).
+        if (baseIsRtl)
+        {
+            var maxRight = float.NegativeInfinity;
+            for (var i = 0; i < visualRuns.Length; i++)
+            {
+                maxRight = Math.Max(maxRight, visualRuns[i].Bounds.Right);
+            }
+
+            if (float.IsFinite(maxRight))
+            {
+                var dx = contentRight - maxRight;
+                if (dx != 0)
+                {
+                    var shifted = ImmutableArray.CreateBuilder<InlineRunLayout>(visualRuns.Length);
+                    for (var i = 0; i < visualRuns.Length; i++)
+                    {
+                        shifted.Add(ShiftRunX(visualRuns[i], dx));
+                    }
+                    visualRuns = shifted.ToImmutable();
+                }
+            }
+        }
+
+        return visualRuns;
+
+        void AddSegment(int srcRunIndex, int startOffset, int endOffsetInclusive, bool isRightToLeft)
+        {
+            var src = runs[srcRunIndex];
+            var srcText = src.Text ?? string.Empty;
+            if (srcText.Length == 0)
+            {
+                return;
+            }
+
+            startOffset = Math.Clamp(startOffset, 0, Math.Max(0, srcText.Length - 1));
+            endOffsetInclusive = Math.Clamp(endOffsetInclusive, 0, Math.Max(0, srcText.Length - 1));
+            if (endOffsetInclusive < startOffset)
+            {
+                (startOffset, endOffsetInclusive) = (endOffsetInclusive, startOffset);
+            }
+
+            var length = (endOffsetInclusive - startOffset) + 1;
+            var text = srcText.Substring(startOffset, length);
+
+            var span = src.Kind == NodeKind.InlineCode && !src.IsCodeBlockLine
+                ? src.Span
+                : new SourceSpan(src.Span.Start + startOffset, src.Span.Start + startOffset + length);
+
+            var m = textMeasurer.Measure(text, src.Style, scale);
+            var width = Math.Max(0, m.Width);
+            var height = Math.Max(0, src.Bounds.Height);
+
+            var extraLeft = 0f;
+            if (src.Kind == NodeKind.InlineCode && !src.IsCodeBlockLine)
+            {
+                var inlinePad = Math.Max(0, theme.Metrics.InlineCodePadding) * scale;
+                extraLeft = inlinePad;
+                width += inlinePad * 2;
+                height = Math.Max(height, Math.Max(0, m.Height) + (inlinePad * 2));
+            }
+
+            var bounds = new RectF(cursorX, lineY, width, height);
+            var glyphX = BuildGlyphX(text, src.Style, scale, textMeasurer, startX: bounds.X, extraLeft, isRightToLeft);
+
+            builder.Add(new InlineRunLayout(
+                Id: src.Id,
+                Kind: src.Kind,
+                Span: span,
+                Bounds: bounds,
+                Style: src.Style,
+                Text: text,
+                Url: src.Url,
+                IsStrikethrough: src.IsStrikethrough,
+                IsCodeBlockLine: src.IsCodeBlockLine,
+                GlyphX: glyphX,
+                NodeTextOffset: src.NodeTextOffset + startOffset,
+                IsRightToLeft: isRightToLeft));
+
+            cursorX += width;
+        }
+    }
+
+    private enum BidiClass
+    {
+        L,
+        R,
+        AL,
+        EN,
+        AN,
+        ES,
+        ET,
+        CS,
+        NSM,
+        BN,
+        B,
+        S,
+        WS,
+        ON,
+    }
+
+    private static BidiClass Classify(char ch)
+    {
+        if (char.IsWhiteSpace(ch))
+        {
+            return BidiClass.WS;
+        }
+
+        var category = CharUnicodeInfo.GetUnicodeCategory(ch);
+        if (category is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark)
+        {
+            return BidiClass.NSM;
+        }
+
+        if (char.IsDigit(ch))
+        {
+            // Distinguish Arabic-Indic digits.
+            return ch is >= '\u0660' and <= '\u0669' or >= '\u06F0' and <= '\u06F9'
+                ? BidiClass.AN
+                : BidiClass.EN;
+        }
+
+        if (IsRtlCodePoint(ch))
+        {
+            // We do not distinguish AL vs R here; the downstream resolver normalizes AL to R anyway.
+            return BidiClass.R;
+        }
+
+        if (char.IsLetter(ch))
+        {
+            return BidiClass.L;
+        }
+
+        // Basic punctuation / symbol handling.
+        return BidiClass.ON;
+    }
+
+    private static BidiClass Classify(int codePoint, char fallback)
+    {
+        if (codePoint >= 0)
+        {
+            if (IsRtlCodePoint(codePoint))
+            {
+                return BidiClass.R;
+            }
+        }
+
+        return Classify(fallback);
+    }
+
+    private static bool IsRtlCodePoint(char ch) => IsRtlCodePoint((int)ch);
+
+    private static bool IsRtlCodePoint(int codePoint)
+    {
+        // Common RTL ranges and marks.
+        // This is an approximation used to support robust RTL behavior without a full bidi-category table.
+        return codePoint switch
+        {
+            // Explicit RTL marks
+            0x061C or 0x200F or 0x202B or 0x202E => true,
+            _ =>
+                // Hebrew
+                (codePoint is >= 0x0590 and <= 0x05FF) ||
+                // Arabic + supplements
+                (codePoint is >= 0x0600 and <= 0x06FF) ||
+                (codePoint is >= 0x0750 and <= 0x077F) ||
+                (codePoint is >= 0x08A0 and <= 0x08FF) ||
+                // Syriac
+                (codePoint is >= 0x0700 and <= 0x074F) ||
+                // Thaana
+                (codePoint is >= 0x0780 and <= 0x07BF) ||
+                // NKo
+                (codePoint is >= 0x07C0 and <= 0x07FF) ||
+                // Arabic presentation forms
+                (codePoint is >= 0xFB50 and <= 0xFDFF) ||
+                (codePoint is >= 0xFE70 and <= 0xFEFF)
+        };
+    }
+
+    private static void ResolveWeakAndNeutralTypes(BidiClass[] types, int baseLevel)
+    {
+        if (types.Length == 0)
+        {
+            return;
+        }
+
+        var baseDir = (baseLevel & 1) == 1 ? BidiClass.R : BidiClass.L;
+
+        // W1: NSM -> previous type (or base).
+        for (var i = 0; i < types.Length; i++)
+        {
+            if (types[i] == BidiClass.NSM)
+            {
+                types[i] = i > 0 ? types[i - 1] : baseDir;
+            }
+        }
+
+        // W2: EN -> AN if previous strong is AL.
+        var prevStrong = baseDir;
+        for (var i = 0; i < types.Length; i++)
+        {
+            var t = types[i];
+            if (t is BidiClass.L or BidiClass.R or BidiClass.AL)
+            {
+                prevStrong = t;
+            }
+
+            if (t == BidiClass.EN && prevStrong == BidiClass.AL)
+            {
+                types[i] = BidiClass.AN;
+            }
+        }
+
+        // W3: AL -> R.
+        for (var i = 0; i < types.Length; i++)
+        {
+            if (types[i] == BidiClass.AL)
+            {
+                types[i] = BidiClass.R;
+            }
+        }
+
+        // W4: ES/CS between numbers.
+        for (var i = 1; i < types.Length - 1; i++)
+        {
+            var t = types[i];
+            if (t == BidiClass.ES && types[i - 1] == BidiClass.EN && types[i + 1] == BidiClass.EN)
+            {
+                types[i] = BidiClass.EN;
+            }
+            else if (t == BidiClass.CS)
+            {
+                var left = types[i - 1];
+                var right = types[i + 1];
+                if (left == BidiClass.EN && right == BidiClass.EN)
+                {
+                    types[i] = BidiClass.EN;
+                }
+                else if (left == BidiClass.AN && right == BidiClass.AN)
+                {
+                    types[i] = BidiClass.AN;
+                }
+            }
+        }
+
+        // W5: ET adjacent to EN -> EN.
+        for (var i = 0; i < types.Length; i++)
+        {
+            if (types[i] != BidiClass.ET)
+            {
+                continue;
+            }
+
+            var start = i;
+            var end = i;
+            while (end + 1 < types.Length && types[end + 1] == BidiClass.ET)
+            {
+                end++;
+            }
+
+            var leftIsEN = start - 1 >= 0 && types[start - 1] == BidiClass.EN;
+            var rightIsEN = end + 1 < types.Length && types[end + 1] == BidiClass.EN;
+            if (leftIsEN || rightIsEN)
+            {
+                for (var k = start; k <= end; k++)
+                {
+                    types[k] = BidiClass.EN;
+                }
+            }
+
+            i = end;
+        }
+
+        // W6: ES/ET/CS -> ON.
+        for (var i = 0; i < types.Length; i++)
+        {
+            if (types[i] is BidiClass.ES or BidiClass.ET or BidiClass.CS)
+            {
+                types[i] = BidiClass.ON;
+            }
+        }
+
+        // W7: EN -> L if previous strong is L.
+        prevStrong = baseDir;
+        for (var i = 0; i < types.Length; i++)
+        {
+            var t = types[i];
+            if (t is BidiClass.L or BidiClass.R)
+            {
+                prevStrong = t;
+            }
+
+            if (t == BidiClass.EN && prevStrong == BidiClass.L)
+            {
+                types[i] = BidiClass.L;
+            }
+        }
+
+        // N1/N2: neutrals (WS/ON) resolution.
+        var iNeutral = 0;
+        while (iNeutral < types.Length)
+        {
+            if (!IsNeutral(types[iNeutral]))
+            {
+                iNeutral++;
+                continue;
+            }
+
+            var startNeutral = iNeutral;
+            var endNeutral = iNeutral;
+            while (endNeutral + 1 < types.Length && IsNeutral(types[endNeutral + 1]))
+            {
+                endNeutral++;
+            }
+
+            var leftStrong = FindStrong(types, startNeutral - 1, direction: -1, baseDir);
+            var rightStrong = FindStrong(types, endNeutral + 1, direction: +1, baseDir);
+
+            var resolved = leftStrong == rightStrong ? leftStrong : baseDir;
+            for (var k = startNeutral; k <= endNeutral; k++)
+            {
+                types[k] = resolved;
+            }
+
+            iNeutral = endNeutral + 1;
+        }
+
+        static bool IsNeutral(BidiClass t) => t is BidiClass.WS or BidiClass.ON or BidiClass.B or BidiClass.S or BidiClass.BN;
+
+        static BidiClass FindStrong(BidiClass[] t, int start, int direction, BidiClass baseDir)
+        {
+            for (var i = start; i >= 0 && i < t.Length; i += direction)
+            {
+                if (t[i] is BidiClass.L or BidiClass.R)
+                {
+                    return t[i];
+                }
+            }
+
+            return baseDir;
+        }
+    }
+
+    private static int[] ComputeImplicitLevels(BidiClass[] types, int baseLevel)
+    {
+        var levels = new int[types.Length];
+        for (var i = 0; i < levels.Length; i++)
+        {
+            levels[i] = baseLevel;
+        }
+
+        for (var i = 0; i < types.Length; i++)
+        {
+            var level = levels[i];
+            var t = types[i];
+
+            if ((level & 1) == 0)
+            {
+                // Even level.
+                if (t == BidiClass.R)
+                {
+                    levels[i] = level + 1;
+                }
+                else if (t is BidiClass.AN or BidiClass.EN)
+                {
+                    levels[i] = level + 2;
+                }
+            }
+            else
+            {
+                // Odd level.
+                if (t == BidiClass.L)
+                {
+                    levels[i] = level + 1;
+                }
+                else if (t is BidiClass.AN or BidiClass.EN)
+                {
+                    levels[i] = level + 1;
+                }
+            }
+        }
+
+        return levels;
+    }
+
+    private static int[] ComputeVisualOrder(int[] levels)
+    {
+        var order = new int[levels.Length];
+        for (var i = 0; i < order.Length; i++)
+        {
+            order[i] = i;
+        }
+
+        if (levels.Length == 0)
+        {
+            return order;
+        }
+
+        var max = 0;
+        for (var i = 0; i < levels.Length; i++)
+        {
+            max = Math.Max(max, levels[i]);
+        }
+
+        for (var level = max; level > 0; level--)
+        {
+            var i = 0;
+            while (i < levels.Length)
+            {
+                while (i < levels.Length && levels[i] < level)
+                {
+                    i++;
+                }
+
+                var start = i;
+                while (i < levels.Length && levels[i] >= level)
+                {
+                    i++;
+                }
+
+                var end = i - 1;
+                if (end > start)
+                {
+                    Array.Reverse(order, start, end - start + 1);
+                }
+            }
+        }
+
+        return order;
     }
 
     private static ImmutableArray<InlineRunLayout> AlignRunsRight(ImmutableArray<InlineRunLayout> runs, float paddingLeft, float contentWidth)
@@ -1007,11 +1650,28 @@ public sealed class MarkdownLayoutEngine
             || (v >= 'a' && v <= 'z');
     }
 
-    private static ImmutableArray<float> BuildGlyphX(string text, MarkdownTextStyle style, float scale, ITextMeasurer measurer, float startX, float extraLeft)
+    private static ImmutableArray<float> BuildGlyphX(string text, MarkdownTextStyle style, float scale, ITextMeasurer measurer, float startX, float extraLeft, bool isRightToLeft)
     {
         if (string.IsNullOrEmpty(text))
         {
             return ImmutableArray<float>.Empty;
+        }
+
+        if (measurer is ITextShaper shaper)
+        {
+            var shaped = shaper.Shape(text, style, scale, isRightToLeft);
+            var caret = shaped.CaretX;
+            if (!caret.IsDefault && caret.Length > 0)
+            {
+                var caretBuilder = ImmutableArray.CreateBuilder<float>(caret.Length);
+                var offset = startX + Math.Max(0, extraLeft);
+                for (var i = 0; i < caret.Length; i++)
+                {
+                    caretBuilder.Add(caret[i] + offset);
+                }
+
+                return caretBuilder.ToImmutable();
+            }
         }
 
         var builder = ImmutableArray.CreateBuilder<float>(text.Length + 1);
@@ -1020,8 +1680,7 @@ public sealed class MarkdownLayoutEngine
 
         for (var i = 0; i < text.Length; i++)
         {
-            // Deterministic, fast-enough approximation: per-char measurement.
-            // Kerning/shaping will be handled in a later shaping phase.
+            // Fallback: per-char measurement (approximate caret positions).
             var w = measurer.Measure(text[i].ToString(), style, scale).Width;
             x += Math.Max(0, w);
             builder.Add(x);

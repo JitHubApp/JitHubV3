@@ -130,4 +130,5 @@ public sealed record InlineRunLayout(
     bool IsStrikethrough,
     bool IsCodeBlockLine,
     ImmutableArray<float> GlyphX = default,
-    int NodeTextOffset = 0);
+    int NodeTextOffset = 0,
+    bool IsRightToLeft = false);

@@ -1,0 +1,244 @@
+using System.Collections.Immutable;
+using HarfBuzzSharp;
+using SkiaSharp;
+using SkiaSharp.HarfBuzz;
+
+namespace JitHub.Markdown;
+
+public sealed class SkiaTextShaper : ITextShaper
+{
+    public TextMeasurement Measure(string text, MarkdownTextStyle style, float scale)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return new TextMeasurement(0, GetLineHeight(style, scale));
+        }
+
+        using var paint = CreatePaint(style, scale);
+        using var shaper = new SKShaper(paint.Typeface!);
+
+        using var buffer = new HarfBuzzSharp.Buffer();
+        buffer.AddUtf16(text);
+        buffer.GuessSegmentProperties();
+
+        var shaped = shaper.Shape(buffer, paint);
+
+        paint.GetFontMetrics(out var metrics);
+        var height = (metrics.Descent - metrics.Ascent);
+        if (height <= 0)
+        {
+            height = GetLineHeight(style, scale);
+        }
+
+        return new TextMeasurement(shaped.Width, height);
+    }
+
+    public float GetLineHeight(MarkdownTextStyle style, float scale)
+    {
+        using var paint = CreatePaint(style, scale);
+        paint.GetFontMetrics(out var metrics);
+        var height = (metrics.Descent - metrics.Ascent);
+        return height <= 0 ? Math.Max(1, style.FontSize * 1.4f * scale) : height;
+    }
+
+    public TextShapingResult Shape(string text, MarkdownTextStyle style, float scale, bool isRightToLeft)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return new TextShapingResult(0, GetLineHeight(style, scale), ImmutableArray<float>.Empty, isRightToLeft);
+        }
+
+        using var paint = CreatePaint(style, scale);
+        using var shaper = new SKShaper(paint.Typeface!);
+
+        using var buffer = new HarfBuzzSharp.Buffer();
+        buffer.Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight;
+        buffer.AddUtf16(text);
+        buffer.GuessSegmentProperties();
+
+        var shaped = shaper.Shape(buffer, paint);
+
+        paint.GetFontMetrics(out var metrics);
+        var height = (metrics.Descent - metrics.Ascent);
+        if (height <= 0)
+        {
+            height = GetLineHeight(style, scale);
+        }
+
+        var caretVisual = BuildCaretX(text.Length, shaped);
+
+        // Note: caret boundaries must be monotonic increasing X (visual order) for hit-testing binary search.
+        // RTL is handled by inverting logical offsets at hit-test / keyboard-navigation time.
+        return new TextShapingResult(shaped.Width, height, caretVisual, isRightToLeft);
+    }
+
+    public static SKTextBlob? CreateTextBlob(string text, MarkdownTextStyle style, float scale, bool isRightToLeft)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return null;
+        }
+
+        using var paint = CreatePaint(style, scale);
+        using var shaper = new SKShaper(paint.Typeface!);
+
+        using var buffer = new HarfBuzzSharp.Buffer();
+        buffer.Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight;
+        buffer.AddUtf16(text);
+        buffer.GuessSegmentProperties();
+
+        var shaped = shaper.Shape(buffer, paint);
+        if (shaped.Codepoints is null || shaped.Points is null || shaped.Codepoints.Length == 0)
+        {
+            return null;
+        }
+
+        var glyphs = new ushort[shaped.Codepoints.Length];
+        for (var i = 0; i < glyphs.Length; i++)
+        {
+            // Skia glyph IDs are 16-bit.
+            glyphs[i] = (ushort)shaped.Codepoints[i];
+        }
+
+        using var font = new SKFont(paint.Typeface, paint.TextSize);
+        using var builder = new SKTextBlobBuilder();
+        builder.AddPositionedRun(glyphs, font, shaped.Points);
+        return builder.Build();
+    }
+
+    private static ImmutableArray<float> BuildCaretX(int textLength, SKShaper.Result shaped)
+    {
+        // Build an approximate caret boundary array for UTF-16 offsets using cluster boundaries.
+        // This is sufficient for selection/hit-testing and supports complex-script shaping.
+        if (textLength <= 0)
+        {
+            return ImmutableArray<float>.Empty;
+        }
+
+        var width = Math.Max(0, shaped.Width);
+        var cps = shaped.Codepoints;
+        var pts = shaped.Points;
+        var cls = shaped.Clusters;
+
+        if (cps is null || pts is null || cls is null || cps.Length == 0 || pts.Length == 0 || cls.Length == 0)
+        {
+            // Fallback: evenly spread across width.
+            var fallback = ImmutableArray.CreateBuilder<float>(textLength + 1);
+            for (var i = 0; i <= textLength; i++)
+            {
+                fallback.Add(width * (i / (float)textLength));
+            }
+            return fallback.ToImmutable();
+        }
+
+        // Sort glyphs by X so we can derive non-decreasing visual segments.
+        var order = Enumerable.Range(0, pts.Length).ToArray();
+        Array.Sort(order, (a, b) => pts[a].X.CompareTo(pts[b].X));
+
+        var glyphStartX = new float[order.Length];
+        var glyphEndX = new float[order.Length];
+        var glyphCluster = new int[order.Length];
+
+        for (var oi = 0; oi < order.Length; oi++)
+        {
+            var gi = order[oi];
+            glyphStartX[oi] = pts[gi].X;
+            glyphCluster[oi] = (int)cls[gi];
+        }
+
+        for (var oi = 0; oi < order.Length; oi++)
+        {
+            var nextX = (oi == order.Length - 1) ? width : glyphStartX[oi + 1];
+            glyphEndX[oi] = Math.Max(glyphStartX[oi], nextX);
+        }
+
+        // Compute per-cluster start/end X.
+        var clusterStart = new Dictionary<int, float>();
+        var clusterEnd = new Dictionary<int, float>();
+        for (var oi = 0; oi < order.Length; oi++)
+        {
+            var c = glyphCluster[oi];
+            var sx = glyphStartX[oi];
+            var ex = glyphEndX[oi];
+
+            if (!clusterStart.TryGetValue(c, out var curS) || sx < curS)
+            {
+                clusterStart[c] = sx;
+            }
+
+            if (!clusterEnd.TryGetValue(c, out var curE) || ex > curE)
+            {
+                clusterEnd[c] = ex;
+            }
+        }
+
+        var starts = clusterStart.Keys.Where(k => k >= 0 && k <= textLength).Distinct().OrderBy(k => k).ToArray();
+        if (starts.Length == 0)
+        {
+            // Fallback: evenly spread across width.
+            var fallback = ImmutableArray.CreateBuilder<float>(textLength + 1);
+            for (var i = 0; i <= textLength; i++)
+            {
+                fallback.Add(width * (i / (float)textLength));
+            }
+            return fallback.ToImmutable();
+        }
+
+        // Ensure we have a segment that starts at 0.
+        if (starts[0] != 0)
+        {
+            starts = (new[] { 0 }).Concat(starts).Distinct().OrderBy(k => k).ToArray();
+            clusterStart.TryAdd(0, 0);
+            clusterEnd.TryAdd(0, clusterEnd.Count > 0 ? clusterEnd.Values.Max() : width);
+        }
+
+        var caret = new float[textLength + 1];
+
+        // Fill segments between cluster starts.
+        for (var si = 0; si < starts.Length; si++)
+        {
+            var startIndex = starts[si];
+            var endIndex = (si == starts.Length - 1) ? textLength : Math.Clamp(starts[si + 1], 0, textLength);
+            if (endIndex < startIndex)
+            {
+                continue;
+            }
+
+            var sx = clusterStart.TryGetValue(startIndex, out var ssx) ? ssx : 0f;
+            var ex = clusterEnd.TryGetValue(startIndex, out var eex) ? eex : sx;
+            var segLen = Math.Max(1, endIndex - startIndex);
+
+            for (var i = startIndex; i <= endIndex; i++)
+            {
+                var t = (i - startIndex) / (float)segLen;
+                caret[i] = sx + ((ex - sx) * t);
+            }
+        }
+
+        // Enforce monotonic non-decreasing caret X.
+        var last = caret[0];
+        for (var i = 1; i < caret.Length; i++)
+        {
+            if (caret[i] < last)
+            {
+                caret[i] = last;
+            }
+            last = caret[i];
+        }
+
+        return caret.ToImmutableArray();
+    }
+
+    private static SKPaint CreatePaint(MarkdownTextStyle style, float scale)
+    {
+        var paint = new SKPaint
+        {
+            IsAntialias = true,
+            TextSize = style.FontSize * scale,
+            Color = style.Foreground.ToSKColor(),
+        };
+
+        paint.Typeface = SkiaTypefaceCache.GetTypeface(style);
+        return paint;
+    }
+}

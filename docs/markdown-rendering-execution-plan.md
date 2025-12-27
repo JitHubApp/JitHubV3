@@ -772,7 +772,7 @@ Implemented notes:
 - RTL paragraphs/headings are right-aligned within their content area.
 - RTL lists place the marker gutter on the right.
 
-#### 7.3.1 RTL shaping + BiDi (not implemented yet)
+#### 7.3.1 RTL shaping + BiDi (partially implemented)
 Scope:
 - Implement full Unicode BiDi reordering (logical → visual order) and complex-script shaping (Arabic joining, diacritics, ligatures).
 
@@ -780,12 +780,17 @@ Notes on “platform limitation” vs “not implemented”:
 - This is **not a platform limitation** in the same sense as the Skia accessibility gaps in Phase 7.2.x.
 - The current limitation exists because our markdown stack still uses a simplified layout/shaping model (token-based layout + per-char measurement) and we have not integrated a shaping engine (HarfBuzz-level shaping).
 
+Implemented notes:
+- Integrated HarfBuzz shaping via `SkiaSharp.HarfBuzz` for rendering and caret boundary generation.
+- Hit-testing and caret mapping now treat `GlyphX` as visual-order boundaries and invert logical offsets for RTL runs.
+- Layout includes a basic BiDi reflow step that groups contiguous runs by direction.
+
 Limitations (current):
-- This is paragraph-level RTL alignment only; it does not implement full Unicode BiDi reordering or complex-script shaping.
-- Glyph shaping/kerning for Arabic/Hebrew (HarfBuzz-level shaping) remains a future improvement.
+- This is **not** a full Unicode BiDi (UAX#9) implementation; direction is still determined via a first-strong heuristic and applied at token/run granularity.
+- Mixed-direction content inside a single token/run (neutrals, punctuation, numbers) may not match full text engines.
 
 Tests:
-- Added deterministic RTL layout unit tests (Hebrew paragraph alignment + RTL list marker placement).
+- Existing selection/hit-testing tests validate monotonic `GlyphX` and keyboard navigation; RTL-specific shaping cases should be expanded as needed.
 
 ### 7.4 High contrast theme support
 Deliverables:

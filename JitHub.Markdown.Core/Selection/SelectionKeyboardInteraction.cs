@@ -436,21 +436,27 @@ public sealed class SelectionKeyboardInteraction
 
         var runIndex = Math.Clamp(caret.RunIndex, 0, line.Runs.Length - 1);
         var run = line.Runs[runIndex];
+        var runLen = GetRunLogicalLength(run);
 
-        if (run.Kind != NodeKind.Image && caret.TextOffset > 0)
+        // Move within the current run in *visual* order (RTL inverts logical offsets).
+        if (run.Kind != NodeKind.Image && runLen > 0)
         {
-            var newOffset = Math.Max(0, caret.TextOffset - 1);
-            next = new MarkdownHitTestResult(caret.LineIndex, runIndex, run, line, newOffset, MarkdownHitTester.GetCaretX(run, newOffset));
-            return true;
+            var visual = run.IsRightToLeft ? (runLen - caret.TextOffset) : caret.TextOffset;
+            if (visual > 0)
+            {
+                var visualNew = visual - 1;
+                var logicalNew = run.IsRightToLeft ? (runLen - visualNew) : visualNew;
+                logicalNew = Math.Clamp(logicalNew, 0, runLen);
+                next = new MarkdownHitTestResult(caret.LineIndex, runIndex, run, line, logicalNew, MarkdownHitTester.GetCaretX(run, logicalNew));
+                return true;
+            }
         }
 
-        // Move to previous run/line.
-        if (runIndex > 0)
+        // Cross-run fallback: probe slightly to the left of the current caret.
+        var probeX = caret.CaretX - 0.5f;
+        if (MarkdownHitTester.TryHitTestLine(caret.LineIndex, line, probeX, out var hit) && (hit.RunIndex != caret.RunIndex || hit.TextOffset != caret.TextOffset))
         {
-            var prevIndex = runIndex - 1;
-            var prevRun = line.Runs[prevIndex];
-            var prevOffset = GetRunLogicalLength(prevRun);
-            next = new MarkdownHitTestResult(caret.LineIndex, prevIndex, prevRun, line, prevOffset, MarkdownHitTester.GetCaretX(prevRun, prevOffset));
+            next = hit;
             return true;
         }
 
@@ -493,21 +499,27 @@ public sealed class SelectionKeyboardInteraction
 
         var runIndex = Math.Clamp(caret.RunIndex, 0, line.Runs.Length - 1);
         var run = line.Runs[runIndex];
-
         var runLen = GetRunLogicalLength(run);
-        if (run.Kind != NodeKind.Image && caret.TextOffset < runLen)
+
+        // Move within the current run in *visual* order (RTL inverts logical offsets).
+        if (run.Kind != NodeKind.Image && runLen > 0)
         {
-            var newOffset = Math.Min(runLen, caret.TextOffset + 1);
-            next = new MarkdownHitTestResult(caret.LineIndex, runIndex, run, line, newOffset, MarkdownHitTester.GetCaretX(run, newOffset));
-            return true;
+            var visual = run.IsRightToLeft ? (runLen - caret.TextOffset) : caret.TextOffset;
+            if (visual < runLen)
+            {
+                var visualNew = visual + 1;
+                var logicalNew = run.IsRightToLeft ? (runLen - visualNew) : visualNew;
+                logicalNew = Math.Clamp(logicalNew, 0, runLen);
+                next = new MarkdownHitTestResult(caret.LineIndex, runIndex, run, line, logicalNew, MarkdownHitTester.GetCaretX(run, logicalNew));
+                return true;
+            }
         }
 
-        // Move to next run/line.
-        if (runIndex < line.Runs.Length - 1)
+        // Cross-run fallback: probe slightly to the right of the current caret.
+        var probeX = caret.CaretX + 0.5f;
+        if (MarkdownHitTester.TryHitTestLine(caret.LineIndex, line, probeX, out var hit) && (hit.RunIndex != caret.RunIndex || hit.TextOffset != caret.TextOffset))
         {
-            var nextIndex = runIndex + 1;
-            var nextRun = line.Runs[nextIndex];
-            next = new MarkdownHitTestResult(caret.LineIndex, nextIndex, nextRun, line, 0, MarkdownHitTester.GetCaretX(nextRun, 0));
+            next = hit;
             return true;
         }
 
@@ -550,12 +562,13 @@ public sealed class SelectionKeyboardInteraction
                 continue;
             }
 
-            var runIndex = FindRunIndex(line.Runs, targetX);
-            var run = line.Runs[runIndex];
-            var textOffset = GetTextOffset(run, targetX);
-            var caretX = MarkdownHitTester.GetCaretX(run, textOffset);
-            next = new MarkdownHitTestResult(lineIndex, runIndex, run, line, textOffset, caretX);
-            return true;
+            if (MarkdownHitTester.TryHitTestLine(lineIndex, line, targetX, out var hit))
+            {
+                next = hit;
+                return true;
+            }
+
+            // If hit-testing fails for this line (unexpected), keep searching.
         }
 
         next = caret;
@@ -570,76 +583,6 @@ public sealed class SelectionKeyboardInteraction
         }
 
         return run.Text?.Length ?? 0;
-    }
-
-    // Duplicated from MarkdownHitTester to keep keyboard navigation consistent with pointer hit-testing.
-    private static int FindRunIndex(ImmutableArray<InlineRunLayout> runs, float x)
-    {
-        for (var i = 0; i < runs.Length; i++)
-        {
-            var r = runs[i].Bounds;
-            if (x >= r.X && x <= r.Right)
-            {
-                return i;
-            }
-        }
-
-        if (x < runs[0].Bounds.X)
-        {
-            return 0;
-        }
-
-        return runs.Length - 1;
-    }
-
-    // Duplicated from MarkdownHitTester to keep keyboard navigation consistent with pointer hit-testing.
-    private static int GetTextOffset(InlineRunLayout run, float x)
-    {
-        if (string.IsNullOrEmpty(run.Text))
-        {
-            return 0;
-        }
-
-        if (run.Kind == NodeKind.Image)
-        {
-            return 0;
-        }
-
-        var gx = run.GlyphX;
-        if (gx.IsDefault || gx.Length == 0)
-        {
-            var w = Math.Max(1f, run.Bounds.Width);
-            var t = Math.Clamp((x - run.Bounds.X) / w, 0f, 1f);
-            return (int)MathF.Round(t * run.Text.Length);
-        }
-
-        if (x <= gx[0])
-        {
-            return 0;
-        }
-
-        var last = gx[gx.Length - 1];
-        if (x >= last)
-        {
-            return run.Text.Length;
-        }
-
-        var lo = 0;
-        var hi = gx.Length - 1;
-        while (lo <= hi)
-        {
-            var mid = lo + ((hi - lo) / 2);
-            if (gx[mid] <= x)
-            {
-                lo = mid + 1;
-            }
-            else
-            {
-                hi = mid - 1;
-            }
-        }
-
-        return Math.Clamp(lo - 1, 0, run.Text.Length);
     }
 
     // Note: line enumeration is centralized in MarkdownLineIndexCache.
