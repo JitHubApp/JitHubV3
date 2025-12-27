@@ -199,7 +199,7 @@ public sealed class MarkdownLayoutEngine
             var m = textMeasurer.Measure(text, textStyle, scale);
             var runBounds = new RectF(padding, localY, Math.Min(m.Width, contentWidth), lineHeight);
 
-            var run = new InlineRunLayout(codeBlock.Id, NodeKind.InlineCode, codeBlock.Span, runBounds, textStyle, text);
+            var run = new InlineRunLayout(codeBlock.Id, NodeKind.InlineCode, codeBlock.Span, runBounds, textStyle, text, Url: null, IsStrikethrough: false);
             runsBuilder.Add(new LineLayout(localY, lineHeight, ImmutableArray.Create(run)));
 
             localY += lineHeight;
@@ -408,7 +408,7 @@ public sealed class MarkdownLayoutEngine
                 }
 
                 var runBounds = new RectF(x, lineY, tokenWidth, tokenHeight);
-                currentRuns.Add(new InlineRunLayout(token.Id, token.Kind, token.Span, runBounds, token.Style, token.Text));
+                currentRuns.Add(new InlineRunLayout(token.Id, token.Kind, token.Span, runBounds, token.Style, token.Text, token.Url, token.IsStrikethrough));
 
                 x += tokenWidth;
                 lineHeight = Math.Max(lineHeight, tokenHeight);
@@ -431,49 +431,56 @@ public sealed class MarkdownLayoutEngine
     private ImmutableArray<InlineSegment> FlattenInlineSegments(ImmutableArray<InlineNode> inlines, MarkdownTextStyle baseStyle, MarkdownTheme theme)
     {
         var builder = ImmutableArray.CreateBuilder<InlineSegment>();
-        FlattenInto(inlines, baseStyle);
+        FlattenInto(inlines, baseStyle, url: null, isStrikethrough: false);
         return builder.ToImmutable();
 
-        void FlattenInto(ImmutableArray<InlineNode> nodes, MarkdownTextStyle current)
+        void FlattenInto(ImmutableArray<InlineNode> nodes, MarkdownTextStyle current, string? url, bool isStrikethrough)
         {
             foreach (var n in nodes)
             {
                 switch (n)
                 {
                     case TextInlineNode t:
-                        builder.Add(new InlineSegment(t.Id, t.Kind, t.Span, current, t.Text));
+                        builder.Add(new InlineSegment(
+                            Id: t.Id,
+                            Kind: url is null ? t.Kind : NodeKind.Link,
+                            Span: t.Span,
+                            Style: current,
+                            Text: t.Text,
+                            Url: url,
+                            IsStrikethrough: isStrikethrough));
                         break;
 
                     case InlineCodeNode code:
-                        builder.Add(new InlineSegment(code.Id, code.Kind, code.Span, theme.Typography.InlineCode, code.Code));
+                        builder.Add(new InlineSegment(code.Id, code.Kind, code.Span, theme.Typography.InlineCode, code.Code, Url: null, IsStrikethrough: isStrikethrough));
                         break;
 
                     case LineBreakInlineNode br:
-                        builder.Add(new InlineSegment(br.Id, br.Kind, br.Span, current, "\n"));
+                        builder.Add(new InlineSegment(br.Id, br.Kind, br.Span, current, "\n", Url: null, IsStrikethrough: isStrikethrough));
                         break;
 
                     case EmphasisInlineNode e:
-                        FlattenInto(e.Inlines, current.With(italic: true));
+                        FlattenInto(e.Inlines, current.With(italic: true), url, isStrikethrough);
                         break;
 
                     case StrongInlineNode s:
-                        FlattenInto(s.Inlines, current.With(weight: FontWeight.Bold));
+                        FlattenInto(s.Inlines, current.With(weight: FontWeight.Bold), url, isStrikethrough);
                         break;
 
                     case StrikethroughInlineNode st:
-                        FlattenInto(st.Inlines, current);
+                        FlattenInto(st.Inlines, current, url, isStrikethrough: true);
                         break;
 
                     case LinkInlineNode link:
                         var linkStyle = current.With(
                             foreground: theme.Typography.Link.Foreground,
                             underline: theme.Typography.Link.Underline);
-                        FlattenInto(link.Inlines, linkStyle);
+                        FlattenInto(link.Inlines, linkStyle, url: link.Url, isStrikethrough);
                         break;
 
                     case ImageInlineNode img:
                         // Phase 3: treat image as its alt text for layout measurement.
-                        FlattenInto(img.AltText, current);
+                        FlattenInto(img.AltText, current, url, isStrikethrough);
                         break;
 
                     default:
@@ -490,7 +497,7 @@ public sealed class MarkdownLayoutEngine
         if (s == "\n")
         {
             // Explicit hard break.
-            yield return new Token(segment.Id, segment.Kind, segment.Span, segment.Style, string.Empty, IsWhitespace: true);
+            yield return new Token(segment.Id, segment.Kind, segment.Span, segment.Style, string.Empty, segment.Url, segment.IsStrikethrough, IsWhitespace: true);
             yield break;
         }
 
@@ -507,12 +514,12 @@ public sealed class MarkdownLayoutEngine
             var text = s.Substring(start, end - start);
             var span = new SourceSpan(segment.Span.Start + start, segment.Span.Start + end);
 
-            yield return new Token(segment.Id, segment.Kind, span, segment.Style, text, IsWhitespace: isSpace);
+            yield return new Token(segment.Id, segment.Kind, span, segment.Style, text, segment.Url, segment.IsStrikethrough, IsWhitespace: isSpace);
             start = end;
         }
     }
 
-    private readonly record struct InlineSegment(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text);
+    private readonly record struct InlineSegment(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, string? Url, bool IsStrikethrough);
 
-    private readonly record struct Token(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, bool IsWhitespace);
+    private readonly record struct Token(NodeId Id, NodeKind Kind, SourceSpan Span, MarkdownTextStyle Style, string Text, string? Url, bool IsStrikethrough, bool IsWhitespace);
 }

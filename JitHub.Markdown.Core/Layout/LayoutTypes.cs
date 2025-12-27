@@ -85,4 +85,6 @@ public sealed record InlineRunLayout(
     SourceSpan Span,
     RectF Bounds,
     MarkdownTextStyle Style,
-    string Text);
+    string Text,
+    string? Url,
+    bool IsStrikethrough);

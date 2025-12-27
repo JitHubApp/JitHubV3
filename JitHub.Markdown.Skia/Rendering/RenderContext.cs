@@ -11,4 +11,10 @@ public sealed class RenderContext
     public required float Scale { get; init; }
 
     public float Overscan { get; init; } = 0;
+
+    public IList<HitRegion>? HitRegions { get; init; }
+
+    public NodeId? HoveredId { get; init; }
+
+    public NodeId? PressedId { get; init; }
 }

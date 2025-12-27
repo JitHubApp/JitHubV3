@@ -355,12 +355,20 @@ Tests:
 #### 4.2.3 Emphasis / Strong / Strikethrough
 - Font weight/decoration
 
+Status (implemented):
+- Emphasis + strong are applied during layout (style modifications) and render via the same text pipeline.
+- Strikethrough is propagated into layout runs and rendered as a strike line.
+
 Tests:
 - Golden tests for nested emphasis.
 
 #### 4.2.4 Links
 - Link style + hover/pressed (platform dependent)
 - Hit test region creation for accessibility and activation
+
+Status (implemented):
+- Link runs carry URL metadata, render with link styling, and support simple hover/pressed tinting via `RenderContext`.
+- Renderer collects link hit regions (`HitRegion`) for activation/accessibility wiring.
 
 Tests:
 - Unit tests: link run bounds exist

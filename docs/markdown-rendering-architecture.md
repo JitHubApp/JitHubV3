@@ -166,8 +166,13 @@ This section reflects what currently exists in the repo (not the full end-state 
 - Paragraphs and headings render from `InlineRunLayout` runs (text + basic underline support).
 - Block backgrounds are filled using `MarkdownBlockStyle.Background` + corner radius.
 
+### Decorations + links (so far)
+- Strikethrough is propagated into layout runs and rendered as a strike line.
+- Link runs carry URL metadata; the renderer can collect hit regions for activation/accessibility and supports hover/pressed tinting via `RenderContext`.
+
 ### Tests (gate)
 - `JitHub.Markdown.Tests/MarkdownSkiaRendererTests.cs` exercises an offscreen render pass (no-throw) for paragraph + heading input.
+- Link hit region behavior is unit-tested (URL present and collected).
 
 ---
 

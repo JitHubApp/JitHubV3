@@ -100,7 +100,25 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             return;
         }
 
-        using var paint = CreateTextPaint(run.Style, context.Scale);
+        if (run.Kind == NodeKind.Link && run.Url is not null)
+        {
+            context.HitRegions?.Add(new HitRegion(run.Id, run.Kind, run.Span, run.Bounds, run.Url));
+        }
+
+        var style = run.Style;
+        if (run.Kind == NodeKind.Link)
+        {
+            if (context.PressedId is { } pressed && pressed == run.Id)
+            {
+                style = style.With(foreground: Multiply(style.Foreground, 0.75f));
+            }
+            else if (context.HoveredId is { } hovered && hovered == run.Id)
+            {
+                style = style.With(foreground: Multiply(style.Foreground, 1.1f));
+            }
+        }
+
+        using var paint = CreateTextPaint(style, context.Scale);
         paint.GetFontMetrics(out var metrics);
 
         var x = run.Bounds.X;
@@ -108,20 +126,51 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         context.Canvas.DrawText(run.Text, x, baselineY, paint);
 
-        if (run.Style.Underline)
+        if (style.Underline)
         {
             var w = paint.MeasureText(run.Text);
             using var underline = new SKPaint
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = Math.Max(1, (run.Style.FontSize * 0.08f) * context.Scale),
+                StrokeWidth = Math.Max(1, (style.FontSize * 0.08f) * context.Scale),
                 Color = paint.Color,
             };
 
-            var y = baselineY + Math.Max(1, run.Style.FontSize * 0.12f * context.Scale);
+            var y = baselineY + Math.Max(1, style.FontSize * 0.12f * context.Scale);
             context.Canvas.DrawLine(x, y, x + w, y, underline);
         }
+
+        if (run.IsStrikethrough)
+        {
+            var w = paint.MeasureText(run.Text);
+            using var strike = new SKPaint
+            {
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = Math.Max(1, (style.FontSize * 0.08f) * context.Scale),
+                Color = paint.Color,
+            };
+
+            var y = baselineY - Math.Max(1, style.FontSize * 0.3f * context.Scale);
+            context.Canvas.DrawLine(x, y, x + w, y, strike);
+        }
+    }
+
+    private static ColorRgba Multiply(ColorRgba c, float factor)
+    {
+        static byte Clamp(float v)
+        {
+            if (v <= 0) return 0;
+            if (v >= 255) return 255;
+            return (byte)v;
+        }
+
+        return new ColorRgba(
+            Clamp(c.R * factor),
+            Clamp(c.G * factor),
+            Clamp(c.B * factor),
+            c.A);
     }
 
     private static SKPaint CreateTextPaint(MarkdownTextStyle style, float scale)

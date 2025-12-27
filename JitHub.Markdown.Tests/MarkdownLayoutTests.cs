@@ -106,4 +106,22 @@ public sealed class MarkdownLayoutTests
         full.Blocks.Length.Should().BeGreaterThan(partial.Blocks.Length);
         partial.Blocks.Length.Should().BeGreaterThan(0);
     }
+
+    [Test]
+    public void Strikethrough_is_propagated_to_inline_runs()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("This is ~~deleted~~ text.");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var runs = layout.Blocks
+            .OfType<ParagraphLayout>()
+            .SelectMany(p => p.Lines)
+            .SelectMany(l => l.Runs)
+            .ToArray();
+
+        runs.Any(r => r.Text.Contains("deleted", StringComparison.Ordinal) && r.IsStrikethrough).Should().BeTrue();
+    }
 }
