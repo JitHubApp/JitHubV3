@@ -67,6 +67,33 @@ Non-goals (for the first iteration):
 
 ---
 
+## Implemented so far (Phase 0)
+
+This section reflects what currently exists in the repo (not the full end-state architecture).
+
+### Projects (created + wired)
+- `JitHub.Markdown.Core` (net10.0)
+  - Contains a minimal `MarkdownEngine` wrapper around a Markdig pipeline (`UseAdvancedExtensions()` baseline).
+- `JitHub.Markdown.Skia` (net10.0)
+  - Placeholder project referencing Core (Skia rendering comes in later phases).
+- `JitHub.Markdown.Uno` (net10.0)
+  - Contains a Phase 0 placeholder `MarkdownView` control implemented in code (no XAML yet).
+- `JitHub.Markdown.Tests` (net10.0)
+  - Minimal NUnit tests validating the parsing harness.
+
+### App harness
+- `JitHubV3/Presentation/MarkdownTestPage.xaml` hosts `MarkdownView` and binds to a `Markdown` string in its VM.
+- The harness is intentionally minimal in Phase 0 (no theming toggles/selection diagnostics yet).
+
+### Dependency management
+- `Markdig` is pinned centrally via `Directory.Packages.props`.
+
+### Constraints/decisions captured
+- **Uno SDK build constraint:** a WinUI/Uno class library containing XAML may not be buildable with `dotnet build` in this repo configuration (requires `msbuild`). Phase 0 keeps the adapter code-only to unblock iteration.
+- **Adapter TFM simplification (temporary):** `JitHub.Markdown.Uno` targets `net10.0` only in Phase 0 to avoid platform package graph conflicts during early scaffolding. Re-evaluate multi-targeting and/or build strategy in Phase 1.
+
+---
+
 ## Core architecture
 
 ### 1) Pipeline overview

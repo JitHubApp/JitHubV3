@@ -267,6 +267,7 @@ public partial class App : Application
             new ViewMap(ViewModel: typeof(ShellViewModel)),
             new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
+            new ViewMap<MarkdownTestPage, MarkdownTestViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>()
         );
 
@@ -276,6 +277,7 @@ public partial class App : Application
                 [
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
                     new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                 ]
             )

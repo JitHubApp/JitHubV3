@@ -1,0 +1,30 @@
+<Page x:Class="JitHubV3.Presentation.MarkdownTestPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:md="using:JitHub.Markdown.Uno"
+      mc:Ignorable="d"
+      NavigationCacheMode="Required"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+  <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+
+    <utu:NavigationBar Content="Markdown Test" />
+
+    <ScrollViewer Grid.Row="1">
+      <StackPanel Spacing="12" MaxWidth="960">
+        <TextBox
+          Header="Markdown"
+          AcceptsReturn="True"
+          TextWrapping="Wrap"
+          Text="{Binding Markdown, Mode=TwoWay}" />
+
+        <md:MarkdownView Markdown="{Binding Markdown}" />
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</Page>

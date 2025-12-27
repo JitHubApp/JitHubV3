@@ -17,6 +17,21 @@
       <Deploy />
     </Project>
   </Folder>
+
+  <Folder Name="/Markdown/">
+    <Project Path="JitHub.Markdown.Core/JitHub.Markdown.Core.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="JitHub.Markdown.Skia/JitHub.Markdown.Skia.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="JitHub.Markdown.Uno/JitHub.Markdown.Uno.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="JitHub.Markdown.Tests/JitHub.Markdown.Tests.csproj">
+      <Deploy />
+    </Project>
+  </Folder>
   <Project Path="JitHubV3.Server/JitHubV3.Server.csproj">
     <Deploy />
   </Project>

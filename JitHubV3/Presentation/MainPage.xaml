@@ -23,6 +23,9 @@
         <Button Content="Go to Second Page"
             AutomationProperties.AutomationId="SecondPageButton"
             Command="{Binding GoToSecond}" />
+        <Button Content="Markdown Test"
+          AutomationProperties.AutomationId="MarkdownTestButton"
+          Command="{Binding GoToMarkdownTest}" />
         <Button Content="Load Private Repos"
           Command="{Binding LoadPrivateRepos}" />
         <TextBlock Text="{Binding RepoStatus}"

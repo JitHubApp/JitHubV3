@@ -42,6 +42,30 @@ A phase is “done” when:
 
 ## Phase 0 — Project foundation and repo integration
 
+### Phase 0 status (implemented)
+
+Implemented artifacts:
+- Projects added to the repo and solution:
+  - `JitHub.Markdown.Core` (net10.0): Markdig-based `MarkdownEngine` skeleton.
+  - `JitHub.Markdown.Skia` (net10.0): placeholder project referencing Core.
+  - `JitHub.Markdown.Uno` (net10.0): Phase 0 placeholder `MarkdownView` (code-only, no XAML).
+  - `JitHub.Markdown.Tests` (net10.0): minimal NUnit tests validating the parsing harness.
+- Central Package Management:
+  - `Markdig` is pinned centrally via `Directory.Packages.props`.
+- App dev harness:
+  - `JitHubV3/Presentation/MarkdownTestPage.xaml` + VM are wired into navigation and reachable from the main page.
+  - Current harness UX is intentionally minimal: edit a markdown string and see it passed through to the placeholder view.
+
+Decisions / constraints discovered during Phase 0:
+- **Uno SDK build constraint:** a WinUI/Uno class library that contains XAML may not be buildable with `dotnet build` in this repo configuration (requires `msbuild`). To keep Phase 0 buildable and unblock iteration, `JitHub.Markdown.Uno` is code-only for now.
+- **Adapter TFM simplification:** `JitHub.Markdown.Uno` currently targets **`net10.0` only** to avoid introducing platform runtime package graph conflicts during scaffolding (a WASM runtime package conflict was observed when experimenting with multi-targeting).
+- Deferred deliverables: `JitHub.Markdown.GoldenTests` and `JitHub.Markdown.Benchmarks` are intentionally postponed until Phase 2/3.
+
+Build/test gate (Phase 0):
+- `dotnet build .\\JitHubV3.slnx -c Debug -f net10.0`
+- If you hit intermittent `CS2012` file-lock errors on Windows, rerun with `-m:1`.
+- `dotnet test .\\JitHubV3.slnx -c Debug -f net10.0 -m:1`
+
 ### 0.1 Create project skeletons
 Deliverables:
 - New projects (initial empty or minimal compilable):

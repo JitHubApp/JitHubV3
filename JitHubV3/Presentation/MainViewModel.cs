@@ -33,12 +33,15 @@ public partial class MainViewModel : ObservableObject
         Title += $" - {localizer["ApplicationName"]}";
         Title += $" - {appInfo?.Value?.Environment}";
         GoToSecond = new AsyncRelayCommand(GoToSecondView);
+        GoToMarkdownTest = new AsyncRelayCommand(GoToMarkdownTestView);
         LoadPrivateRepos = new AsyncRelayCommand(DoLoadPrivateRepos);
         Logout = new AsyncRelayCommand(DoLogout);
     }
     public string? Title { get; }
 
     public ICommand GoToSecond { get; }
+
+    public ICommand GoToMarkdownTest { get; }
 
     public ICommand LoadPrivateRepos { get; }
 
@@ -47,6 +50,11 @@ public partial class MainViewModel : ObservableObject
     private async Task GoToSecondView()
     {
         await _navigator.NavigateViewModelAsync<SecondViewModel>(this, data: new Entity(Name!));
+    }
+
+    private async Task GoToMarkdownTestView()
+    {
+        await _navigator.NavigateViewModelAsync<MarkdownTestViewModel>(this);
     }
 
     private async Task DoLoadPrivateRepos()
