@@ -767,6 +767,26 @@ Deliverables:
 Unit tests:
 - RTL shaping/layout tests with known samples.
 
+Implemented notes:
+- Added minimal RTL detection (first-strong-character heuristic) in the core layout engine.
+- RTL paragraphs/headings are right-aligned within their content area.
+- RTL lists place the marker gutter on the right.
+
+#### 7.3.1 RTL shaping + BiDi (not implemented yet)
+Scope:
+- Implement full Unicode BiDi reordering (logical → visual order) and complex-script shaping (Arabic joining, diacritics, ligatures).
+
+Notes on “platform limitation” vs “not implemented”:
+- This is **not a platform limitation** in the same sense as the Skia accessibility gaps in Phase 7.2.x.
+- The current limitation exists because our markdown stack still uses a simplified layout/shaping model (token-based layout + per-char measurement) and we have not integrated a shaping engine (HarfBuzz-level shaping).
+
+Limitations (current):
+- This is paragraph-level RTL alignment only; it does not implement full Unicode BiDi reordering or complex-script shaping.
+- Glyph shaping/kerning for Arabic/Hebrew (HarfBuzz-level shaping) remains a future improvement.
+
+Tests:
+- Added deterministic RTL layout unit tests (Hebrew paragraph alignment + RTL list marker placement).
+
 ### 7.4 High contrast theme support
 Deliverables:
 - High contrast preset + style overrides.

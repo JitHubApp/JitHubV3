@@ -17,13 +17,23 @@
 
     <ScrollViewer Grid.Row="1">
       <StackPanel Spacing="12" MaxWidth="960">
+        <ToggleSwitch
+          Header="RTL"
+          OnContent="Forced RTL (test)"
+          OffContent="Platform default"
+          IsOn="{Binding ForceRtl, Mode=TwoWay}" />
+
         <TextBox
           Header="Markdown"
           AcceptsReturn="True"
           TextWrapping="Wrap"
+          FlowDirection="{Binding PreviewFlowDirection}"
           Text="{Binding Markdown, Mode=TwoWay}" />
 
-        <md:MarkdownView x:Name="MarkdownPreview" Markdown="{Binding Markdown}" />
+        <md:MarkdownView
+          x:Name="MarkdownPreview"
+          IsRightToLeft="{Binding PreviewIsRightToLeft}"
+          Markdown="{Binding Markdown}" />
       </StackPanel>
     </ScrollViewer>
 

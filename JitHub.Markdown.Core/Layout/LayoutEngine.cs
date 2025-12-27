@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text;
 
 namespace JitHub.Markdown;
 
@@ -6,6 +7,12 @@ public sealed class MarkdownLayoutEngine
 {
     private readonly IMarkdownStyleResolver _styleResolver;
     private readonly Dictionary<BlockCacheKey, BlockLayout> _cache = new();
+
+    /// <summary>
+    /// Base direction used when a block contains no strong directional characters.
+    /// This is used as a fallback only; strong RTL/LTR characters in content take precedence.
+    /// </summary>
+    public bool DefaultIsRtl { get; set; }
 
     public MarkdownLayoutEngine(IMarkdownStyleResolver? styleResolver = null)
     {
@@ -287,6 +294,9 @@ public sealed class MarkdownLayoutEngine
         var markerStyle = theme.Typography.Paragraph;
         var markerGap = Math.Max(4f, theme.Metrics.BlockPadding / 2f) * scale;
 
+        // Phase 7.3 (RTL): when content is RTL (or base direction is RTL for neutral content), place marker gutter on the right.
+        var isRtl = DetermineIsRtl(list.Items.SelectMany(static it => it.Blocks));
+
         // Compute a uniform marker gutter width so item content aligns.
         var markerTexts = new string[list.Items.Length];
         var markerWidths = new float[list.Items.Length];
@@ -328,7 +338,7 @@ public sealed class MarkdownLayoutEngine
             foreach (var child in item.Blocks)
             {
                 var childLayout = LayoutBlock(child, itemContentWidth, theme, themeHash, scale, textMeasurer, ref childY);
-                childBlocks.Add(Translate(childLayout, dx: markerGutterWidth, dy: 0));
+                childBlocks.Add(Translate(childLayout, dx: isRtl ? 0 : markerGutterWidth, dy: 0));
             }
 
             localY = childY;
@@ -343,7 +353,8 @@ public sealed class MarkdownLayoutEngine
                 (markerY, markerHeight) = GetFirstLineYAndHeight(first, fallbackLineHeight);
             }
 
-            var markerBounds = new RectF(0, markerY, markerWidths[i], markerHeight);
+            var markerX = isRtl ? Math.Max(0, width - markerWidths[i]) : 0;
+            var markerBounds = new RectF(markerX, markerY, markerWidths[i], markerHeight);
 
             var itemBounds = new RectF(0, itemTop, width, Math.Max(0, localY - itemTop));
             items.Add(new ListItemLayout(
@@ -393,6 +404,8 @@ public sealed class MarkdownLayoutEngine
         var rows = ImmutableArray.CreateBuilder<TableRowLayout>(table.Rows.Length);
         var localY = y + padding;
 
+        var isRtl = DetermineIsRtl(table.Rows.SelectMany(static r => r.Cells).SelectMany(static c => c.Blocks));
+
         for (var r = 0; r < table.Rows.Length; r++)
         {
             var row = table.Rows[r];
@@ -403,7 +416,8 @@ public sealed class MarkdownLayoutEngine
 
             for (var c = 0; c < colCount; c++)
             {
-                var cellX = padding + (c * cellWidth);
+                var visualCol = isRtl ? (colCount - 1 - c) : c;
+                var cellX = padding + (visualCol * cellWidth);
                 var cellY = rowTop;
 
                 ImmutableArray<BlockNode> cellBlocks = ImmutableArray<BlockNode>.Empty;
@@ -638,6 +652,11 @@ public sealed class MarkdownLayoutEngine
     {
         var segments = FlattenInlineSegments(inlines, baseTextStyle, theme);
 
+        // Phase 7.3 (RTL): paragraph-level direction detection.
+        // This is a minimal heuristic (first strong directional character). It aligns the laid-out
+        // lines to the right edge for RTL content, but does not implement full Unicode BiDi shaping.
+        var isRtl = DetermineIsRtl(segments.Select(static s => s.Text));
+
         var lines = ImmutableArray.CreateBuilder<LineLayout>();
         var currentRuns = ImmutableArray.CreateBuilder<InlineRunLayout>();
 
@@ -647,7 +666,13 @@ public sealed class MarkdownLayoutEngine
 
         void FlushLine()
         {
-            lines.Add(new LineLayout(lineY, lineHeight, currentRuns.ToImmutable()));
+            var runs = currentRuns.ToImmutable();
+            if (isRtl && runs.Length > 0)
+            {
+                runs = AlignRunsRight(runs, paddingLeft, contentWidth);
+            }
+
+            lines.Add(new LineLayout(lineY, lineHeight, runs));
             currentRuns.Clear();
             x = paddingLeft;
             lineY += lineHeight;
@@ -747,6 +772,239 @@ public sealed class MarkdownLayoutEngine
         }
 
         return lines.ToImmutable();
+    }
+
+    private static ImmutableArray<InlineRunLayout> AlignRunsRight(ImmutableArray<InlineRunLayout> runs, float paddingLeft, float contentWidth)
+    {
+        if (runs.Length == 0)
+        {
+            return runs;
+        }
+
+        var maxRight = float.NegativeInfinity;
+        for (var i = 0; i < runs.Length; i++)
+        {
+            maxRight = Math.Max(maxRight, runs[i].Bounds.Right);
+        }
+
+        if (!float.IsFinite(maxRight))
+        {
+            return runs;
+        }
+
+        var contentRight = paddingLeft + Math.Max(0, contentWidth);
+        var dx = contentRight - maxRight;
+        if (dx <= 0)
+        {
+            return runs;
+        }
+
+        return runs.Select(r => ShiftRunX(r, dx)).ToImmutableArray();
+    }
+
+    private static InlineRunLayout ShiftRunX(InlineRunLayout run, float dx)
+    {
+        if (dx == 0)
+        {
+            return run;
+        }
+
+        var b = run.Bounds;
+        var shiftedBounds = new RectF(b.X + dx, b.Y, b.Width, b.Height);
+
+        var gx = run.GlyphX;
+        if (!gx.IsDefault && gx.Length > 0)
+        {
+            var builder = ImmutableArray.CreateBuilder<float>(gx.Length);
+            for (var i = 0; i < gx.Length; i++)
+            {
+                builder.Add(gx[i] + dx);
+            }
+            gx = builder.ToImmutable();
+        }
+
+        return run with { Bounds = shiftedBounds, GlyphX = gx };
+    }
+
+    private static bool ContainsStrongRtl(IEnumerable<string> texts)
+    {
+        foreach (var t in texts)
+        {
+            if (TryGetFirstStrongDirection(t, out var rtl))
+            {
+                return rtl;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsStrongRtl(IEnumerable<BlockNode> blocks)
+    {
+        foreach (var b in blocks)
+        {
+            if (TryGetFirstStrongDirection(b, out var rtl))
+            {
+                return rtl;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryGetFirstStrongDirection(BlockNode block, out bool isRtl)
+    {
+        switch (block)
+        {
+            case ParagraphBlockNode p:
+                return TryGetFirstStrongDirection(p.Inlines, out isRtl);
+            case HeadingBlockNode h:
+                return TryGetFirstStrongDirection(h.Inlines, out isRtl);
+            case BlockQuoteBlockNode q:
+                return TryGetFirstStrongDirection(q.Blocks, out isRtl);
+            case ListBlockNode l:
+                return TryGetFirstStrongDirection(l.Items.SelectMany(static it => it.Blocks), out isRtl);
+            case ListItemBlockNode li:
+                return TryGetFirstStrongDirection(li.Blocks, out isRtl);
+            case TableBlockNode t:
+                return TryGetFirstStrongDirection(t.Rows.SelectMany(static r => r.Cells).SelectMany(static c => c.Blocks), out isRtl);
+            case TableRowBlockNode tr:
+                return TryGetFirstStrongDirection(tr.Cells.SelectMany(static c => c.Blocks), out isRtl);
+            case TableCellBlockNode tc:
+                return TryGetFirstStrongDirection(tc.Blocks, out isRtl);
+            case CodeBlockNode:
+            case ThematicBreakBlockNode:
+                isRtl = false;
+                return false;
+            default:
+                isRtl = false;
+                return false;
+        }
+    }
+
+    private static bool TryGetFirstStrongDirection(IEnumerable<BlockNode> blocks, out bool isRtl)
+    {
+        foreach (var b in blocks)
+        {
+            if (TryGetFirstStrongDirection(b, out isRtl))
+            {
+                return true;
+            }
+        }
+
+        isRtl = false;
+        return false;
+    }
+
+    private static bool TryGetFirstStrongDirection(ImmutableArray<InlineNode> inlines, out bool isRtl)
+    {
+        for (var i = 0; i < inlines.Length; i++)
+        {
+            if (TryGetFirstStrongDirection(inlines[i], out isRtl))
+            {
+                return true;
+            }
+        }
+
+        isRtl = false;
+        return false;
+    }
+
+    private static bool TryGetFirstStrongDirection(InlineNode inline, out bool isRtl)
+    {
+        switch (inline)
+        {
+            case TextInlineNode t:
+                return TryGetFirstStrongDirection(t.Text, out isRtl);
+            case InlineCodeNode c:
+                return TryGetFirstStrongDirection(c.Code, out isRtl);
+            case EmphasisInlineNode e:
+                return TryGetFirstStrongDirection(e.Inlines, out isRtl);
+            case StrongInlineNode s:
+                return TryGetFirstStrongDirection(s.Inlines, out isRtl);
+            case StrikethroughInlineNode st:
+                return TryGetFirstStrongDirection(st.Inlines, out isRtl);
+            case LinkInlineNode l:
+                return TryGetFirstStrongDirection(l.Inlines, out isRtl);
+            case ImageInlineNode img:
+                return TryGetFirstStrongDirection(img.AltText, out isRtl);
+            case LineBreakInlineNode:
+                isRtl = false;
+                return false;
+            default:
+                isRtl = false;
+                return false;
+        }
+    }
+
+    private static bool TryGetFirstStrongDirection(string? text, out bool isRtl)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            isRtl = false;
+            return false;
+        }
+
+        foreach (var rune in text.EnumerateRunes())
+        {
+            if (IsStrongRtlRune(rune))
+            {
+                isRtl = true;
+                return true;
+            }
+
+            if (IsStrongLtrRune(rune))
+            {
+                isRtl = false;
+                return true;
+            }
+        }
+
+        isRtl = false;
+        return false;
+    }
+
+    private bool DetermineIsRtl(IEnumerable<string> texts)
+    {
+        foreach (var t in texts)
+        {
+            if (TryGetFirstStrongDirection(t, out var rtl))
+            {
+                return rtl;
+            }
+        }
+
+        return DefaultIsRtl;
+    }
+
+    private bool DetermineIsRtl(IEnumerable<BlockNode> blocks)
+    {
+        foreach (var b in blocks)
+        {
+            if (TryGetFirstStrongDirection(b, out var rtl))
+            {
+                return rtl;
+            }
+        }
+
+        return DefaultIsRtl;
+    }
+
+    private static bool IsStrongRtlRune(Rune r)
+    {
+        // Heuristic: treat common RTL blocks as strong RTL.
+        // Hebrew, Arabic, Arabic Supplement, Arabic Extended, Arabic Presentation Forms.
+        var v = r.Value;
+        return (v >= 0x0590 && v <= 0x08FF)
+            || (v >= 0xFB1D && v <= 0xFEFF);
+    }
+
+    private static bool IsStrongLtrRune(Rune r)
+    {
+        // Latin letters count as strong LTR for our heuristic.
+        var v = r.Value;
+        return (v >= 'A' && v <= 'Z')
+            || (v >= 'a' && v <= 'z');
     }
 
     private static ImmutableArray<float> BuildGlyphX(string text, MarkdownTextStyle style, float scale, ITextMeasurer measurer, float startX, float extraLeft)

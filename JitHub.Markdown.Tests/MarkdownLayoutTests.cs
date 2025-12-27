@@ -214,4 +214,49 @@ public sealed class MarkdownLayoutTests
         runs[0].Bounds.Width.Should().BeGreaterThan(0);
         runs[0].Bounds.Height.Should().BeApproximately(theme.Metrics.ImagePlaceholderHeight, 0.01f);
     }
+
+    [Test]
+    public void Rtl_paragraph_aligns_runs_to_content_right_edge()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("שלום עולם");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var theme = MarkdownTheme.Light;
+        var scale = 1f;
+
+        var layout = layoutEngine.Layout(doc, width: 600, theme: theme, scale: scale, textMeasurer: new TestTextMeasurer());
+        var para = layout.Blocks.OfType<ParagraphLayout>().Single();
+
+        var runs = para.Lines.SelectMany(l => l.Runs).Where(r => !string.IsNullOrWhiteSpace(r.Text)).ToArray();
+        runs.Should().NotBeEmpty();
+
+        var padding = Math.Max(0, para.Style.Padding) * scale;
+        var expectedRight = layout.Width - padding;
+        var maxRight = runs.Max(r => r.Bounds.Right);
+
+        maxRight.Should().BeApproximately(expectedRight, 1.0f);
+    }
+
+    [Test]
+    public void Rtl_list_places_marker_gutter_on_right()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("- שלום\n- עולם\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 400, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var list = layout.Blocks.OfType<ListLayout>().Single();
+        list.Items.Length.Should().Be(2);
+
+        // Marker should be placed on the right side for RTL.
+        var item = list.Items[0];
+        item.MarkerBounds.X.Should().BeGreaterThan(0);
+        item.MarkerBounds.Right.Should().BeApproximately(list.Bounds.Width, 1.0f);
+
+        // Content blocks should not be shifted right by a left-side marker gutter.
+        item.Blocks.Should().NotBeEmpty();
+        item.Blocks[0].Bounds.X.Should().BeApproximately(0, 0.01f);
+    }
 }

@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
+using System.Globalization;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Dispatching;
@@ -45,6 +46,12 @@ public class SkiaMarkdownView : ContentControl
         typeof(SkiaMarkdownView),
         new PropertyMetadata(true, OnSelectionEnabledChanged));
 
+    public static readonly DependencyProperty IsRightToLeftProperty = DependencyProperty.Register(
+        nameof(IsRightToLeft),
+        typeof(bool),
+        typeof(SkiaMarkdownView),
+        new PropertyMetadata(GetPlatformIsRtl(), OnIsRightToLeftChanged));
+
     public string Markdown
     {
         get => (string)GetValue(MarkdownProperty);
@@ -69,6 +76,17 @@ public class SkiaMarkdownView : ContentControl
         set => SetValue(SelectionEnabledProperty, value);
     }
 
+    /// <summary>
+    /// Controls the base text direction for the markdown layout engine.
+    /// Note: this is intentionally separate from XAML FlowDirection because applying RTL FlowDirection
+    /// to a Skia-rendered surface will mirror the entire drawing output.
+    /// </summary>
+    public bool IsRightToLeft
+    {
+        get => (bool)GetValue(IsRightToLeftProperty);
+        set => SetValue(IsRightToLeftProperty, value);
+    }
+
     public SelectionRange? Selection
     {
         get => _selection;
@@ -91,6 +109,9 @@ public class SkiaMarkdownView : ContentControl
     public SkiaMarkdownView()
     {
         IsTabStop = true;
+        // Prevent XAML FlowDirection from mirroring the Skia surface.
+        // RTL is handled by the layout engine (alignment, gutters, etc.).
+        FlowDirection = FlowDirection.LeftToRight;
         Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         // Uno docs: when nested in a ScrollViewer, a control can receive PointerCancelled as soon as scrolling is detected.
         // Setting ManipulationMode to something other than System prevents that behavior.
@@ -102,6 +123,7 @@ public class SkiaMarkdownView : ContentControl
 
         _engine = MarkdownEngine.CreateDefault();
         _layoutEngine = new MarkdownLayoutEngine();
+        _layoutEngine.DefaultIsRtl = IsRightToLeft;
         _textMeasurer = new SkiaTextMeasurer();
         _renderer = new SkiaMarkdownRenderer();
 
@@ -150,6 +172,16 @@ public class SkiaMarkdownView : ContentControl
         KeyUp += OnKeyUp;
 
         RebuildDocumentAndLayout();
+    }
+
+    private static bool GetPlatformIsRtl()
+        => CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft;
+
+    private static void OnIsRightToLeftChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (SkiaMarkdownView)d;
+        view._layoutEngine.DefaultIsRtl = (bool)e.NewValue;
+        view.RebuildLayoutOnly();
     }
 
     private readonly MarkdownEngine _engine;

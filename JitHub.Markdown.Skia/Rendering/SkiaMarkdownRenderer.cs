@@ -162,8 +162,14 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             return;
         }
 
+        // Phase 7.3 (RTL): place the quote stripe on the right for RTL content.
+        var isRtl = ContainsStrongRtl(quote);
+
         var stripeWidth = Math.Max(2f, MathF.Round(padding * 0.2f));
-        var stripeX = quote.Bounds.X + MathF.Round(padding * 0.35f);
+        var stripeInset = MathF.Round(padding * 0.35f);
+        var stripeX = isRtl
+            ? (quote.Bounds.Right - stripeInset - stripeWidth)
+            : (quote.Bounds.X + stripeInset);
         var stripeTop = quote.Bounds.Y + MathF.Round(padding * 0.2f);
         var stripeBottom = quote.Bounds.Bottom - MathF.Round(padding * 0.2f);
 
@@ -181,6 +187,75 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         var r = new SKRect(stripeX, stripeTop, stripeX + stripeWidth, stripeBottom);
         context.Canvas.DrawRect(r, paint);
+    }
+
+    private static bool ContainsStrongRtl(BlockQuoteLayout quote)
+    {
+        for (var i = 0; i < quote.Blocks.Length; i++)
+        {
+            if (ContainsStrongRtl(quote.Blocks[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsStrongRtl(BlockLayout block)
+        => block switch
+        {
+            ParagraphLayout p => ContainsStrongRtl(p.Lines),
+            HeadingLayout h => ContainsStrongRtl(h.Lines),
+            CodeBlockLayout => false,
+            BlockQuoteLayout q => q.Blocks.Any(ContainsStrongRtl),
+            ListLayout l => l.Items.Any(ContainsStrongRtl),
+            ListItemLayout li => li.Blocks.Any(ContainsStrongRtl),
+            TableLayout t => t.Rows.SelectMany(static r => r.Cells).SelectMany(static c => c.Blocks).Any(ContainsStrongRtl),
+            _ => false,
+        };
+
+    private static bool ContainsStrongRtl(System.Collections.Immutable.ImmutableArray<LineLayout> lines)
+    {
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var runs = lines[i].Runs;
+            for (var r = 0; r < runs.Length; r++)
+            {
+                if (ContainsStrongRtl(runs[r].Text))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsStrongRtl(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        foreach (var rune in text.EnumerateRunes())
+        {
+            var v = rune.Value;
+            // Hebrew, Arabic, Arabic Supplement, Arabic Extended, Arabic Presentation Forms.
+            if ((v >= 0x0590 && v <= 0x08FF) || (v >= 0xFB1D && v <= 0xFEFF))
+            {
+                return true;
+            }
+
+            // If we hit a strong Latin letter first, treat as LTR.
+            if ((v >= 'A' && v <= 'Z') || (v >= 'a' && v <= 'z'))
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static void DrawListMarker(ListItemLayout item, RenderContext context)
