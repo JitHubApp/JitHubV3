@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.Json;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Dispatching;
@@ -81,6 +83,8 @@ public class SkiaMarkdownView : ContentControl
 
     private SkiaMarkdownViewAutomationPeer? _automationPeer;
 
+    private static bool IsWebAssembly => OperatingSystem.IsBrowser();
+
     protected override AutomationPeer OnCreateAutomationPeer()
         => _automationPeer ??= new SkiaMarkdownViewAutomationPeer(this);
 
@@ -113,14 +117,12 @@ public class SkiaMarkdownView : ContentControl
             IsHitTestVisible = true,
         };
 
-        _linkFocusOverlay = new Border
+        _linkFocusOverlay = new Canvas
         {
             Visibility = Visibility.Collapsed,
             IsHitTestVisible = false,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
-            BorderThickness = new Thickness(2),
-            BorderBrush = GetLinkFocusBrush(),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
         };
 
@@ -156,7 +158,12 @@ public class SkiaMarkdownView : ContentControl
     private readonly SkiaMarkdownRenderer _renderer;
     private readonly Grid _canvas;
     private readonly Image _image;
-    private readonly Border _linkFocusOverlay;
+    private readonly Canvas _linkFocusOverlay;
+
+    private readonly List<Border> _linkFocusRects = new();
+
+    private readonly string _wasmAriaInstanceId = Guid.NewGuid().ToString("N");
+    private bool _wasmAriaOverlayQueued;
 
     private MarkdownDocumentModel? _document;
     private MarkdownLayout? _layout;
@@ -260,6 +267,12 @@ public class SkiaMarkdownView : ContentControl
             UpdateViewportFromScrollViewer();
         }
 
+        if (IsWebAssembly)
+        {
+            EnsureWasmAriaOverlayInitialized();
+            RequestWasmAriaOverlayUpdate();
+        }
+
         RequestRender();
     }
 
@@ -283,6 +296,11 @@ public class SkiaMarkdownView : ContentControl
         {
             System.Buffers.ArrayPool<byte>.Shared.Return(_renderPixelBuffer);
             _renderPixelBuffer = null;
+        }
+
+        if (IsWebAssembly)
+        {
+            DisposeWasmAriaOverlay();
         }
     }
 
@@ -634,6 +652,14 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
+        // WebAssembly accessibility: do NOT handle Tab in the XAML layer.
+        // The Skia renderer draws to a canvas, so screen readers need real DOM focus changes.
+        // Our WASM ARIA overlay is DOM-based; letting Tab propagate enables browser-driven focus navigation.
+        if (IsWebAssembly && e.Key == VirtualKey.Tab)
+        {
+            return;
+        }
+
         if (_layout is null)
         {
             return;
@@ -753,14 +779,211 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        var b = focused.Value.Bounds;
+        var id = focused.Value.Id;
+        var url = focused.Value.Url;
+        var rects = GetLinkRunBounds(_layout, id, url);
+
+        if (rects.Count == 0)
+        {
+            // Fallback: use the single cached bounds.
+            rects.Add(focused.Value.Bounds);
+        }
+
+        // Long links may be split into multiple runs (e.g. word-by-word). Merge adjacent
+        // rectangles so the highlight matches the original link across a line.
+        rects = MergeAdjacentRectsByLine(rects);
+
+        EnsureLinkFocusRects(rects.Count);
+
+        for (var i = 0; i < rects.Count; i++)
+        {
+            var r = rects[i];
+            var box = _linkFocusRects[i];
+
+            Canvas.SetLeft(box, r.X);
+            Canvas.SetTop(box, r.Y);
+            box.Width = r.Width;
+            box.Height = r.Height;
+            box.Visibility = Visibility.Visible;
+        }
+
+        for (var i = rects.Count; i < _linkFocusRects.Count; i++)
+        {
+            _linkFocusRects[i].Visibility = Visibility.Collapsed;
+        }
+
         _linkFocusOverlay.Visibility = Visibility.Visible;
-        // IMPORTANT: Bounds are in document/layout coordinates (full control space), not viewport-local.
-        // The markdown view virtualizes rendering into a viewport bitmap, but this overlay must remain
-        // anchored to the actual document position so it scrolls naturally with the ScrollViewer.
-        _linkFocusOverlay.Margin = new Thickness(b.X, b.Y, 0, 0);
-        _linkFocusOverlay.Width = b.Width;
-        _linkFocusOverlay.Height = b.Height;
+    }
+
+    private static List<RectF> MergeAdjacentRectsByLine(List<RectF> rects)
+    {
+        if (rects.Count <= 1)
+        {
+            return rects;
+        }
+
+        // `GetLinkRunBounds` already sorts top-to-bottom, left-to-right.
+        const float yTolerance = 2f;
+        const float xGapTolerance = 6f;
+
+        var merged = new List<RectF>(rects.Count);
+        var current = rects[0];
+
+        for (var i = 1; i < rects.Count; i++)
+        {
+            var r = rects[i];
+
+            // Consider rects to be on the same line if their vertical bands overlap substantially.
+            var currentBottom = current.Y + current.Height;
+            var rBottom = r.Y + r.Height;
+            var overlapTop = Math.Max(current.Y, r.Y);
+            var overlapBottom = Math.Min(currentBottom, rBottom);
+            var overlap = overlapBottom - overlapTop;
+
+            var minHeight = Math.Min(current.Height, r.Height);
+            var sameLine = overlap >= (minHeight * 0.6f) || (Math.Abs(current.Y - r.Y) <= yTolerance && Math.Abs(currentBottom - rBottom) <= yTolerance);
+
+            var currentRight = current.X + current.Width;
+            var rRight = r.X + r.Width;
+            var closeHorizontally = r.X <= (currentRight + xGapTolerance);
+
+            if (sameLine && closeHorizontally)
+            {
+                var left = Math.Min(current.X, r.X);
+                var top = Math.Min(current.Y, r.Y);
+                var right = Math.Max(currentRight, rRight);
+                var bottom = Math.Max(currentBottom, rBottom);
+                current = new RectF(left, top, right - left, bottom - top);
+            }
+            else
+            {
+                merged.Add(current);
+                current = r;
+            }
+        }
+
+        merged.Add(current);
+        return merged;
+    }
+
+    private void EnsureLinkFocusRects(int count)
+    {
+        while (_linkFocusRects.Count < count)
+        {
+            var box = new Border
+            {
+                IsHitTestVisible = false,
+                BorderThickness = new Thickness(2),
+                BorderBrush = GetLinkFocusBrush(),
+                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                Visibility = Visibility.Collapsed,
+            };
+
+            _linkFocusRects.Add(box);
+            _linkFocusOverlay.Children.Add(box);
+        }
+    }
+
+    private static List<RectF> GetLinkRunBounds(MarkdownLayout layout, NodeId id, string? url)
+    {
+        var rects = new List<RectF>();
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return rects;
+        }
+
+        for (var i = 0; i < layout.Blocks.Length; i++)
+        {
+            CollectLinkRunBounds(layout.Blocks[i], id, url, rects);
+        }
+
+        // Sort for stable overlay order (top-to-bottom, left-to-right).
+        rects.Sort(static (a, b) =>
+        {
+            var cy = a.Y.CompareTo(b.Y);
+            return cy != 0 ? cy : a.X.CompareTo(b.X);
+        });
+
+        return rects;
+    }
+
+    private static void CollectLinkRunBounds(BlockLayout block, NodeId id, string url, List<RectF> rects)
+    {
+        switch (block)
+        {
+            case ParagraphLayout p:
+                CollectLinkRunBounds(p.Lines, id, url, rects);
+                break;
+            case HeadingLayout h:
+                CollectLinkRunBounds(h.Lines, id, url, rects);
+                break;
+            case CodeBlockLayout c:
+                CollectLinkRunBounds(c.Lines, id, url, rects);
+                break;
+            case BlockQuoteLayout q:
+                foreach (var child in q.Blocks)
+                {
+                    CollectLinkRunBounds(child, id, url, rects);
+                }
+                break;
+            case ListLayout l:
+                foreach (var item in l.Items)
+                {
+                    CollectLinkRunBounds(item, id, url, rects);
+                }
+                break;
+            case ListItemLayout li:
+                foreach (var child in li.Blocks)
+                {
+                    CollectLinkRunBounds(child, id, url, rects);
+                }
+                break;
+            case TableLayout t:
+                foreach (var row in t.Rows)
+                {
+                    foreach (var cell in row.Cells)
+                    {
+                        foreach (var child in cell.Blocks)
+                        {
+                            CollectLinkRunBounds(child, id, url, rects);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    private static void CollectLinkRunBounds(ImmutableArray<LineLayout> lines, NodeId id, string url, List<RectF> rects)
+    {
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            for (var j = 0; j < line.Runs.Length; j++)
+            {
+                var run = line.Runs[j];
+                if (run.Kind != NodeKind.Link)
+                {
+                    continue;
+                }
+
+                if (run.Id != id)
+                {
+                    continue;
+                }
+
+                if (!string.Equals(run.Url, url, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (run.Bounds.Width <= 0 || run.Bounds.Height <= 0)
+                {
+                    continue;
+                }
+
+                rects.Add(run.Bounds);
+            }
+        }
     }
 
     private void NotifyAutomationFocusOrNameChanged()
@@ -1210,6 +1433,10 @@ public class SkiaMarkdownView : ContentControl
     {
         UpdateViewportFromScrollViewer();
         RequestRender();
+        if (IsWebAssembly)
+        {
+            RequestWasmAriaOverlayUpdate();
+        }
     }
 
     private void UpdateViewportFromScrollViewer()
@@ -1255,6 +1482,10 @@ public class SkiaMarkdownView : ContentControl
 
             _image.Margin = new Thickness(0, _viewportTop, 0, 0);
             UpdateLinkFocusOverlay();
+            if (IsWebAssembly)
+            {
+                RequestWasmAriaOverlayUpdate();
+            }
         }
         catch
         {
@@ -1264,6 +1495,10 @@ public class SkiaMarkdownView : ContentControl
             _image.Visibility = Visibility.Visible;
             _image.Margin = new Thickness(0);
             UpdateLinkFocusOverlay();
+            if (IsWebAssembly)
+            {
+                RequestWasmAriaOverlayUpdate();
+            }
         }
     }
 
@@ -1295,6 +1530,11 @@ public class SkiaMarkdownView : ContentControl
 
         UpdateViewportFromScrollViewer();
         RequestRender();
+
+        if (IsWebAssembly)
+        {
+            RequestWasmAriaOverlayUpdate();
+        }
     }
 
     private void RequestRender()
@@ -1321,6 +1561,246 @@ public class SkiaMarkdownView : ContentControl
         {
             _renderQueued = false;
             InvalidateRender();
+        }
+    }
+
+    private void RequestWasmAriaOverlayUpdate()
+    {
+        if (!IsWebAssembly)
+        {
+            return;
+        }
+
+        if (_wasmAriaOverlayQueued)
+        {
+            return;
+        }
+
+        _wasmAriaOverlayQueued = true;
+
+        var queue = DispatcherQueue;
+        if (!queue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+            {
+                _wasmAriaOverlayQueued = false;
+                UpdateWasmAriaOverlayCore();
+            }))
+        {
+            _wasmAriaOverlayQueued = false;
+            UpdateWasmAriaOverlayCore();
+        }
+    }
+
+    private void EnsureWasmAriaOverlayInitialized()
+    {
+        if (!IsWebAssembly)
+        {
+            return;
+        }
+
+        _ = TryInvokeJS("(function(){\n" +
+            "  const g = globalThis;\n" +
+            "  if (g.jithubMarkdownAriaOverlay) return;\n" +
+            "  const api = {};\n" +
+            "  api._instances = new Map();\n" +
+            "  api._ensure = function(id){\n" +
+            "    let inst = api._instances.get(id);\n" +
+            "    if (inst) return inst;\n" +
+            "    const root = document.createElement('div');\n" +
+            "    root.setAttribute('data-jithub-md-a11y', id);\n" +
+            "    root.style.position = 'fixed';\n" +
+            "    root.style.left = '0px';\n" +
+            "    root.style.top = '0px';\n" +
+            "    root.style.width = '0px';\n" +
+            "    root.style.height = '0px';\n" +
+            "    root.style.zIndex = '2147483647';\n" +
+            "    document.body.appendChild(root);\n" +
+            "    inst = { root: root, els: new Map() };\n" +
+            "    api._instances.set(id, inst);\n" +
+            "    return inst;\n" +
+            "  };\n" +
+            "  api.dispose = function(id){\n" +
+            "    const inst = api._instances.get(id);\n" +
+            "    if (!inst) return;\n" +
+            "    inst.root.remove();\n" +
+            "    api._instances.delete(id);\n" +
+            "  };\n" +
+            "  api.update = function(id, nodes){\n" +
+            "    const inst = api._ensure(id);\n" +
+            "    const desired = new Set();\n" +
+            "    for (const n of nodes){\n" +
+            "      desired.add(n.key);\n" +
+            "      let el = inst.els.get(n.key);\n" +
+            "      if (!el){\n" +
+            "        el = (n.role === 'link') ? document.createElement('a') : document.createElement('div');\n" +
+            "        el.setAttribute('data-jithub-md-node', n.key);\n" +
+            "        el.tabIndex = 0;\n" +
+            "        el.style.position = 'fixed';\n" +
+            // Some AT/browser combos can ignore fully-transparent focusable elements.
+            "        el.style.opacity = '0.01';\n" +
+            "        el.style.background = 'transparent';\n" +
+            "        el.style.pointerEvents = 'auto';\n" +
+            "        el.style.outline = 'none';\n" +
+            "        inst.root.appendChild(el);\n" +
+            "        inst.els.set(n.key, el);\n" +
+            "      }\n" +
+            "      if (n.role === 'link'){\n" +
+            "        el.setAttribute('role', 'link');\n" +
+            "        if (n.url) el.setAttribute('href', n.url);\n" +
+            "      } else if (n.role === 'heading'){\n" +
+            "        el.setAttribute('role', 'heading');\n" +
+            "        if (n.level) el.setAttribute('aria-level', String(n.level));\n" +
+            "      } else if (n.role === 'listitem'){\n" +
+            "        el.setAttribute('role', 'listitem');\n" +
+            "      } else {\n" +
+            "        el.setAttribute('role', 'group');\n" +
+            "      }\n" +
+            "      const label = n.label || '';\n" +
+            "      el.setAttribute('aria-label', label);\n" +
+            "      if (label) { el.textContent = label; }\n" +
+            "      el.style.left = (n.x|0) + 'px';\n" +
+            "      el.style.top = (n.y|0) + 'px';\n" +
+            "      el.style.width = Math.max(0, n.w|0) + 'px';\n" +
+            "      el.style.height = Math.max(0, n.h|0) + 'px';\n" +
+            "    }\n" +
+            "    for (const [k, el] of inst.els){\n" +
+            "      if (!desired.has(k)){\n" +
+            "        el.remove();\n" +
+            "        inst.els.delete(k);\n" +
+            "      }\n" +
+            "    }\n" +
+            "  };\n" +
+            "  g.jithubMarkdownAriaOverlay = api;\n" +
+            "})();");
+    }
+
+    private void DisposeWasmAriaOverlay()
+    {
+        if (!IsWebAssembly)
+        {
+            return;
+        }
+
+        var idJson = JsonSerializer.Serialize(_wasmAriaInstanceId);
+        _ = TryInvokeJS($"globalThis.jithubMarkdownAriaOverlay && globalThis.jithubMarkdownAriaOverlay.dispose({idJson});");
+    }
+
+    private void UpdateWasmAriaOverlayCore()
+    {
+        if (!IsWebAssembly)
+        {
+            return;
+        }
+
+        EnsureWasmAriaOverlayInitialized();
+
+        if (_layout is null)
+        {
+            var idJson = JsonSerializer.Serialize(_wasmAriaInstanceId);
+            _ = TryInvokeJS($"globalThis.jithubMarkdownAriaOverlay && globalThis.jithubMarkdownAriaOverlay.update({idJson}, []);");
+            return;
+        }
+
+        Windows.Foundation.Point controlTopLeft;
+        try
+        {
+            var transform = TransformToVisual(null);
+            controlTopLeft = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+        }
+        catch
+        {
+            controlTopLeft = new Windows.Foundation.Point(0, 0);
+        }
+
+        var viewportHeight = (float)_viewportHeight;
+        if (viewportHeight <= 0)
+        {
+            viewportHeight = (float)Math.Max(0, ActualHeight);
+        }
+
+        var tree = MarkdownAccessibilityTreeBuilder.Build(
+            _layout,
+            viewportTop: (float)_viewportTop,
+            viewportHeight: viewportHeight,
+            overscan: 32);
+
+        var nodes = new List<object>(64);
+
+        void AddNodesRec(AccessibilityNode node)
+        {
+            var isRelevant = node.Role is MarkdownAccessibilityRole.Heading
+                or MarkdownAccessibilityRole.ListItem
+                or MarkdownAccessibilityRole.Link;
+
+            if (isRelevant)
+            {
+                var b = node.Bounds;
+                var absX = controlTopLeft.X + b.X;
+                var absY = controlTopLeft.Y + b.Y;
+
+                var role = node.Role switch
+                {
+                    MarkdownAccessibilityRole.Heading => "heading",
+                    MarkdownAccessibilityRole.ListItem => "listitem",
+                    MarkdownAccessibilityRole.Link => "link",
+                    _ => "group",
+                };
+
+                var label = node.Role == MarkdownAccessibilityRole.Link && !string.IsNullOrWhiteSpace(node.Url)
+                    ? string.IsNullOrWhiteSpace(node.Name) ? node.Url! : $"{node.Name} ({node.Url})"
+                    : (node.Name ?? string.Empty);
+
+                var key = node.Role == MarkdownAccessibilityRole.Link && !string.IsNullOrWhiteSpace(node.Url)
+                    ? $"{role}_{node.Id.Value}_{node.Url}"
+                    : $"{role}_{node.Id.Value}";
+
+                nodes.Add(new
+                {
+                    key,
+                    role,
+                    label,
+                    url = node.Url,
+                    level = node.Level,
+                    x = absX,
+                    y = absY,
+                    w = b.Width,
+                    h = b.Height,
+                });
+            }
+
+            foreach (var child in node.Children)
+            {
+                AddNodesRec(child);
+            }
+        }
+
+        AddNodesRec(tree.Root);
+
+        var idJson2 = JsonSerializer.Serialize(_wasmAriaInstanceId);
+        var nodesJson = JsonSerializer.Serialize(nodes);
+        _ = TryInvokeJS($"globalThis.jithubMarkdownAriaOverlay && globalThis.jithubMarkdownAriaOverlay.update({idJson2}, {nodesJson});");
+    }
+
+    private static string? TryInvokeJS(string script)
+    {
+        try
+        {
+            var t = Type.GetType("Uno.Foundation.WebAssemblyRuntime, Uno.Foundation");
+            if (t is null)
+            {
+                return null;
+            }
+
+            var m = t.GetMethod("InvokeJS", new[] { typeof(string) });
+            if (m is null)
+            {
+                return null;
+            }
+
+            return m.Invoke(null, new object[] { script }) as string;
+        }
+        catch
+        {
+            return null;
         }
     }
 

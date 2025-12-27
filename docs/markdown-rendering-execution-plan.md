@@ -713,12 +713,29 @@ Manual verification (Narrator on Windows):
   - Scroll the page (mouse wheel / touchpad) while Narrator focus is within the markdown view.
   - Expected: focus remains stable; when you `Tab`/`Shift+Tab` again, focus continues to reachable links (no “lost focus” state).
 
-#### 7.2.2 WebAssembly (ARIA overlay)
+#### 7.2.2 WebAssembly (ARIA overlay) (attempted; blocked by current Skia a11y limitations)
 - Optional ARIA overlay for screen readers.
 - Keep overlays aligned with layout bounds.
 
+Implemented notes:
+- Added a WASM-only DOM overlay in `SkiaMarkdownView` that mirrors the *visible* semantic accessibility nodes.
+- Overlay elements are positioned to match node bounds and updated on scroll/layout changes.
+
+Current status / findings:
+- Narrator does not consistently announce content in the WASM + Skia renderer path.
+- Skia renderer accessibility support is documented by Uno as a work in progress (Skia draws to a canvas and does not rely on native controls):
+  - https://platform.uno/docs/articles/features/using-skia-rendering.html#limitations
+- WinAppSDK/native rendering remains the supported path for Narrator-level accessibility today.
+
+Manual verification (WebAssembly):
+- Load the Markdown Test Page in the WASM host.
+- Turn on a screen reader (e.g., Narrator in Edge, NVDA in Chrome).
+- Navigate the page using the screen reader’s browse mode/virtual cursor.
+  - Expected (target): headings/list items/links are discoverable as readable elements.
+  - Observed (current): may remain silent due to Skia renderer accessibility limitations.
+
 Tests:
-- Manual screen reader checks + DOM snapshot tests (if feasible).
+- Manual screen reader checks only.
 
 #### 7.2.3 iOS (UIAccessibility)
 - Provide accessibility elements and labels.
