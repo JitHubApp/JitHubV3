@@ -77,7 +77,9 @@ This section reflects what currently exists in the repo (not the full end-state 
 - `JitHub.Markdown.Skia` (net10.0)
   - Placeholder project referencing Core (Skia rendering comes in later phases).
 - `JitHub.Markdown.Uno` (net10.0)
-  - Contains a Phase 0 placeholder `MarkdownView` control implemented in code (no XAML yet).
+  - Contains a Phase 0 code-only placeholder `MarkdownView` control.
+- `JitHub.Markdown.Uno/Xaml/MarkdownView.xaml`
+  - XAML placeholder control kept for MSBuild (Full) builds.
 - `JitHub.Markdown.Tests` (net10.0)
   - Minimal NUnit tests validating the parsing harness.
 
@@ -91,6 +93,29 @@ This section reflects what currently exists in the repo (not the full end-state 
 ### Constraints/decisions captured
 - **Uno SDK build constraint:** a WinUI/Uno class library containing XAML may not be buildable with `dotnet build` in this repo configuration (requires `msbuild`). Phase 0 keeps the adapter code-only to unblock iteration.
 - **Adapter TFM simplification (temporary):** `JitHub.Markdown.Uno` targets `net10.0` only in Phase 0 to avoid platform package graph conflicts during early scaffolding. Re-evaluate multi-targeting and/or build strategy in Phase 1.
+
+---
+
+## Implemented so far (Phase 1)
+
+### Parsing + model + source mapping
+- `MarkdownEngine.Parse()` returns a `MarkdownDocumentModel` containing:
+  - `SourceMarkdown`
+  - normalized `BlockNode[]` + `InlineNode[]`
+  - `SourceMap` (lookup by `NodeId`)
+- `MarkdownParserOptions` exists with:
+  - Markdig pipeline hook
+  - HTML policy flag (currently enforced by dropping HTML blocks in the builder)
+- Source spans are preserved as `[Start, EndExclusive)` in `SourceSpan`.
+- Stable `NodeId` generation exists (deterministic hashing based on kind/span/ordinal/parent).
+
+### Selection mapping scaffolding
+- `TextOffsetMap` + `MarkdownTextMapper` provide a Phase 1 mechanism to map display text offsets (from inline trees) back to source indices.
+- Default behavior maps emphasis/link selections to the inner visible content (excluding markup markers).
+
+### Uno adapter (XAML strategy)
+- XAML is reintroduced as `JitHub.Markdown.Uno/Xaml/MarkdownView.xaml`, intended for **MSBuild (Full)** builds.
+- A code-only `MarkdownView` fallback remains so `dotnet build` continues to work in environments without `MSBuild.exe`.
 
 ---
 

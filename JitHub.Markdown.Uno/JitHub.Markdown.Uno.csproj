@@ -9,7 +9,29 @@
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!--
+      Keep XAML in a folder excluded from default SDK globs so dotnet build stays workable.
+      When building with MSBuild.exe (Full), we explicitly include the XAML items.
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Xaml\**</DefaultItemExcludes>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
   </PropertyGroup>
+
+  <!--
+    XAML build constraint:
+    - MSBuild (Full/.NET Framework) supports WinUI XAML compilation in class libraries.
+    - dotnet build (Core MSBuild) may fail with UNOB0008 when XAML is present.
+
+    We keep BOTH implementations in the repo:
+    - MarkdownView.xaml + code-behind: used when MSBuildRuntimeType == Full
+    - MarkdownView.cs (code-only fallback): used otherwise
+  -->
+  <ItemGroup Condition="'$(MSBuildRuntimeType)' == 'Full'">
+    <Compile Remove="MarkdownView.cs" />
+    <Page Include="Xaml\MarkdownView.xaml" />
+    <Compile Include="Xaml\MarkdownView.xaml.cs" DependentUpon="Xaml\MarkdownView.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JitHub.Markdown.Core\JitHub.Markdown.Core.csproj" />

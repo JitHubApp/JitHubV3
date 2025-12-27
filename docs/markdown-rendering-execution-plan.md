@@ -108,6 +108,27 @@ Unit tests:
 
 ## Phase 1 — Parsing layer and source mapping foundation
 
+### Phase 1 status (implemented)
+
+Implemented artifacts:
+- `JitHub.Markdown.Core`
+  - `MarkdownParserOptions` (pipeline hook + HTML policy flag).
+  - `MarkdownEngine.Parse()` now returns `MarkdownDocumentModel` (not raw Markdig AST).
+  - Normalized node model (blocks + inlines) with deterministic `NodeId` + `SourceSpan`.
+  - `SourceMap` for `NodeId` → `SourceSpan` lookup.
+  - `DocumentBuilder` converting Markdig AST → our nodes (Phase 1 coverage: headings, paragraphs, blockquotes, lists (+ task marker heuristic), fenced code, tables, links/images, emphasis/strong/strikethrough via delimiter detection).
+- Selection mapping scaffolding:
+  - `TextOffsetMap` + `MarkdownTextMapper` (maps rendered/display inline text offsets back to source indices).
+  - Default behavior maps emphasis/link selections to inner visible content spans.
+
+Build/test gate (Phase 1):
+- `dotnet test .\\JitHub.Markdown.Tests\\JitHub.Markdown.Tests.csproj -c Debug -f net10.0`
+- `dotnet test .\\JitHubV3.slnx -c Debug -f net10.0 -m:1`
+
+Notes:
+- The model intentionally ignores unsupported/unknown Markdig nodes in Phase 1 (we expand coverage in later phases).
+- Task list items are detected via a simple source-text heuristic in Phase 1; we can switch to Markdig metadata later.
+
 ### 1.1 Markdig pipeline configuration (GFM baseline)
 Deliverables:
 - `MarkdownParserOptions` with:
