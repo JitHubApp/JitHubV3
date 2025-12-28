@@ -25,6 +25,10 @@ public partial class App : Application
     protected Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
 
+    // Exposed for library components (via reflection) that need access to DI services.
+    // Avoids creating compile-time dependencies from shared libraries back to the app.
+    public IServiceProvider? Services => Host?.Services;
+
 #if WINDOWS
     private bool _pendingWindowActivation;
 #endif
@@ -49,6 +53,9 @@ public partial class App : Application
 #endif
                 .UseLogging(configure: (context, logBuilder) =>
                 {
+                    // Allow category-level log filtering via appsettings.json (Logging:LogLevel:...).
+                    logBuilder.AddConfiguration(context.Configuration.GetSection("Logging"));
+
                     // Configure log levels for different categories of logging
                     logBuilder
                         .SetMinimumLevel(

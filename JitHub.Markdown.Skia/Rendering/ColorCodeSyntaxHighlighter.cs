@@ -364,7 +364,7 @@ internal static class ColorCodeSyntaxHighlighter
 
     private static bool TryGetStyle(StyleDictionary styles, string scopeName, out Style style)
     {
-        style = default;
+        style = default!;
         if (string.IsNullOrWhiteSpace(scopeName))
         {
             return false;

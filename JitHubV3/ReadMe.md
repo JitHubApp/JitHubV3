@@ -41,3 +41,16 @@ Alternative (Environment variables):
 - `setx GitHub__ClientSecret "<your-client-secret>"`
 
 Restart the server after changing secrets.
+
+## Markdown logging (segmented)
+
+The markdown renderer exposes a few category names you can enable/disable via `appsettings.json` / `appsettings.development.json`:
+
+- `JitHub.Markdown.Skia.SyntaxHighlighting` (very verbose; emits at `Debug`)
+- `JitHub.Markdown.Uno.Input`
+- `JitHub.Markdown.Uno.Selection`
+
+To enable syntax highlight diagnostics temporarily:
+
+- Set `Logging:LogLevel:JitHub.Markdown.Skia.SyntaxHighlighting` to `Debug`, or
+- Set environment variable `JITHUB_SYNTAXHL_DIAG=1`

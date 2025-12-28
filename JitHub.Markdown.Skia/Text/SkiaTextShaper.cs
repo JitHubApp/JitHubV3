@@ -14,22 +14,22 @@ public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
             return new TextMeasurement(0, GetLineHeight(style, scale));
         }
 
-        using var paint = CreatePaint(style, scale);
-        EnsureTypefaceSupportsText(paint, text);
-        using var shaper = new SKShaper(paint.Typeface!);
+        using var font = CreateFont(style, scale);
+        EnsureTypefaceSupportsText(font.Typeface, text);
+        using var shaper = new SKShaper(font.Typeface!);
 
         using var buffer = new HarfBuzzSharp.Buffer();
         buffer.AddUtf16(text);
         buffer.GuessSegmentProperties();
 
-        var shaped = shaper.Shape(buffer, paint);
+        var shaped = shaper.Shape(buffer, font);
 
         // Some SKShaper implementations can under-report Width for certain shaped runs.
         // Ensure the returned width is at least the paint-measured width so caret/selection
         // can reach the visually drawn end of the run.
-        var width = Math.Max(shaped.Width, paint.MeasureText(text));
+        var width = Math.Max(shaped.Width, font.MeasureText(text));
 
-        paint.GetFontMetrics(out var metrics);
+        font.GetFontMetrics(out var metrics);
         var height = (metrics.Descent - metrics.Ascent);
         if (height <= 0)
         {
@@ -41,16 +41,16 @@ public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
 
     public float GetLineHeight(MarkdownTextStyle style, float scale)
     {
-        using var paint = CreatePaint(style, scale);
-        paint.GetFontMetrics(out var metrics);
+        using var font = CreateFont(style, scale);
+        font.GetFontMetrics(out var metrics);
         var height = (metrics.Descent - metrics.Ascent);
         return height <= 0 ? Math.Max(1, style.FontSize * 1.4f * scale) : height;
     }
 
     public TextFontMetrics GetFontMetrics(MarkdownTextStyle style, float scale)
     {
-        using var paint = CreatePaint(style, scale);
-        paint.GetFontMetrics(out var metrics);
+        using var font = CreateFont(style, scale);
+        font.GetFontMetrics(out var metrics);
 
         var ascent = Math.Max(0, -metrics.Ascent);
         var descent = Math.Max(0, metrics.Descent);
@@ -72,25 +72,25 @@ public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
             return new TextShapingResult(0, GetLineHeight(style, scale), ImmutableArray<float>.Empty, isRightToLeft);
         }
 
-        using var paint = CreatePaint(style, scale);
-        EnsureTypefaceSupportsText(paint, text);
-        using var shaper = new SKShaper(paint.Typeface!);
+        using var font = CreateFont(style, scale);
+        EnsureTypefaceSupportsText(font.Typeface, text);
+        using var shaper = new SKShaper(font.Typeface!);
 
         using var buffer = new HarfBuzzSharp.Buffer();
         buffer.Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight;
         buffer.AddUtf16(text);
         buffer.GuessSegmentProperties();
 
-        var shaped = shaper.Shape(buffer, paint);
+        var shaped = shaper.Shape(buffer, font);
 
-        paint.GetFontMetrics(out var metrics);
+        font.GetFontMetrics(out var metrics);
         var height = (metrics.Descent - metrics.Ascent);
         if (height <= 0)
         {
             height = GetLineHeight(style, scale);
         }
 
-        var width = Math.Max(shaped.Width, paint.MeasureText(text));
+        var width = Math.Max(shaped.Width, font.MeasureText(text));
         var caretVisual = BuildCaretX(text.Length, shaped, width);
 
         // Note: caret boundaries must be monotonic increasing X (visual order) for hit-testing binary search.
@@ -105,16 +105,16 @@ public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
             return null;
         }
 
-        using var paint = CreatePaint(style, scale);
-        EnsureTypefaceSupportsText(paint, text);
-        using var shaper = new SKShaper(paint.Typeface!);
+        using var font = CreateFont(style, scale);
+        EnsureTypefaceSupportsText(font.Typeface, text);
+        using var shaper = new SKShaper(font.Typeface!);
 
         using var buffer = new HarfBuzzSharp.Buffer();
         buffer.Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight;
         buffer.AddUtf16(text);
         buffer.GuessSegmentProperties();
 
-        var shaped = shaper.Shape(buffer, paint);
+        var shaped = shaper.Shape(buffer, font);
         if (shaped.Codepoints is null || shaped.Points is null || shaped.Codepoints.Length == 0)
         {
             return null;
@@ -127,7 +127,6 @@ public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
             glyphs[i] = (ushort)shaped.Codepoints[i];
         }
 
-        using var font = new SKFont(paint.Typeface, paint.TextSize);
         using var builder = new SKTextBlobBuilder();
         builder.AddPositionedRun(glyphs, font, shaped.Points);
         return builder.Build();
@@ -275,23 +274,16 @@ public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
         return caret.ToImmutableArray();
     }
 
-    private static SKPaint CreatePaint(MarkdownTextStyle style, float scale)
+    private static SKFont CreateFont(MarkdownTextStyle style, float scale)
     {
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            TextSize = style.FontSize * scale,
-            Color = style.Foreground.ToSKColor(),
-        };
-
-        paint.Typeface = SkiaTypefaceCache.GetTypeface(style);
-        return paint;
+        var typeface = SkiaTypefaceCache.GetTypeface(style);
+        return new SKFont(typeface, style.FontSize * scale);
     }
 
-    private static void EnsureTypefaceSupportsText(SKPaint paint, string text)
+    private static void EnsureTypefaceSupportsText(SKTypeface? typeface, string text)
     {
         // No-op: Typeface fallback is handled by the typeface cache.
-        _ = paint;
+        _ = typeface;
         _ = text;
     }
 }

@@ -11,11 +11,20 @@ public partial class MainViewModel : ObservableObject
 
     private INavigator _navigator;
 
-    [ObservableProperty]
-    private string? name;
+    private string? _name;
+    private string? _repoStatus;
 
-    [ObservableProperty]
-    private string? repoStatus;
+    public string? Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public string? RepoStatus
+    {
+        get => _repoStatus;
+        set => SetProperty(ref _repoStatus, value);
+    }
 
     public ObservableCollection<string> PrivateRepos { get; } = new();
 

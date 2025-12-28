@@ -8,23 +8,66 @@ namespace JitHubV3.Presentation;
 
 public sealed partial class MarkdownTestViewModel : ObservableObject
 {
-    [ObservableProperty]
     private string _title = "Markdown Test";
-
-    [ObservableProperty]
     private string _markdown = DefaultMarkdownLtr;
-
-    [ObservableProperty]
     private bool _forceRtl;
-
-    [ObservableProperty]
     private MarkdownThemeVariant _themeVariant = MarkdownThemeVariant.Light;
-
-    [ObservableProperty]
     private TextAlignment _previewTextAlignment = GetPlatformIsRtl() ? TextAlignment.Right : TextAlignment.Left;
-
-    [ObservableProperty]
     private bool _previewIsRightToLeft = GetPlatformIsRtl();
+
+    public string Title
+    {
+        get => _title;
+        set => SetProperty(ref _title, value);
+    }
+
+    public string Markdown
+    {
+        get => _markdown;
+        set
+        {
+            if (SetProperty(ref _markdown, value))
+            {
+                OnMarkdownChanged(value);
+            }
+        }
+    }
+
+    public bool ForceRtl
+    {
+        get => _forceRtl;
+        set
+        {
+            if (SetProperty(ref _forceRtl, value))
+            {
+                OnForceRtlChanged(value);
+            }
+        }
+    }
+
+    public MarkdownThemeVariant ThemeVariant
+    {
+        get => _themeVariant;
+        set
+        {
+            if (SetProperty(ref _themeVariant, value))
+            {
+                OnThemeVariantChanged(value);
+            }
+        }
+    }
+
+    public TextAlignment PreviewTextAlignment
+    {
+        get => _previewTextAlignment;
+        set => SetProperty(ref _previewTextAlignment, value);
+    }
+
+    public bool PreviewIsRightToLeft
+    {
+        get => _previewIsRightToLeft;
+        set => SetProperty(ref _previewIsRightToLeft, value);
+    }
 
     private string _markdownLtrDraft = DefaultMarkdownLtr;
     private string _markdownRtlDraft = DefaultMarkdownRtl;
@@ -38,7 +81,7 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
 
     public MarkdownTheme PreviewTheme => MarkdownThemeEngine.Resolve(ThemeVariant);
 
-    partial void OnForceRtlChanged(bool value)
+    private void OnForceRtlChanged(bool value)
     {
         // Preserve edits per-mode so you can flip back and forth while testing.
         if (value)
@@ -56,12 +99,12 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
         PreviewTextAlignment = PreviewIsRightToLeft ? TextAlignment.Right : TextAlignment.Left;
     }
 
-    partial void OnThemeVariantChanged(MarkdownThemeVariant value)
+    private void OnThemeVariantChanged(MarkdownThemeVariant value)
     {
         OnPropertyChanged(nameof(PreviewTheme));
     }
 
-    partial void OnMarkdownChanged(string value)
+    private void OnMarkdownChanged(string value)
     {
         if (ForceRtl)
         {

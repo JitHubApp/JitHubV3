@@ -149,7 +149,13 @@ internal sealed class MarkdownAccessibilityNodeAutomationPeer : AutomationPeer, 
         // Uno may not implement this on all targets; ignore failures.
         try
         {
-            RaiseAutomationEvent(AutomationEvents.AutomationFocusChanged);
+            GetType().GetMethod(
+                    "RaiseAutomationEvent",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                    binder: null,
+                    types: new[] { typeof(AutomationEvents) },
+                    modifiers: null)
+                ?.Invoke(this, new object[] { AutomationEvents.AutomationFocusChanged });
         }
         catch
         {

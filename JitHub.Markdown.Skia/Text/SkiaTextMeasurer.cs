@@ -6,10 +6,10 @@ public sealed class SkiaTextMeasurer : ITextMeasurerWithFontMetrics
 {
     public TextMeasurement Measure(string text, MarkdownTextStyle style, float scale)
     {
-        using var paint = CreatePaint(style, scale);
-        var width = paint.MeasureText(text ?? string.Empty);
+        using var font = CreateFont(style, scale);
+        var width = font.MeasureText(text ?? string.Empty);
 
-        paint.GetFontMetrics(out var metrics);
+        font.GetFontMetrics(out var metrics);
         var height = (metrics.Descent - metrics.Ascent);
         if (height <= 0)
         {
@@ -21,16 +21,16 @@ public sealed class SkiaTextMeasurer : ITextMeasurerWithFontMetrics
 
     public float GetLineHeight(MarkdownTextStyle style, float scale)
     {
-        using var paint = CreatePaint(style, scale);
-        paint.GetFontMetrics(out var metrics);
+        using var font = CreateFont(style, scale);
+        font.GetFontMetrics(out var metrics);
         var height = (metrics.Descent - metrics.Ascent);
         return height <= 0 ? Math.Max(1, style.FontSize * 1.4f * scale) : height;
     }
 
     public TextFontMetrics GetFontMetrics(MarkdownTextStyle style, float scale)
     {
-        using var paint = CreatePaint(style, scale);
-        paint.GetFontMetrics(out var metrics);
+        using var font = CreateFont(style, scale);
+        font.GetFontMetrics(out var metrics);
 
         // Skia: Ascent is typically negative (distance above baseline).
         var ascent = Math.Max(0, -metrics.Ascent);
@@ -47,16 +47,9 @@ public sealed class SkiaTextMeasurer : ITextMeasurerWithFontMetrics
         return new TextFontMetrics(ascent, descent);
     }
 
-    private static SKPaint CreatePaint(MarkdownTextStyle style, float scale)
+    private static SKFont CreateFont(MarkdownTextStyle style, float scale)
     {
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            TextSize = style.FontSize * scale,
-            Color = style.Foreground.ToSKColor(),
-        };
-
-        paint.Typeface = SkiaTypefaceCache.GetTypeface(style);
-        return paint;
+        var typeface = SkiaTypefaceCache.GetTypeface(style);
+        return new SKFont(typeface, style.FontSize * scale);
     }
 }

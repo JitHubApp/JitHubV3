@@ -279,13 +279,14 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
 
         var style = context.Theme.Typography.Paragraph;
-        using var paint = CreateTextPaint(style, context.Scale);
-        paint.GetFontMetrics(out var metrics);
+        using var paint = CreateTextPaint(style);
+        using var font = CreateTextFont(style, context.Scale);
+        font.GetFontMetrics(out var metrics);
 
         var x = item.MarkerBounds.X;
         var baselineY = item.MarkerBounds.Y - metrics.Ascent;
 
-        context.Canvas.DrawText(item.MarkerText, x, baselineY, paint);
+        context.Canvas.DrawText(item.MarkerText, x, baselineY, SKTextAlign.Left, font, paint);
     }
 
     private static void DrawBlockBackground(BlockLayout block, RenderContext context)
@@ -435,8 +436,9 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
 
         var style = run.Style;
-        using var basePaint = CreateTextPaint(style, context.Scale);
-        basePaint.GetFontMetrics(out var metrics);
+        using var basePaint = CreateTextPaint(style);
+        using var font = CreateTextFont(style, context.Scale);
+        font.GetFontMetrics(out var metrics);
 
         var baselineY = run.Bounds.Y - metrics.Ascent;
         var globalStart = runStartInBlock;
@@ -470,7 +472,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             // Draw unstyled text before this span.
             if (segStart > localIndex)
             {
-                DrawCodeSubstring(run, localIndex, segStart - localIndex, baselineY, basePaint, context);
+                DrawCodeSubstring(run, localIndex, segStart - localIndex, baselineY, font, basePaint, context);
                 localIndex = segStart;
             }
 
@@ -478,22 +480,20 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             using var spanPaint = new SKPaint
             {
                 IsAntialias = basePaint.IsAntialias,
-                TextSize = basePaint.TextSize,
                 Color = s.Foreground,
-                Typeface = basePaint.Typeface,
             };
-            DrawCodeSubstring(run, localIndex, segEnd - localIndex, baselineY, spanPaint, context);
+            DrawCodeSubstring(run, localIndex, segEnd - localIndex, baselineY, font, spanPaint, context);
             localIndex = segEnd;
         }
 
         // Draw remaining unstyled text.
         if (localIndex < run.Text.Length)
         {
-            DrawCodeSubstring(run, localIndex, run.Text.Length - localIndex, baselineY, basePaint, context);
+            DrawCodeSubstring(run, localIndex, run.Text.Length - localIndex, baselineY, font, basePaint, context);
         }
     }
 
-    private static void DrawCodeSubstring(InlineRunLayout run, int start, int length, float baselineY, SKPaint paint, RenderContext context)
+    private static void DrawCodeSubstring(InlineRunLayout run, int start, int length, float baselineY, SKFont font, SKPaint paint, RenderContext context)
     {
         if (length <= 0)
         {
@@ -502,7 +502,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         var x = run.GlyphX[start];
         var text = run.Text.Substring(start, length);
-        DrawShapedText(context.Canvas, text, x, baselineY, paint, isRightToLeft: false);
+        DrawShapedText(context.Canvas, text, x, baselineY, font, paint, isRightToLeft: false);
     }
 
     private static void DrawSelectionForLine(LineLayout line, SelectionGeometry selectionGeometry, RenderContext context, bool isInQuote)
@@ -659,8 +659,9 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             }
         }
 
-        using var paint = CreateTextPaint(style, context.Scale);
-        paint.GetFontMetrics(out var metrics);
+        using var paint = CreateTextPaint(style);
+        using var font = CreateTextFont(style, context.Scale);
+        font.GetFontMetrics(out var metrics);
 
         var x = run.Bounds.X;
         var baselineY = run.Bounds.Y - metrics.Ascent;
@@ -674,11 +675,11 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             baselineY = (run.Bounds.Y + pad) - metrics.Ascent;
         }
 
-        DrawShapedText(context.Canvas, run.Text, x, baselineY, paint, run.IsRightToLeft);
+        DrawShapedText(context.Canvas, run.Text, x, baselineY, font, paint, run.IsRightToLeft);
 
         if (style.Underline)
         {
-            var w = MeasureShapedWidth(run.Text, paint, run.IsRightToLeft);
+            var w = MeasureShapedWidth(run.Text, font, run.IsRightToLeft);
             using var underline = new SKPaint
             {
                 IsAntialias = true,
@@ -693,7 +694,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         if (run.IsStrikethrough)
         {
-            var w = MeasureShapedWidth(run.Text, paint, run.IsRightToLeft);
+            var w = MeasureShapedWidth(run.Text, font, run.IsRightToLeft);
             using var strike = new SKPaint
             {
                 IsAntialias = true,
@@ -707,7 +708,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
     }
 
-    private static void DrawShapedText(SKCanvas canvas, string text, float x, float baselineY, SKPaint paint, bool isRightToLeft)
+    private static void DrawShapedText(SKCanvas canvas, string text, float x, float baselineY, SKFont font, SKPaint paint, bool isRightToLeft)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -716,7 +717,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
 
         // Use HarfBuzz shaping so complex scripts (Arabic/Hebrew) and RTL runs render correctly.
         // We explicitly set buffer direction to match layout's run direction.
-        using var shaper = new SKShaper(paint.Typeface!);
+        using var shaper = new SKShaper(font.Typeface!);
         using var buffer = new HarfBuzzSharp.Buffer
         {
             Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight,
@@ -724,10 +725,10 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         buffer.AddUtf16(text);
         buffer.GuessSegmentProperties();
 
-        var shaped = shaper.Shape(buffer, paint);
+        var shaped = shaper.Shape(buffer, font);
         if (shaped.Codepoints is null || shaped.Points is null || shaped.Codepoints.Length == 0)
         {
-            canvas.DrawText(text, x, baselineY, paint);
+            canvas.DrawText(text, x, baselineY, font, paint);
             return;
         }
 
@@ -737,34 +738,33 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             glyphs[i] = (ushort)shaped.Codepoints[i];
         }
 
-        using var font = new SKFont(paint.Typeface, paint.TextSize);
         using var blobBuilder = new SKTextBlobBuilder();
         blobBuilder.AddPositionedRun(glyphs, font, shaped.Points);
         using var blob = blobBuilder.Build();
         if (blob is null)
         {
-            canvas.DrawText(text, x, baselineY, paint);
+            canvas.DrawText(text, x, baselineY, font, paint);
             return;
         }
 
         canvas.DrawText(blob, x, baselineY, paint);
     }
 
-    private static float MeasureShapedWidth(string text, SKPaint paint, bool isRightToLeft)
+    private static float MeasureShapedWidth(string text, SKFont font, bool isRightToLeft)
     {
         if (string.IsNullOrEmpty(text))
         {
             return 0;
         }
 
-        using var shaper = new SKShaper(paint.Typeface!);
+        using var shaper = new SKShaper(font.Typeface!);
         using var buffer = new HarfBuzzSharp.Buffer
         {
             Direction = isRightToLeft ? Direction.RightToLeft : Direction.LeftToRight,
         };
         buffer.AddUtf16(text);
         buffer.GuessSegmentProperties();
-        var shaped = shaper.Shape(buffer, paint);
+        var shaped = shaper.Shape(buffer, font);
         return Math.Max(0, shaped.Width);
     }
 
@@ -826,16 +826,18 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
             c.A);
     }
 
-    private static SKPaint CreateTextPaint(MarkdownTextStyle style, float scale)
+    private static SKPaint CreateTextPaint(MarkdownTextStyle style)
     {
-        var paint = new SKPaint
+        return new SKPaint
         {
             IsAntialias = true,
-            TextSize = style.FontSize * scale,
             Color = style.Foreground.ToSKColor(),
         };
+    }
 
-        paint.Typeface = SkiaTypefaceCache.GetTypeface(style);
-        return paint;
+    private static SKFont CreateTextFont(MarkdownTextStyle style, float scale)
+    {
+        var typeface = SkiaTypefaceCache.GetTypeface(style);
+        return new SKFont(typeface, style.FontSize * scale);
     }
 }

@@ -160,24 +160,32 @@ public class SkiaMarkdownView : ContentControl
         _textMeasurer = new SkiaTextShaper();
         _renderer = new SkiaMarkdownRenderer();
 
-        var enableSyntaxDiag = false;
-#if DEBUG
-        enableSyntaxDiag = true;
-#else
-        // Opt-in for non-debug builds.
-        enableSyntaxDiag = string.Equals(Environment.GetEnvironmentVariable("JITHUB_SYNTAXHL_DIAG"), "1", StringComparison.Ordinal);
-#endif
+        var syntaxLog = MarkdownLog.CreateLogger(this, MarkdownLogCategories.SkiaSyntaxHighlighting);
+
+        // Diagnostics are opt-in:
+        // - via environment variable: JITHUB_SYNTAXHL_DIAG=1
+        // - or via config: set Logging:LogLevel:JitHub.Markdown.Skia.SyntaxHighlighting=Debug
+        var enableSyntaxDiag =
+            string.Equals(Environment.GetEnvironmentVariable("JITHUB_SYNTAXHL_DIAG"), "1", StringComparison.Ordinal) ||
+            syntaxLog.IsEnabled(LogLevel.Debug);
 
         if (enableSyntaxDiag)
         {
-            var log = this.Log();
-            log.LogWarning("[SyntaxHL] diagnostics ENABLED");
+            if (syntaxLog.IsEnabled(LogLevel.Information))
+            {
+                syntaxLog.LogInformation("[SyntaxHL] diagnostics enabled");
+            }
+
             SyntaxHighlightDiagnostics.Enable(msg =>
             {
                 // Always emit to Debug output (useful on platforms where logging is filtered).
                 Debug.WriteLine(msg);
-                // Also emit via Uno logging; Warning is far more likely to be visible by default.
-                log.LogWarning(msg);
+
+                // Also emit via app logging; keep it at Debug to avoid noisy defaults.
+                if (syntaxLog.IsEnabled(LogLevel.Debug))
+                {
+                    syntaxLog.LogDebug(msg);
+                }
             });
         }
 
@@ -512,7 +520,8 @@ public class SkiaMarkdownView : ContentControl
 
     private void OnPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        var log = this.Log();
+        var log = MarkdownLog.CreateLogger(this, MarkdownLogCategories.UnoInput);
+
         if (log.IsEnabled(LogLevel.Debug))
         {
             log.LogDebug("[SkiaMarkdownView] PointerPressed id={PointerId} type={PointerType} selectionEnabled={SelectionEnabled}",
@@ -1180,7 +1189,7 @@ public class SkiaMarkdownView : ContentControl
                 Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
                 Visibility = Visibility.Collapsed,
             };
-
+                var log = MarkdownLog.CreateLogger(this, MarkdownLogCategories.UnoInput);
             _linkFocusRects.Add(box);
             _linkFocusOverlay.Children.Add(box);
         }
@@ -1307,8 +1316,33 @@ public class SkiaMarkdownView : ContentControl
         try
         {
             var peer = FrameworkElementAutomationPeer.FromElement(this) ?? FrameworkElementAutomationPeer.CreatePeerForElement(this);
-            peer?.InvalidatePeer();
-            peer?.RaiseAutomationEvent(AutomationEvents.AutomationFocusChanged);
+            if (peer is not null)
+            {
+                var peerType = peer.GetType();
+
+                try
+                {
+                    peerType.GetMethod("InvalidatePeer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+                        ?.Invoke(peer, parameters: null);
+                }
+                catch
+                {
+                }
+
+                try
+                {
+                    peerType.GetMethod(
+                            "RaiseAutomationEvent",
+                            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                            binder: null,
+                            types: new[] { typeof(AutomationEvents) },
+                            modifiers: null)
+                        ?.Invoke(peer, new object[] { AutomationEvents.AutomationFocusChanged });
+                }
+                catch
+                {
+                }
+            }
         }
         catch
         {
