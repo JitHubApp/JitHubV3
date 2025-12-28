@@ -17,6 +17,11 @@
 
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="12" MaxWidth="960">
+        <ComboBox
+          Header="Theme"
+          ItemsSource="{Binding ThemeVariants}"
+          SelectedItem="{Binding ThemeVariant, Mode=TwoWay}" />
+
         <ToggleSwitch
           x:Name="RtlToggle"
           Header="RTL"
@@ -35,6 +40,7 @@
         <md:MarkdownView
           x:Name="MarkdownPreview"
           IsRightToLeft="{Binding PreviewIsRightToLeft}"
+          Theme="{Binding PreviewTheme}"
           Markdown="{Binding Markdown}" />
       </StackPanel>
     </ScrollViewer>

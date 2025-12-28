@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Globalization;
+using JitHub.Markdown;
 
 namespace JitHubV3.Presentation;
 
@@ -17,6 +18,9 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
     private bool _forceRtl;
 
     [ObservableProperty]
+    private MarkdownThemeVariant _themeVariant = MarkdownThemeVariant.Light;
+
+    [ObservableProperty]
     private TextAlignment _previewTextAlignment = GetPlatformIsRtl() ? TextAlignment.Right : TextAlignment.Left;
 
     [ObservableProperty]
@@ -24,6 +28,15 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
 
     private string _markdownLtrDraft = DefaultMarkdownLtr;
     private string _markdownRtlDraft = DefaultMarkdownRtl;
+
+    public MarkdownThemeVariant[] ThemeVariants { get; } =
+    [
+        MarkdownThemeVariant.Light,
+        MarkdownThemeVariant.Dark,
+        MarkdownThemeVariant.HighContrast,
+    ];
+
+    public MarkdownTheme PreviewTheme => MarkdownThemeEngine.Resolve(ThemeVariant);
 
     partial void OnForceRtlChanged(bool value)
     {
@@ -41,6 +54,11 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
 
         PreviewIsRightToLeft = value || GetPlatformIsRtl();
         PreviewTextAlignment = PreviewIsRightToLeft ? TextAlignment.Right : TextAlignment.Left;
+    }
+
+    partial void OnThemeVariantChanged(MarkdownThemeVariant value)
+    {
+        OnPropertyChanged(nameof(PreviewTheme));
     }
 
     partial void OnMarkdownChanged(string value)
