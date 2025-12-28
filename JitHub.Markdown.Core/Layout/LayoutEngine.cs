@@ -545,7 +545,20 @@ public sealed class MarkdownLayoutEngine
         LineLayout ShiftLine(LineLayout l)
             => new(l.Y + dy, l.Height, l.Runs.Select(ShiftRun).ToImmutableArray());
         InlineRunLayout ShiftRun(InlineRunLayout r)
-            => r with { Bounds = Shift(r.Bounds) };
+        {
+            var gx = r.GlyphX;
+            if (dx != 0 && !gx.IsDefault && gx.Length > 0)
+            {
+                var builder = ImmutableArray.CreateBuilder<float>(gx.Length);
+                for (var i = 0; i < gx.Length; i++)
+                {
+                    builder.Add(gx[i] + dx);
+                }
+                gx = builder.ToImmutable();
+            }
+
+            return r with { Bounds = Shift(r.Bounds), GlyphX = gx };
+        }
 
         return layout switch
         {

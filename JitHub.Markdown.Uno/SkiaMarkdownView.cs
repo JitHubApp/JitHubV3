@@ -217,6 +217,12 @@ public class SkiaMarkdownView : ContentControl
     private bool _hasPointerCapture;
     private bool _isSelecting;
 
+#if DEBUG
+    // Throttles high-signal selection diagnostics.
+    private (int lineIndex, int runIndex, int textOffset)? _lastEndCaretDebug;
+    private DateTimeOffset _lastEndCaretDebugAt;
+#endif
+
     private uint? _activePointerId;
     private Microsoft.UI.Xaml.Input.Pointer? _activePointer;
     private bool _isPointerDown;
@@ -536,6 +542,10 @@ public class SkiaMarkdownView : ContentControl
 
         _lastPointerMoveHit = hit;
 
+    #if DEBUG
+        LogEndCaretDiagnosticIfSuspicious(hit, x: x, y: y);
+    #endif
+
         var result = _pointerInteraction.OnPointerMove(
             hit,
             x: x,
@@ -556,6 +566,106 @@ public class SkiaMarkdownView : ContentControl
             e.Handled = true;
         }
     }
+
+#if DEBUG
+    private void LogEndCaretDiagnosticIfSuspicious(MarkdownHitTestResult hit, float x, float y)
+    {
+        // Only log for mouse-driven selection scenarios (the reported issue).
+        if (!_isPointerDown || !SelectionEnabled || _layout is null)
+        {
+            return;
+        }
+
+        var run = hit.Run;
+        if (run.Kind == NodeKind.Image || string.IsNullOrEmpty(run.Text))
+        {
+            return;
+        }
+
+        // Focus on the classic symptom: pointer is at/near the right edge, but caret/offset doesn't reach end.
+        var right = run.Bounds.Right;
+        var left = run.Bounds.X;
+
+        // Ignore obviously out-of-bounds X.
+        if (x < left - 64 || x > right + 256)
+        {
+            return;
+        }
+
+        var slop = 6f;
+        var isNearRightEdge = !run.IsRightToLeft && x >= (right - slop);
+        var isNearLeftEdgeRtl = run.IsRightToLeft && x <= (left + slop);
+        if (!isNearRightEdge && !isNearLeftEdgeRtl)
+        {
+            return;
+        }
+
+        var expectedEndOffset = run.Text.Length;
+        var endCaretX = MarkdownHitTester.GetCaretX(run, expectedEndOffset);
+
+        var suspicious = false;
+        if (!run.IsRightToLeft)
+        {
+            if (hit.TextOffset < expectedEndOffset)
+            {
+                suspicious = true;
+            }
+            else if (endCaretX < (right - 0.5f))
+            {
+                suspicious = true;
+            }
+        }
+        else
+        {
+            // RTL: end offset is still Text.Length, but visually maps to the left edge.
+            if (hit.TextOffset < expectedEndOffset)
+            {
+                suspicious = true;
+            }
+            else if (endCaretX > (left + 0.5f))
+            {
+                suspicious = true;
+            }
+        }
+
+        if (!suspicious)
+        {
+            return;
+        }
+
+        // Throttle: log at most once per 500ms for the same (line,run,offset).
+        var key = (hit.LineIndex, hit.RunIndex, hit.TextOffset);
+        var now = DateTimeOffset.UtcNow;
+        if (_lastEndCaretDebug is { } lastKey && lastKey == key && (now - _lastEndCaretDebugAt).TotalMilliseconds < 500)
+        {
+            return;
+        }
+
+        _lastEndCaretDebug = key;
+        _lastEndCaretDebugAt = now;
+
+        var log = this.Log();
+        log.LogWarning(
+            "[SkiaMarkdownView] EndCaret suspicious: x={X} y={Y} viewportTop={ViewportTop} scale={RasterScale} layoutW={LayoutW} | line={LineIndex} run={RunIndex} rtl={IsRtl} run=({L},{T},{W},{H}) right={Right} | hitOffset={HitOffset}/{Len} hitCaretX={HitCaretX} endCaretX={EndCaretX} glyphLast={GlyphLast}",
+            x, y,
+            _viewportTop,
+            GetScale(),
+            _layout.Width,
+            hit.LineIndex,
+            hit.RunIndex,
+            run.IsRightToLeft,
+            run.Bounds.X,
+            run.Bounds.Y,
+            run.Bounds.Width,
+            run.Bounds.Height,
+            right,
+            hit.TextOffset,
+            run.Text.Length,
+            hit.CaretX,
+            endCaretX,
+            (!run.GlyphX.IsDefault && run.GlyphX.Length > 0) ? run.GlyphX[run.GlyphX.Length - 1] : float.NaN);
+    }
+#endif
 
     private void OnPointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
@@ -1538,7 +1648,14 @@ public class SkiaMarkdownView : ContentControl
         }
 
         var width = (float)Math.Max(1, ActualWidth);
-        var scale = GetScale();
+        // IMPORTANT:
+        // Layout/hit-testing must be expressed in device-independent units (DIPs).
+        // Rendering already applies rasterization scaling via canvas.Scale(rasterizationScale)
+        // and the bitmap is sized in pixels accordingly.
+        // If layout is also built with rasterizationScale, caret positions and bounds end up
+        // in a different coordinate space than pointer positions, which can make the last
+        // characters at the end of a line appear unselectable on high-DPI.
+        const float scale = 1f;
         var theme = GetEffectiveTheme();
 
         _layout = _layoutEngine.Layout(_document, width: width, theme: theme, scale: scale, textMeasurer: _textMeasurer);

@@ -174,6 +174,32 @@ public static class MarkdownHitTester
             return Math.Clamp(visualOffset, 0, run.Text.Length);
         }
 
+        // If the caret boundary array extends beyond the run bounds (can happen with complex shaping
+        // or measurement mismatch), ensure the end positions are still reachable within the run's
+        // visual bounds. This is especially important when the viewport edge prevents moving the
+        // pointer further.
+        var runLeft = run.Bounds.X;
+        var runRight = run.Bounds.Right;
+        if (!run.IsRightToLeft)
+        {
+            if (x >= runRight)
+            {
+                return run.Text.Length;
+            }
+        }
+        else
+        {
+            if (x <= runLeft)
+            {
+                return run.Text.Length;
+            }
+
+            if (x >= runRight)
+            {
+                return 0;
+            }
+        }
+
         // gx contains absolute x boundaries for each *visual* offset (increasing X).
         if (x <= gx[0])
         {

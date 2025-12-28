@@ -14,6 +14,13 @@ public sealed partial class MarkdownTestPage : Page
     private readonly Dictionary<uint, int> _moveCounts = new();
     private long _seq;
 
+#if DEBUG
+    // Runtime toggle (avoid compile-time unreachable warnings).
+    // Set env var `JITHUB_POINTER_MOVES=1` to enable.
+    private static bool EnablePointerMoveLogging
+        => string.Equals(Environment.GetEnvironmentVariable("JITHUB_POINTER_MOVES"), "1", StringComparison.Ordinal);
+#endif
+
     public MarkdownTestPage()
     {
         InitializeComponent();
@@ -92,6 +99,11 @@ public sealed partial class MarkdownTestPage : Page
 
         AddHandler(UIElement.PointerMovedEvent, new PointerEventHandler((_, args) =>
         {
+            if (!EnablePointerMoveLogging)
+            {
+                return;
+            }
+
             if (!ShouldLogMove(args.Pointer.PointerId))
             {
                 return;
@@ -129,6 +141,11 @@ public sealed partial class MarkdownTestPage : Page
 
             MarkdownPreview.AddHandler(UIElement.PointerMovedEvent, new PointerEventHandler((s, args) =>
             {
+                if (!EnablePointerMoveLogging)
+                {
+                    return;
+                }
+
                 if (!ShouldLogMove(args.Pointer.PointerId))
                 {
                     return;
@@ -179,6 +196,11 @@ public sealed partial class MarkdownTestPage : Page
 
         element.AddHandler(UIElement.PointerMovedEvent, new PointerEventHandler((s, a) =>
         {
+            if (!EnablePointerMoveLogging)
+            {
+                return;
+            }
+
             if (!ShouldLogMove(a.Pointer.PointerId))
             {
                 return;

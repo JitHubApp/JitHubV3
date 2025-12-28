@@ -24,6 +24,11 @@ public sealed class SkiaTextShaper : ITextShaper
 
         var shaped = shaper.Shape(buffer, paint);
 
+        // Some SKShaper implementations can under-report Width for certain shaped runs.
+        // Ensure the returned width is at least the paint-measured width so caret/selection
+        // can reach the visually drawn end of the run.
+        var width = Math.Max(shaped.Width, paint.MeasureText(text));
+
         paint.GetFontMetrics(out var metrics);
         var height = (metrics.Descent - metrics.Ascent);
         if (height <= 0)
@@ -31,7 +36,7 @@ public sealed class SkiaTextShaper : ITextShaper
             height = GetLineHeight(style, scale);
         }
 
-        return new TextMeasurement(shaped.Width, height);
+        return new TextMeasurement(width, height);
     }
 
     public float GetLineHeight(MarkdownTextStyle style, float scale)
@@ -67,11 +72,12 @@ public sealed class SkiaTextShaper : ITextShaper
             height = GetLineHeight(style, scale);
         }
 
-        var caretVisual = BuildCaretX(text.Length, shaped);
+        var width = Math.Max(shaped.Width, paint.MeasureText(text));
+        var caretVisual = BuildCaretX(text.Length, shaped, width);
 
         // Note: caret boundaries must be monotonic increasing X (visual order) for hit-testing binary search.
         // RTL is handled by inverting logical offsets at hit-test / keyboard-navigation time.
-        return new TextShapingResult(shaped.Width, height, caretVisual, isRightToLeft);
+        return new TextShapingResult(width, height, caretVisual, isRightToLeft);
     }
 
     public static SKTextBlob? CreateTextBlob(string text, MarkdownTextStyle style, float scale, bool isRightToLeft)
@@ -109,7 +115,7 @@ public sealed class SkiaTextShaper : ITextShaper
         return builder.Build();
     }
 
-    private static ImmutableArray<float> BuildCaretX(int textLength, SKShaper.Result shaped)
+    private static ImmutableArray<float> BuildCaretX(int textLength, SKShaper.Result shaped, float width)
     {
         // Build an approximate caret boundary array for UTF-16 offsets using cluster boundaries.
         // This is sufficient for selection/hit-testing and supports complex-script shaping.
@@ -118,7 +124,7 @@ public sealed class SkiaTextShaper : ITextShaper
             return ImmutableArray<float>.Empty;
         }
 
-        var width = Math.Max(0, shaped.Width);
+        width = Math.Max(0, width);
         var cps = shaped.Codepoints;
         var pts = shaped.Points;
         var cls = shaped.Clusters;
@@ -227,6 +233,25 @@ public sealed class SkiaTextShaper : ITextShaper
                 caret[i] = last;
             }
             last = caret[i];
+        }
+
+        // Ensure the end caret reaches the visual run width.
+        // Some cluster/advance patterns (or shaping quirks) can yield a final caret that is
+        // slightly short of the reported width, which makes the last characters effectively
+        // unselectable and causes selection highlight to stop early.
+        var end = caret.Length - 1;
+        if (end >= 0)
+        {
+            var expected = Math.Max(0, width);
+            if (caret[end] < expected)
+            {
+                caret[end] = expected;
+            }
+
+            if (end > 0 && caret[end] < caret[end - 1])
+            {
+                caret[end] = caret[end - 1];
+            }
         }
 
         return caret.ToImmutableArray();

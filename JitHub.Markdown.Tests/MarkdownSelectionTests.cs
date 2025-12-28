@@ -1,4 +1,5 @@
 using JitHub.Markdown;
+using System.Collections.Immutable;
 
 namespace JitHub.Markdown.Tests;
 
@@ -224,6 +225,28 @@ public sealed class MarkdownSelectionTests
 
         var up = interaction.OnPointerUp(hit, selectionEnabled: true);
         up.ActivateLinkUrl.Should().BeNull("clicking outside link bounds must not activate");
+    }
+
+    [Test]
+    public void HitTest_maps_to_end_of_run_when_pointer_is_at_run_right_edge()
+    {
+        var run = new InlineRunLayout(
+            Id: default,
+            Kind: NodeKind.Text,
+            Span: new SourceSpan(0, 5),
+            Bounds: new RectF(10, 20, 50, 16),
+            Style: MarkdownTheme.Light.Typography.Paragraph,
+            Text: "hello",
+            Url: null,
+            IsStrikethrough: false,
+            IsCodeBlockLine: false,
+            GlyphX: ImmutableArray.Create(10f, 25f, 40f, 55f, 70f, 85f),
+            IsRightToLeft: false);
+
+        var line = new LineLayout(20, 16, ImmutableArray.Create(run));
+
+        MarkdownHitTester.TryHitTestLine(0, line, x: run.Bounds.Right, out var hit).Should().BeTrue();
+        hit.TextOffset.Should().Be(run.Text.Length);
     }
 
     [Test]
