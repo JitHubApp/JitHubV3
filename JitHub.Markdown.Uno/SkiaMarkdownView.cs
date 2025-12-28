@@ -16,6 +16,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Extensions.Logging;
+using Markdig;
 using SkiaSharp;
 using JitHub.Markdown;
 using Uno.Extensions;
@@ -24,6 +25,18 @@ namespace JitHub.Markdown.Uno;
 
 public class SkiaMarkdownView : ContentControl
 {
+    public static readonly DependencyProperty GitHubBaseUrlProperty = DependencyProperty.Register(
+        nameof(GitHubBaseUrl),
+        typeof(string),
+        typeof(SkiaMarkdownView),
+        new PropertyMetadata(string.Empty, OnGitHubEnrichmentsChanged));
+
+    public static readonly DependencyProperty GitHubRepositorySlugProperty = DependencyProperty.Register(
+        nameof(GitHubRepositorySlug),
+        typeof(string),
+        typeof(SkiaMarkdownView),
+        new PropertyMetadata(string.Empty, OnGitHubEnrichmentsChanged));
+
     public static readonly DependencyProperty MarkdownProperty = DependencyProperty.Register(
         nameof(Markdown),
         typeof(string),
@@ -89,6 +102,26 @@ public class SkiaMarkdownView : ContentControl
         set => SetValue(IsRightToLeftProperty, value);
     }
 
+    /// <summary>
+    /// Optional base URL for GitHub enrichments (e.g. "https://github.com" or a mock like "https://example.invalid").
+    /// When set (or when <see cref="GitHubRepositorySlug"/> is set), GitHub enrichments are enabled.
+    /// </summary>
+    public string GitHubBaseUrl
+    {
+        get => (string)GetValue(GitHubBaseUrlProperty);
+        set => SetValue(GitHubBaseUrlProperty, value);
+    }
+
+    /// <summary>
+    /// Optional repository slug in the form "owner/repo".
+    /// Enables #123 and commit SHA linkification when provided.
+    /// </summary>
+    public string GitHubRepositorySlug
+    {
+        get => (string)GetValue(GitHubRepositorySlugProperty);
+        set => SetValue(GitHubRepositorySlugProperty, value);
+    }
+
     public SelectionRange? Selection
     {
         get => _selection;
@@ -121,7 +154,7 @@ public class SkiaMarkdownView : ContentControl
         // We use reflection to avoid hard dependency on Uno.UI.Xaml types in targets where they're not referenced.
         TryEnableManagedPointerBubbling(this);
 
-        _engine = MarkdownEngine.CreateDefault();
+        _engine = CreateEngine(GitHubBaseUrl, GitHubRepositorySlug);
         _layoutEngine = new MarkdownLayoutEngine();
         _layoutEngine.DefaultIsRtl = IsRightToLeft;
         _textMeasurer = new SkiaTextShaper();
@@ -196,6 +229,40 @@ public class SkiaMarkdownView : ContentControl
         RebuildDocumentAndLayout();
     }
 
+    private static void OnGitHubEnrichmentsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((SkiaMarkdownView)d).SyncGitHubEnrichments();
+    }
+
+    private void SyncGitHubEnrichments()
+    {
+        _engine = CreateEngine(GitHubBaseUrl, GitHubRepositorySlug);
+        RebuildDocumentAndLayout();
+    }
+
+    private static MarkdownEngine CreateEngine(string baseUrl, string repositorySlug)
+    {
+        // Keep CreateDefault behavior unless enrichments are explicitly enabled.
+        if (string.IsNullOrWhiteSpace(baseUrl) && string.IsNullOrWhiteSpace(repositorySlug))
+        {
+            return MarkdownEngine.CreateDefault();
+        }
+
+        var options = new MarkdownParserOptions
+        {
+            ConfigurePipeline = b => b.UseAdvancedExtensions(),
+        };
+
+        var gh = new GitHubEnrichmentsOptions
+        {
+            BaseUrl = string.IsNullOrWhiteSpace(baseUrl) ? "https://github.com" : baseUrl,
+            RepositorySlug = string.IsNullOrWhiteSpace(repositorySlug) ? null : repositorySlug,
+            AllowShortShas = true,
+        };
+
+        return MarkdownEngine.Create(options, new GitHubEnrichmentsPlugin(gh));
+    }
+
     private static bool GetPlatformIsRtl()
         => CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft;
 
@@ -206,7 +273,7 @@ public class SkiaMarkdownView : ContentControl
         view.RebuildLayoutOnly();
     }
 
-    private readonly MarkdownEngine _engine;
+    private MarkdownEngine _engine;
     private readonly MarkdownLayoutEngine _layoutEngine;
     private readonly ITextMeasurer _textMeasurer;
     private readonly SkiaMarkdownRenderer _renderer;

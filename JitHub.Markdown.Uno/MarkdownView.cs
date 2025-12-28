@@ -15,6 +15,18 @@ public sealed partial class MarkdownView : UserControl
 	private readonly Grid _root;
 	private readonly SkiaMarkdownView _host;
 
+	public static readonly DependencyProperty GitHubBaseUrlProperty = DependencyProperty.Register(
+		nameof(GitHubBaseUrl),
+		typeof(string),
+		typeof(MarkdownView),
+		new PropertyMetadata(string.Empty, OnGitHubEnrichmentsChanged));
+
+	public static readonly DependencyProperty GitHubRepositorySlugProperty = DependencyProperty.Register(
+		nameof(GitHubRepositorySlug),
+		typeof(string),
+		typeof(MarkdownView),
+		new PropertyMetadata(string.Empty, OnGitHubEnrichmentsChanged));
+
 	public static readonly DependencyProperty IsRightToLeftProperty = DependencyProperty.Register(
 		nameof(IsRightToLeft),
 		typeof(bool),
@@ -75,6 +87,18 @@ public sealed partial class MarkdownView : UserControl
 		set => SetValue(SelectionEnabledProperty, value);
 	}
 
+	public string GitHubBaseUrl
+	{
+		get => (string)GetValue(GitHubBaseUrlProperty);
+		set => SetValue(GitHubBaseUrlProperty, value);
+	}
+
+	public string GitHubRepositorySlug
+	{
+		get => (string)GetValue(GitHubRepositorySlugProperty);
+		set => SetValue(GitHubRepositorySlugProperty, value);
+	}
+
 	public SelectionRange? Selection
 	{
 		get => _host.Selection;
@@ -124,12 +148,18 @@ public sealed partial class MarkdownView : UserControl
 		((MarkdownView)d).SyncIsRightToLeft();
 	}
 
+	private static void OnGitHubEnrichmentsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		((MarkdownView)d).SyncGitHubEnrichments();
+	}
+
 	private void SyncAll()
 	{
 		SyncMarkdown();
 		SyncTheme();
 		SyncSelectionEnabled();
 		SyncIsRightToLeft();
+		SyncGitHubEnrichments();
 	}
 
 	private void SyncMarkdown()
@@ -151,6 +181,12 @@ public sealed partial class MarkdownView : UserControl
 	private void SyncIsRightToLeft()
 	{
 		_host.IsRightToLeft = IsRightToLeft;
+	}
+
+	private void SyncGitHubEnrichments()
+	{
+		_host.GitHubBaseUrl = GitHubBaseUrl;
+		_host.GitHubRepositorySlug = GitHubRepositorySlug;
 	}
 
 	public Task CopySelectionToClipboardAsync(bool includePlainText = true)

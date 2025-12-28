@@ -41,6 +41,8 @@
           x:Name="MarkdownPreview"
           IsRightToLeft="{Binding PreviewIsRightToLeft}"
           Theme="{Binding PreviewTheme}"
+          GitHubBaseUrl="https://example.invalid/github"
+          GitHubRepositorySlug="mock-owner/mock-repo"
           Markdown="{Binding Markdown}" />
       </StackPanel>
     </ScrollViewer>
