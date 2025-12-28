@@ -1440,20 +1440,9 @@ public class SkiaMarkdownView : ContentControl
 
     private Windows.Foundation.Point GetPointerPositionForHitTest(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        // The rendered bitmap is displayed in _image, whose Margin is adjusted for viewport offset.
-        // e.GetCurrentPoint(_image).Position is *viewport-local* (0..viewportHeight).
-        // Hit-testing must be done in layout coordinates, so add _viewportTop.
-        try
-        {
-            var p = e.GetCurrentPoint(_image).Position;
-            _lastPointerPositionInImage = p;
-            return new Windows.Foundation.Point(p.X, p.Y + _viewportTop);
-        }
-        catch
-        {
-            _lastPointerPositionInImage = null;
-            return e.GetCurrentPoint(this).Position;
-        }
+        var p = LayoutSpace.GetLayoutPoint(e, _image, this, _viewportTop, out var lastInImage);
+        _lastPointerPositionInImage = lastInImage;
+        return p;
     }
 
     private void ArmTouchLongPress()
@@ -1555,28 +1544,44 @@ public class SkiaMarkdownView : ContentControl
     {
         UpdateViewportFromScrollViewer();
 
-        // When the user scrolls (e.g. wheel) while dragging selection, we may not receive PointerMoved
-        // events even though the pointer's layout-space Y changes. Recompute the current hit from the
-        // last known viewport-local pointer position.
-        if (_layout is not null && _isPointerDown && _isSelecting && _lastPointerPositionInImage is { } p)
-        {
-            var x = (float)p.X;
-            var y = (float)(p.Y + _viewportTop);
-
-            if (MarkdownHitTester.TryHitTestNearest(_layout, x, y, out var hit))
-            {
-                _lastPointerMoveHit = hit;
-                var result = _pointerInteraction.OnPointerMove(hit, x: x, y: y, selectionEnabled: SelectionEnabled);
-                if (result.SelectionChanged)
-                {
-                    Selection = result.Selection;
-                    _isSelecting = true;
-                    SyncSelectionFromPointerToKeyboard();
-                }
-            }
-        }
+        RefreshSelectionFromScrollIfNeeded();
 
         RequestRender();
+    }
+
+    private void RefreshSelectionFromScrollIfNeeded()
+    {
+        // When the user scrolls (e.g. wheel) while dragging selection, some targets don't emit PointerMoved.
+        // The viewport changes, which changes the pointer's layout-space Y. Recompute selection from the
+        // last known viewport-local pointer position.
+        if (_layout is null || !_isPointerDown || !_isSelecting)
+        {
+            return;
+        }
+
+        if (_lastPointerPositionInImage is not { } p)
+        {
+            return;
+        }
+
+        var x = (float)p.X;
+        var y = (float)(p.Y + _viewportTop);
+
+        if (!MarkdownHitTester.TryHitTestNearest(_layout, x, y, out var hit))
+        {
+            return;
+        }
+
+        _lastPointerMoveHit = hit;
+        var result = _pointerInteraction.OnPointerMove(hit, x: x, y: y, selectionEnabled: SelectionEnabled);
+        if (!result.SelectionChanged)
+        {
+            return;
+        }
+
+        Selection = result.Selection;
+        _isSelecting = true;
+        SyncSelectionFromPointerToKeyboard();
     }
 
     private void UpdateViewportFromScrollViewer()

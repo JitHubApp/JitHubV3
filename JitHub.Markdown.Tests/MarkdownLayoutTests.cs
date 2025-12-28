@@ -176,6 +176,61 @@ public sealed class MarkdownLayoutTests
     }
 
     [Test]
+    public void Translated_blocks_keep_glyph_boundaries_aligned_with_run_bounds()
+    {
+        // Regression for a bug where bounds were translated but GlyphX was not (making end-of-line unselectable).
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("- one\n- two\n\n> quote\n");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: new TestTextMeasurer());
+
+        var runs = layout.Blocks
+            .SelectMany(FlattenTextRuns)
+            .Where(r => !string.IsNullOrWhiteSpace(r.Text))
+            .ToArray();
+
+        runs.Should().NotBeEmpty();
+
+        foreach (var run in runs)
+        {
+            run.GlyphX.IsDefault.Should().BeFalse("glyph boundaries should be produced during layout");
+            run.GlyphX.Length.Should().BeGreaterThan(0);
+
+            var gx0 = run.GlyphX[0];
+            var gxLast = run.GlyphX[run.GlyphX.Length - 1];
+
+            gx0.Should().BeGreaterThanOrEqualTo(run.Bounds.X - 0.01f);
+            gxLast.Should().BeGreaterThanOrEqualTo(run.Bounds.X - 0.01f);
+            gx0.Should().BeLessThanOrEqualTo(run.Bounds.Right + 0.01f);
+            gxLast.Should().BeLessThanOrEqualTo(run.Bounds.Right + 0.01f);
+        }
+
+        static IEnumerable<InlineRunLayout> FlattenTextRuns(BlockLayout block)
+        {
+            switch (block)
+            {
+                case ParagraphLayout p:
+                    return p.Lines.SelectMany(l => l.Runs);
+                case HeadingLayout h:
+                    return h.Lines.SelectMany(l => l.Runs);
+                case CodeBlockLayout c:
+                    return c.Lines.SelectMany(l => l.Runs);
+                case BlockQuoteLayout q:
+                    return q.Blocks.SelectMany(FlattenTextRuns);
+                case ListLayout l:
+                    return l.Items.SelectMany(it => it.Blocks).SelectMany(FlattenTextRuns);
+                case ListItemLayout li:
+                    return li.Blocks.SelectMany(FlattenTextRuns);
+                case TableLayout t:
+                    return t.Rows.SelectMany(r => r.Cells).SelectMany(c => c.Blocks).SelectMany(FlattenTextRuns);
+                default:
+                    return Array.Empty<InlineRunLayout>();
+            }
+        }
+    }
+
+    [Test]
     public void Tables_layout_cells_and_nested_blocks()
     {
         var engine = MarkdownEngine.CreateDefault();

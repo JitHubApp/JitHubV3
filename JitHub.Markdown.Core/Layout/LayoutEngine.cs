@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
+using System.Diagnostics;
 
 namespace JitHub.Markdown;
 
@@ -557,7 +558,11 @@ public sealed class MarkdownLayoutEngine
                 gx = builder.ToImmutable();
             }
 
-            return r with { Bounds = Shift(r.Bounds), GlyphX = gx };
+            var shifted = r with { Bounds = Shift(r.Bounds), GlyphX = gx };
+#if DEBUG
+            ValidateRunGeometry(shifted);
+#endif
+            return shifted;
         }
 
         return layout switch
@@ -619,6 +624,33 @@ public sealed class MarkdownLayoutEngine
             _ => layout,
         };
     }
+
+#if DEBUG
+    private static void ValidateRunGeometry(InlineRunLayout run)
+    {
+        var gx = run.GlyphX;
+        if (gx.IsDefault || gx.Length == 0)
+        {
+            return;
+        }
+
+        for (var i = 0; i < gx.Length - 1; i++)
+        {
+            Debug.Assert(gx[i] <= gx[i + 1], "GlyphX must be monotonic in visual X order.");
+        }
+
+        // GlyphX values are absolute (layout-space) caret boundaries. They should overlap the run bounds.
+        // Note: Inline code can start after Bounds.X due to internal padding; allow that.
+        var left = run.Bounds.X;
+        var right = run.Bounds.Right;
+        var min = gx[0];
+        var max = gx[gx.Length - 1];
+        const float slop = 8f;
+
+        Debug.Assert(max >= left - slop, "GlyphX end must not be far left of the run bounds.");
+        Debug.Assert(min <= right + slop, "GlyphX start must not be far right of the run bounds.");
+    }
+#endif
 
     private readonly record struct BlockCacheKey(NodeId Id, float Width, float Scale, int ThemeHash);
 
@@ -1479,7 +1511,11 @@ public sealed class MarkdownLayoutEngine
             gx = builder.ToImmutable();
         }
 
-        return run with { Bounds = shiftedBounds, GlyphX = gx };
+        var shifted = run with { Bounds = shiftedBounds, GlyphX = gx };
+#if DEBUG
+        ValidateRunGeometry(shifted);
+#endif
+        return shifted;
     }
 
     private static bool ContainsStrongRtl(IEnumerable<string> texts)
