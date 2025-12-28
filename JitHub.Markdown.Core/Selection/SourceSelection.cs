@@ -38,13 +38,56 @@ public static class SelectionSourceMapper
         var start = normalized.Start;
         var end = normalized.End;
 
-        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, out var startIndex))
+        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, mappers: null, out var startIndex))
         {
             selection = default;
             return false;
         }
 
-        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, out var endIndex))
+        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, mappers: null, out var endIndex))
+        {
+            selection = default;
+            return false;
+        }
+
+        startIndex = Math.Clamp(startIndex, 0, sourceMarkdown.Length);
+        endIndex = Math.Clamp(endIndex, 0, sourceMarkdown.Length);
+
+        if (endIndex < startIndex)
+        {
+            (startIndex, endIndex) = (endIndex, startIndex);
+        }
+
+        selection = new SourceSelection(startIndex, endIndex);
+        return true;
+    }
+
+    public static bool TryMapToSource(
+        string sourceMarkdown,
+        MarkdownDocumentModel document,
+        SelectionRange range,
+        IReadOnlyList<ISelectionSourceIndexMapper>? mappers,
+        out SourceSelection selection,
+        ISelectionNormalizer? normalizer = null)
+    {
+        if (sourceMarkdown is null) throw new ArgumentNullException(nameof(sourceMarkdown));
+        if (document is null) throw new ArgumentNullException(nameof(document));
+
+        // Normalize without requiring a layout instance.
+        var normalized = SelectionRange.Compare(range.Anchor, range.Active) <= 0
+            ? range
+            : new SelectionRange(range.Active, range.Anchor);
+
+        var start = normalized.Start;
+        var end = normalized.End;
+
+        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, mappers, out var startIndex))
+        {
+            selection = default;
+            return false;
+        }
+
+        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, mappers, out var endIndex))
         {
             selection = default;
             return false;
@@ -67,9 +110,27 @@ public static class SelectionSourceMapper
         MarkdownDocumentModel document,
         InlineRunLayout run,
         int textOffset,
+        IReadOnlyList<ISelectionSourceIndexMapper>? mappers,
         out int sourceIndex)
     {
         sourceIndex = 0;
+
+        if (mappers is not null)
+        {
+            for (var i = 0; i < mappers.Count; i++)
+            {
+                var mapper = mappers[i];
+                if (mapper is null)
+                {
+                    continue;
+                }
+
+                if (mapper.TryMapCaretToSourceIndex(sourceMarkdown, document, run, textOffset, out sourceIndex))
+                {
+                    return true;
+                }
+            }
+        }
 
         if (run.Kind == NodeKind.Image)
         {

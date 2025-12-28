@@ -1899,6 +1899,7 @@ public class SkiaMarkdownView : ContentControl
                 Scale = 1,
                 Overscan = 48,
                 ImageResolver = ResolveImage,
+                Plugins = _engine.Plugins,
                 Selection = _selection,
             });
 
@@ -1923,7 +1924,12 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        if (!SelectionSourceMapper.TryMapToSource(Markdown ?? string.Empty, _document, _selection.Value, out var sourceSel))
+        if (!SelectionSourceMapper.TryMapToSource(
+            Markdown ?? string.Empty,
+            _document,
+            _selection.Value,
+            _engine.Plugins.SelectionMappers,
+            out var sourceSel))
         {
             return;
         }

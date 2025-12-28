@@ -16,6 +16,8 @@ public sealed class RenderContext
 
     public Func<Uri, SKImage?>? ImageResolver { get; init; }
 
+    public MarkdownPluginRegistry? Plugins { get; init; }
+
     public SelectionRange? Selection { get; init; }
 
     public IList<HitRegion>? HitRegions { get; init; }

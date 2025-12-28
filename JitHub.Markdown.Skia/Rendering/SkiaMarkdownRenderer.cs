@@ -36,6 +36,17 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
     {
         DrawBlockBackground(block, context);
 
+        if (context.Plugins is not null)
+        {
+            foreach (var renderer in context.Plugins.GetRenderers<ISkiaMarkdownBlockRenderer>())
+            {
+                if (renderer.TryRender(block, context, isInQuote))
+                {
+                    return;
+                }
+            }
+        }
+
         switch (block)
         {
             case ParagraphLayout p:
