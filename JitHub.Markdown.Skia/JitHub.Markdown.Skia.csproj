@@ -11,4 +11,8 @@
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" />
     <ProjectReference Include="..\JitHub.Markdown.Core\JitHub.Markdown.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Fonts\*.ttf" />
+  </ItemGroup>
 </Project>

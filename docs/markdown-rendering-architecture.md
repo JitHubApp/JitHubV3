@@ -1,7 +1,7 @@
 # JitHub Markdown Rendering Library — Architecture (Draft)
 
 ## Why this exists
-JitHub’s center experience is rendering Markdown, everywhere (Windows App SDK/WinUI, WebAssembly, iOS, Android, macOS, Linux). We need a **single shared rendering engine** to ensure:
+JitHub’s center experience is rendering Markdown, everywhere (Windows App SDK/WinUI, iOS, Android, macOS, Linux). We need a **single shared rendering engine** to ensure:
 
 - Identical parsing + layout + rendering behavior on every platform
 - GitHub Flavored Markdown (GFM) compatibility and extensibility (plugins)
@@ -479,7 +479,6 @@ Because this is a shared library, the core provides:
 Platform-specific projects provide implementations:
 - Windows (WinUI/Uno): map nodes to UIA via Uno/WinUI automation patterns or overlay elements.
 - iOS/Android: map nodes to native accessibility nodes.
-- WebAssembly: map nodes to ARIA overlay elements when possible.
 
 ### Keyboard navigation
 Core defines navigation commands:

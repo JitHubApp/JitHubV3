@@ -23,8 +23,11 @@ public sealed class MarkdownPointerInteractionTests
         var run = line.Runs[runIndex];
         var hit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 1, CaretX: MarkdownHitTester.GetCaretX(run, 1));
 
+        var x = (run.Bounds.X + run.Bounds.Right) / 2f;
+        var y = line.Y + (line.Height / 2f);
+
         var sm = new SelectionPointerInteraction();
-        sm.OnPointerDown(hit, x: 10, y: 10, selectionEnabled: true, modifiers: new PointerModifiers(Shift: false))
+        sm.OnPointerDown(hit, x: x, y: y, selectionEnabled: true, modifiers: new PointerModifiers(Shift: false))
             .SelectionChanged.Should().BeFalse();
 
         var up = sm.OnPointerUp(hit, selectionEnabled: true);
@@ -50,11 +53,14 @@ public sealed class MarkdownPointerInteractionTests
         var downHit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 0, CaretX: MarkdownHitTester.GetCaretX(run, 0));
         var moveHit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 4, CaretX: MarkdownHitTester.GetCaretX(run, 4));
 
+        var xDown = (run.Bounds.X + run.Bounds.Right) / 2f;
+        var yDown = line.Y + (line.Height / 2f);
+
         var sm = new SelectionPointerInteraction();
-        sm.OnPointerDown(downHit, x: 10, y: 10, selectionEnabled: true, modifiers: new PointerModifiers(Shift: false));
+        sm.OnPointerDown(downHit, x: xDown, y: yDown, selectionEnabled: true, modifiers: new PointerModifiers(Shift: false));
 
         // Move far enough to exceed drag threshold.
-        var move = sm.OnPointerMove(moveHit, x: 30, y: 10, selectionEnabled: true);
+        var move = sm.OnPointerMove(moveHit, x: xDown + 30, y: yDown, selectionEnabled: true);
         move.SelectionChanged.Should().BeTrue();
         move.Selection.Should().NotBeNull();
         move.ActivateLinkUrl.Should().BeNull();
@@ -83,11 +89,14 @@ public sealed class MarkdownPointerInteractionTests
         var downHit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 0, CaretX: MarkdownHitTester.GetCaretX(run, 0));
         var moveHit = new MarkdownHitTestResult(0, runIndex, run, line, TextOffset: 4, CaretX: MarkdownHitTester.GetCaretX(run, 4));
 
+        var xDown = (run.Bounds.X + run.Bounds.Right) / 2f;
+        var yDown = line.Y + (line.Height / 2f);
+
         var sm = new SelectionPointerInteraction();
-        sm.OnPointerDown(downHit, x: 10, y: 10, selectionEnabled: false, modifiers: new PointerModifiers(Shift: false));
+        sm.OnPointerDown(downHit, x: xDown, y: yDown, selectionEnabled: false, modifiers: new PointerModifiers(Shift: false));
 
         // Move far enough to exceed drag threshold.
-        sm.OnPointerMove(moveHit, x: 30, y: 10, selectionEnabled: false);
+        sm.OnPointerMove(moveHit, x: xDown + 30, y: yDown, selectionEnabled: false);
 
         var up = sm.OnPointerUp(moveHit, selectionEnabled: false);
         up.ActivateLinkUrl.Should().BeNull();

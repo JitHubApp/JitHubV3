@@ -187,7 +187,6 @@ public static class MarkdownHitTester
         }
 
         // Find the first boundary strictly greater than x.
-        // Offset is the index of the preceding boundary.
         var lo = 0;
         var hi = gx.Length - 1;
         while (lo <= hi)
@@ -203,7 +202,16 @@ public static class MarkdownHitTester
             }
         }
 
-        var visual = Math.Clamp(lo - 1, 0, run.Text.Length);
+        // Choose the nearest caret boundary (midpoint rule) so end-of-run selection
+        // doesn't require the pointer to move past the last glyph boundary.
+        var leftIndex = Math.Clamp(lo - 1, 0, gx.Length - 1);
+        var rightIndex = Math.Clamp(lo, 0, gx.Length - 1);
+
+        var distLeft = x - gx[leftIndex];
+        var distRight = gx[rightIndex] - x;
+        var visualCaretIndex = distLeft >= distRight ? rightIndex : leftIndex;
+
+        var visual = Math.Clamp(visualCaretIndex, 0, run.Text.Length);
         if (run.IsRightToLeft)
         {
             return Math.Clamp(run.Text.Length - visual, 0, run.Text.Length);

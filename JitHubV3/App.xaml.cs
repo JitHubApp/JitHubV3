@@ -74,7 +74,6 @@ public partial class App : Application
                     //// DevServer and HotReload related
                     //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
                     //// Debug JS interop
-                    //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
 
                 }, enableUnoLogging: true)
                 .UseSerilog(consoleLoggingEnabled: true, fileLoggingEnabled: true)
@@ -141,12 +140,6 @@ public partial class App : Application
             (initialNavigate: async (services, navigator) =>
             {
                 var auth = services.GetRequiredService<IAuthenticationService>();
-
-#if __WASM__
-                // If we returned from backend auth with an access token in the URL,
-                // persist it into the Uno authentication token cache and clear the URL.
-                await GitHubAuthFlow.TryConsumeAndPersistWasmRedirectTokensAsync(services);
-#endif
 
                 var authenticated = await auth.RefreshAsync();
                 if (authenticated)

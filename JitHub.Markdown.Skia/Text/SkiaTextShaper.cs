@@ -15,6 +15,7 @@ public sealed class SkiaTextShaper : ITextShaper
         }
 
         using var paint = CreatePaint(style, scale);
+        EnsureTypefaceSupportsText(paint, text);
         using var shaper = new SKShaper(paint.Typeface!);
 
         using var buffer = new HarfBuzzSharp.Buffer();
@@ -49,6 +50,7 @@ public sealed class SkiaTextShaper : ITextShaper
         }
 
         using var paint = CreatePaint(style, scale);
+        EnsureTypefaceSupportsText(paint, text);
         using var shaper = new SKShaper(paint.Typeface!);
 
         using var buffer = new HarfBuzzSharp.Buffer();
@@ -80,6 +82,7 @@ public sealed class SkiaTextShaper : ITextShaper
         }
 
         using var paint = CreatePaint(style, scale);
+        EnsureTypefaceSupportsText(paint, text);
         using var shaper = new SKShaper(paint.Typeface!);
 
         using var buffer = new HarfBuzzSharp.Buffer();
@@ -240,5 +243,12 @@ public sealed class SkiaTextShaper : ITextShaper
 
         paint.Typeface = SkiaTypefaceCache.GetTypeface(style);
         return paint;
+    }
+
+    private static void EnsureTypefaceSupportsText(SKPaint paint, string text)
+    {
+        // No-op: Typeface fallback is handled by the typeface cache.
+        _ = paint;
+        _ = text;
     }
 }

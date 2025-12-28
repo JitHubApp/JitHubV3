@@ -101,8 +101,6 @@ public class SkiaMarkdownView : ContentControl
 
     private SkiaMarkdownViewAutomationPeer? _automationPeer;
 
-    private static bool IsWebAssembly => OperatingSystem.IsBrowser();
-
     protected override AutomationPeer OnCreateAutomationPeer()
         => _automationPeer ??= new SkiaMarkdownViewAutomationPeer(this);
 
@@ -162,7 +160,7 @@ public class SkiaMarkdownView : ContentControl
         // NOTE: Do not register the same handlers multiple times on the subtree.
         // This control uses AddHandler(..., handledEventsToo: true) on itself plus managed bubbling.
         // Duplicating handlers on _canvas/_image will cause every input event to be processed multiple times,
-        // which breaks selection reliability and severely harms performance (especially on WASM).
+        // which breaks selection reliability and severely harms performance.
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -194,9 +192,6 @@ public class SkiaMarkdownView : ContentControl
 
     private readonly List<Border> _linkFocusRects = new();
 
-    private readonly string _wasmAriaInstanceId = Guid.NewGuid().ToString("N");
-    private bool _wasmAriaOverlayQueued;
-
     private MarkdownDocumentModel? _document;
     private MarkdownLayout? _layout;
     private SelectionRange? _selection;
@@ -226,6 +221,7 @@ public class SkiaMarkdownView : ContentControl
     private Microsoft.UI.Xaml.Input.Pointer? _activePointer;
     private bool _isPointerDown;
     private MarkdownHitTestResult? _lastPointerMoveHit;
+    private Windows.Foundation.Point? _lastPointerPositionInImage;
 
     private bool _touchLongPressArmed;
     private bool _touchSelectionStarted;
@@ -299,12 +295,6 @@ public class SkiaMarkdownView : ContentControl
             UpdateViewportFromScrollViewer();
         }
 
-        if (IsWebAssembly)
-        {
-            EnsureWasmAriaOverlayInitialized();
-            RequestWasmAriaOverlayUpdate();
-        }
-
         RequestRender();
     }
 
@@ -328,11 +318,6 @@ public class SkiaMarkdownView : ContentControl
         {
             System.Buffers.ArrayPool<byte>.Shared.Return(_renderPixelBuffer);
             _renderPixelBuffer = null;
-        }
-
-        if (IsWebAssembly)
-        {
-            DisposeWasmAriaOverlay();
         }
     }
 
@@ -376,8 +361,8 @@ public class SkiaMarkdownView : ContentControl
             {
                 log.LogDebug("[SkiaMarkdownView] PointerPressed hit-test miss at ({X},{Y})", pos.X, pos.Y);
             }
-            // Important on WASM: if we leave _isPointerDown=true on a miss, we may never receive PointerReleased,
-            // and then PointerMoved keeps extending selection indefinitely.
+            // If we leave _isPointerDown=true on a miss, some platforms may not deliver PointerReleased,
+            // and then PointerMoved could keep extending selection indefinitely.
             ResetPointerTracking();
             return;
         }
@@ -464,8 +449,8 @@ public class SkiaMarkdownView : ContentControl
             return;
         }
 
-        // WASM quirk: sometimes PointerReleased is not delivered (or capture is lost). If the pointer is no
-        // longer pressed/in contact, treat this as an implicit release so selection can't get stuck.
+        // Some platforms may not deliver PointerReleased (or capture is lost). If the pointer is no longer
+        // pressed/in contact, treat this as an implicit release so selection can't get stuck.
         try
         {
             var pp = e.GetCurrentPoint(this);
@@ -529,7 +514,7 @@ public class SkiaMarkdownView : ContentControl
         MarkdownHitTestResult hit;
 
         // Phase 6.6.4: fast-path when staying within the same line band.
-        // PointerMoved is very hot (especially on WASM), so avoid nearest-line lookup if we can.
+        // PointerMoved is very hot, so avoid nearest-line lookup if we can.
         if (_lastPointerMoveHit is { } last && y >= last.Line.Y && y <= (last.Line.Y + last.Line.Height))
         {
             if (!MarkdownHitTester.TryHitTestLine(last.LineIndex, last.Line, x, out hit))
@@ -565,8 +550,7 @@ public class SkiaMarkdownView : ContentControl
 
         SyncSelectionFromPointerToKeyboard();
 
-        // Handle moves when we're actively selecting. This is important on WASM/Desktop
-        // where CapturePointer may not be supported consistently.
+        // Handle moves when we're actively selecting (CapturePointer may not be supported consistently).
         if (_hasPointerCapture || _touchSelectionStarted || _isSelecting)
         {
             e.Handled = true;
@@ -644,7 +628,7 @@ public class SkiaMarkdownView : ContentControl
 
     private void OnPointerCaptureLost(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
-        // Critical: on WASM, capture can be lost without a corresponding PointerReleased.
+        // Capture can be lost without a corresponding PointerReleased.
         // If we don't reset, the control keeps thinking the pointer is down and selection continues forever.
         CancelTouchLongPress();
         _hasPointerCapture = false;
@@ -669,6 +653,7 @@ public class SkiaMarkdownView : ContentControl
         _activePointer = null;
         _isPointerDown = false;
         _lastPointerMoveHit = null;
+        _lastPointerPositionInImage = null;
         _touchLongPressArmed = false;
         _touchSelectionStarted = false;
         _isSelecting = false;
@@ -681,14 +666,6 @@ public class SkiaMarkdownView : ContentControl
         if (e.Key == VirtualKey.Shift)
         {
             _isShiftDown = true;
-            return;
-        }
-
-        // WebAssembly accessibility: do NOT handle Tab in the XAML layer.
-        // The Skia renderer draws to a canvas, so screen readers need real DOM focus changes.
-        // Our WASM ARIA overlay is DOM-based; letting Tab propagate enables browser-driven focus navigation.
-        if (IsWebAssembly && e.Key == VirtualKey.Tab)
-        {
             return;
         }
 
@@ -1354,14 +1331,17 @@ public class SkiaMarkdownView : ContentControl
     private Windows.Foundation.Point GetPointerPositionForHitTest(Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         // The rendered bitmap is displayed in _image, whose Margin is adjusted for viewport offset.
-        // Hit-testing must be done in the same coordinate space as the layout (image-local), otherwise
-        // clicks will randomly miss (especially when _image.Margin.Top != 0 under ScrollViewer).
+        // e.GetCurrentPoint(_image).Position is *viewport-local* (0..viewportHeight).
+        // Hit-testing must be done in layout coordinates, so add _viewportTop.
         try
         {
-            return e.GetCurrentPoint(_image).Position;
+            var p = e.GetCurrentPoint(_image).Position;
+            _lastPointerPositionInImage = p;
+            return new Windows.Foundation.Point(p.X, p.Y + _viewportTop);
         }
         catch
         {
+            _lastPointerPositionInImage = null;
             return e.GetCurrentPoint(this).Position;
         }
     }
@@ -1464,11 +1444,29 @@ public class SkiaMarkdownView : ContentControl
     private void OnScrollViewerViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
         UpdateViewportFromScrollViewer();
-        RequestRender();
-        if (IsWebAssembly)
+
+        // When the user scrolls (e.g. wheel) while dragging selection, we may not receive PointerMoved
+        // events even though the pointer's layout-space Y changes. Recompute the current hit from the
+        // last known viewport-local pointer position.
+        if (_layout is not null && _isPointerDown && _isSelecting && _lastPointerPositionInImage is { } p)
         {
-            RequestWasmAriaOverlayUpdate();
+            var x = (float)p.X;
+            var y = (float)(p.Y + _viewportTop);
+
+            if (MarkdownHitTester.TryHitTestNearest(_layout, x, y, out var hit))
+            {
+                _lastPointerMoveHit = hit;
+                var result = _pointerInteraction.OnPointerMove(hit, x: x, y: y, selectionEnabled: SelectionEnabled);
+                if (result.SelectionChanged)
+                {
+                    Selection = result.Selection;
+                    _isSelecting = true;
+                    SyncSelectionFromPointerToKeyboard();
+                }
+            }
         }
+
+        RequestRender();
     }
 
     private void UpdateViewportFromScrollViewer()
@@ -1514,10 +1512,6 @@ public class SkiaMarkdownView : ContentControl
 
             _image.Margin = new Thickness(0, _viewportTop, 0, 0);
             UpdateLinkFocusOverlay();
-            if (IsWebAssembly)
-            {
-                RequestWasmAriaOverlayUpdate();
-            }
         }
         catch
         {
@@ -1527,10 +1521,6 @@ public class SkiaMarkdownView : ContentControl
             _image.Visibility = Visibility.Visible;
             _image.Margin = new Thickness(0);
             UpdateLinkFocusOverlay();
-            if (IsWebAssembly)
-            {
-                RequestWasmAriaOverlayUpdate();
-            }
         }
     }
 
@@ -1562,11 +1552,6 @@ public class SkiaMarkdownView : ContentControl
 
         UpdateViewportFromScrollViewer();
         RequestRender();
-
-        if (IsWebAssembly)
-        {
-            RequestWasmAriaOverlayUpdate();
-        }
     }
 
     private void RequestRender()
@@ -1593,246 +1578,6 @@ public class SkiaMarkdownView : ContentControl
         {
             _renderQueued = false;
             InvalidateRender();
-        }
-    }
-
-    private void RequestWasmAriaOverlayUpdate()
-    {
-        if (!IsWebAssembly)
-        {
-            return;
-        }
-
-        if (_wasmAriaOverlayQueued)
-        {
-            return;
-        }
-
-        _wasmAriaOverlayQueued = true;
-
-        var queue = DispatcherQueue;
-        if (!queue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
-            {
-                _wasmAriaOverlayQueued = false;
-                UpdateWasmAriaOverlayCore();
-            }))
-        {
-            _wasmAriaOverlayQueued = false;
-            UpdateWasmAriaOverlayCore();
-        }
-    }
-
-    private void EnsureWasmAriaOverlayInitialized()
-    {
-        if (!IsWebAssembly)
-        {
-            return;
-        }
-
-        _ = TryInvokeJS("(function(){\n" +
-            "  const g = globalThis;\n" +
-            "  if (g.jithubMarkdownAriaOverlay) return;\n" +
-            "  const api = {};\n" +
-            "  api._instances = new Map();\n" +
-            "  api._ensure = function(id){\n" +
-            "    let inst = api._instances.get(id);\n" +
-            "    if (inst) return inst;\n" +
-            "    const root = document.createElement('div');\n" +
-            "    root.setAttribute('data-jithub-md-a11y', id);\n" +
-            "    root.style.position = 'fixed';\n" +
-            "    root.style.left = '0px';\n" +
-            "    root.style.top = '0px';\n" +
-            "    root.style.width = '0px';\n" +
-            "    root.style.height = '0px';\n" +
-            "    root.style.zIndex = '2147483647';\n" +
-            "    document.body.appendChild(root);\n" +
-            "    inst = { root: root, els: new Map() };\n" +
-            "    api._instances.set(id, inst);\n" +
-            "    return inst;\n" +
-            "  };\n" +
-            "  api.dispose = function(id){\n" +
-            "    const inst = api._instances.get(id);\n" +
-            "    if (!inst) return;\n" +
-            "    inst.root.remove();\n" +
-            "    api._instances.delete(id);\n" +
-            "  };\n" +
-            "  api.update = function(id, nodes){\n" +
-            "    const inst = api._ensure(id);\n" +
-            "    const desired = new Set();\n" +
-            "    for (const n of nodes){\n" +
-            "      desired.add(n.key);\n" +
-            "      let el = inst.els.get(n.key);\n" +
-            "      if (!el){\n" +
-            "        el = (n.role === 'link') ? document.createElement('a') : document.createElement('div');\n" +
-            "        el.setAttribute('data-jithub-md-node', n.key);\n" +
-            "        el.tabIndex = 0;\n" +
-            "        el.style.position = 'fixed';\n" +
-            // Some AT/browser combos can ignore fully-transparent focusable elements.
-            "        el.style.opacity = '0.01';\n" +
-            "        el.style.background = 'transparent';\n" +
-            "        el.style.pointerEvents = 'auto';\n" +
-            "        el.style.outline = 'none';\n" +
-            "        inst.root.appendChild(el);\n" +
-            "        inst.els.set(n.key, el);\n" +
-            "      }\n" +
-            "      if (n.role === 'link'){\n" +
-            "        el.setAttribute('role', 'link');\n" +
-            "        if (n.url) el.setAttribute('href', n.url);\n" +
-            "      } else if (n.role === 'heading'){\n" +
-            "        el.setAttribute('role', 'heading');\n" +
-            "        if (n.level) el.setAttribute('aria-level', String(n.level));\n" +
-            "      } else if (n.role === 'listitem'){\n" +
-            "        el.setAttribute('role', 'listitem');\n" +
-            "      } else {\n" +
-            "        el.setAttribute('role', 'group');\n" +
-            "      }\n" +
-            "      const label = n.label || '';\n" +
-            "      el.setAttribute('aria-label', label);\n" +
-            "      if (label) { el.textContent = label; }\n" +
-            "      el.style.left = (n.x|0) + 'px';\n" +
-            "      el.style.top = (n.y|0) + 'px';\n" +
-            "      el.style.width = Math.max(0, n.w|0) + 'px';\n" +
-            "      el.style.height = Math.max(0, n.h|0) + 'px';\n" +
-            "    }\n" +
-            "    for (const [k, el] of inst.els){\n" +
-            "      if (!desired.has(k)){\n" +
-            "        el.remove();\n" +
-            "        inst.els.delete(k);\n" +
-            "      }\n" +
-            "    }\n" +
-            "  };\n" +
-            "  g.jithubMarkdownAriaOverlay = api;\n" +
-            "})();");
-    }
-
-    private void DisposeWasmAriaOverlay()
-    {
-        if (!IsWebAssembly)
-        {
-            return;
-        }
-
-        var idJson = JsonSerializer.Serialize(_wasmAriaInstanceId);
-        _ = TryInvokeJS($"globalThis.jithubMarkdownAriaOverlay && globalThis.jithubMarkdownAriaOverlay.dispose({idJson});");
-    }
-
-    private void UpdateWasmAriaOverlayCore()
-    {
-        if (!IsWebAssembly)
-        {
-            return;
-        }
-
-        EnsureWasmAriaOverlayInitialized();
-
-        if (_layout is null)
-        {
-            var idJson = JsonSerializer.Serialize(_wasmAriaInstanceId);
-            _ = TryInvokeJS($"globalThis.jithubMarkdownAriaOverlay && globalThis.jithubMarkdownAriaOverlay.update({idJson}, []);");
-            return;
-        }
-
-        Windows.Foundation.Point controlTopLeft;
-        try
-        {
-            var transform = TransformToVisual(null);
-            controlTopLeft = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
-        }
-        catch
-        {
-            controlTopLeft = new Windows.Foundation.Point(0, 0);
-        }
-
-        var viewportHeight = (float)_viewportHeight;
-        if (viewportHeight <= 0)
-        {
-            viewportHeight = (float)Math.Max(0, ActualHeight);
-        }
-
-        var tree = MarkdownAccessibilityTreeBuilder.Build(
-            _layout,
-            viewportTop: (float)_viewportTop,
-            viewportHeight: viewportHeight,
-            overscan: 32);
-
-        var nodes = new List<object>(64);
-
-        void AddNodesRec(AccessibilityNode node)
-        {
-            var isRelevant = node.Role is MarkdownAccessibilityRole.Heading
-                or MarkdownAccessibilityRole.ListItem
-                or MarkdownAccessibilityRole.Link;
-
-            if (isRelevant)
-            {
-                var b = node.Bounds;
-                var absX = controlTopLeft.X + b.X;
-                var absY = controlTopLeft.Y + b.Y;
-
-                var role = node.Role switch
-                {
-                    MarkdownAccessibilityRole.Heading => "heading",
-                    MarkdownAccessibilityRole.ListItem => "listitem",
-                    MarkdownAccessibilityRole.Link => "link",
-                    _ => "group",
-                };
-
-                var label = node.Role == MarkdownAccessibilityRole.Link && !string.IsNullOrWhiteSpace(node.Url)
-                    ? string.IsNullOrWhiteSpace(node.Name) ? node.Url! : $"{node.Name} ({node.Url})"
-                    : (node.Name ?? string.Empty);
-
-                var key = node.Role == MarkdownAccessibilityRole.Link && !string.IsNullOrWhiteSpace(node.Url)
-                    ? $"{role}_{node.Id.Value}_{node.Url}"
-                    : $"{role}_{node.Id.Value}";
-
-                nodes.Add(new
-                {
-                    key,
-                    role,
-                    label,
-                    url = node.Url,
-                    level = node.Level,
-                    x = absX,
-                    y = absY,
-                    w = b.Width,
-                    h = b.Height,
-                });
-            }
-
-            foreach (var child in node.Children)
-            {
-                AddNodesRec(child);
-            }
-        }
-
-        AddNodesRec(tree.Root);
-
-        var idJson2 = JsonSerializer.Serialize(_wasmAriaInstanceId);
-        var nodesJson = JsonSerializer.Serialize(nodes);
-        _ = TryInvokeJS($"globalThis.jithubMarkdownAriaOverlay && globalThis.jithubMarkdownAriaOverlay.update({idJson2}, {nodesJson});");
-    }
-
-    private static string? TryInvokeJS(string script)
-    {
-        try
-        {
-            var t = Type.GetType("Uno.Foundation.WebAssemblyRuntime, Uno.Foundation");
-            if (t is null)
-            {
-                return null;
-            }
-
-            var m = t.GetMethod("InvokeJS", new[] { typeof(string) });
-            if (m is null)
-            {
-                return null;
-            }
-
-            return m.Invoke(null, new object[] { script }) as string;
-        }
-        catch
-        {
-            return null;
         }
     }
 

@@ -69,8 +69,16 @@ public sealed class SelectionPointerInteraction
         // For a simple click on a link, prefer activation over collapsing selection.
         if (hit.Run.Kind == NodeKind.Link && !string.IsNullOrWhiteSpace(hit.Run.Url))
         {
-            _pendingLinkHit = hit;
-            return new PointerInteractionResult(SelectionChanged: false, Selection: Selection, ActivateLinkUrl: null);
+            // Hit-testing may clamp X to the nearest run when clicking in the empty area past the
+            // end of a line. Only treat it as a link click if the pointer X is actually within
+            // the link's bounds.
+            var b = hit.Run.Bounds;
+            const float slop = 1f;
+            if (x >= (b.X - slop) && x <= (b.Right + slop))
+            {
+                _pendingLinkHit = hit;
+                return new PointerInteractionResult(SelectionChanged: false, Selection: Selection, ActivateLinkUrl: null);
+            }
         }
 
         if (!selectionEnabled)

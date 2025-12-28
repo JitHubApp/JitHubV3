@@ -15,15 +15,17 @@
 
     <utu:NavigationBar Content="{Binding Title}" />
 
-    <ScrollViewer Grid.Row="1">
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="12" MaxWidth="960">
         <ToggleSwitch
+          x:Name="RtlToggle"
           Header="RTL"
           OnContent="Forced RTL (test)"
           OffContent="Platform default"
           IsOn="{Binding ForceRtl, Mode=TwoWay}" />
 
         <TextBox
+          x:Name="MarkdownEditor"
           Header="Markdown"
           AcceptsReturn="True"
           TextWrapping="Wrap"

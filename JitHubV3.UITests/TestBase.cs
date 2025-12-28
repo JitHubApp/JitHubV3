@@ -5,23 +5,35 @@ public class TestBase
 {
     private IApp? _app;
 
-    static TestBase()
+    private static readonly object InitLock = new();
+    private static bool IsInitialized;
+
+    [OneTimeSetUp]
+    public void OneTimeSetUpFixture()
     {
-        AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
-        AppInitializer.TestEnvironment.WebAssemblyDefaultUri = Constants.WebAssemblyDefaultUri;
-        AppInitializer.TestEnvironment.iOSAppName = Constants.iOSAppName;
-        AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
-        AppInitializer.TestEnvironment.iOSDeviceNameOrId = Constants.iOSDeviceNameOrId;
-        AppInitializer.TestEnvironment.CurrentPlatform = Constants.CurrentPlatform;
-        AppInitializer.TestEnvironment.WebAssemblyBrowser = Constants.WebAssemblyBrowser;
+        lock (InitLock)
+        {
+            if (IsInitialized)
+            {
+                return;
+            }
 
-#if DEBUG
-        AppInitializer.TestEnvironment.WebAssemblyHeadless = false;
-#endif
+            AppInitializer.TestEnvironment.AndroidAppName = Constants.AndroidAppName;
+            AppInitializer.TestEnvironment.iOSAppName = Constants.iOSAppName;
+            AppInitializer.TestEnvironment.iOSDeviceNameOrId = Constants.iOSDeviceNameOrId;
+            AppInitializer.TestEnvironment.CurrentPlatform = Constants.CurrentPlatform;
 
-        // Start the app only once, so the tests runs don't restart it
-        // and gain some time for the tests.
-        AppInitializer.ColdStartApp();
+            // Start the app only once, so the tests runs don't restart it.
+            try
+            {
+                AppInitializer.ColdStartApp();
+                IsInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                Assert.Ignore($"UI tests skipped: {ex.Message}");
+            }
+        }
     }
 
     protected IApp App

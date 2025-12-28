@@ -153,6 +153,31 @@ public sealed class MarkdownSelectionTests
     }
 
     [Test]
+    public void Hit_test_can_reach_end_of_run_near_last_glyph()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("Hello world");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var worldRun = line.Runs.First(r => r.Text == "world");
+
+        worldRun.GlyphX.IsDefault.Should().BeFalse();
+        worldRun.GlyphX.Length.Should().Be(worldRun.Text.Length + 1);
+
+        var gx = worldRun.GlyphX;
+        var x = (gx[gx.Length - 2] + gx[gx.Length - 1]) / 2f + 0.01f;
+        var y = line.Y + (line.Height / 2f);
+
+        MarkdownHitTester.TryHitTest(layout, x, y, out var hit).Should().BeTrue();
+        hit.Run.Text.Should().Be("world");
+        hit.TextOffset.Should().Be(worldRun.Text.Length);
+    }
+
+    [Test]
     public void Hit_test_nearest_succeeds_in_vertical_gaps()
     {
         var engine = MarkdownEngine.CreateDefault();
@@ -172,6 +197,33 @@ public sealed class MarkdownSelectionTests
 
         MarkdownHitTester.TryHitTestNearest(layout, x, yBetweenLines, out var hit).Should().BeTrue("nearest hit-test should clamp to the closest line");
         hit.Run.Text.Should().Be("Hello");
+    }
+
+    [Test]
+    public void Link_activation_does_not_trigger_when_clicking_past_link_bounds()
+    {
+        var engine = MarkdownEngine.CreateDefault();
+        var doc = engine.Parse("Go to [Link](https://example.com)");
+
+        var layoutEngine = new MarkdownLayoutEngine();
+        var measurer = new SkiaTextMeasurer();
+        var layout = layoutEngine.Layout(doc, width: 600, theme: MarkdownTheme.Light, scale: 1, textMeasurer: measurer);
+
+        var line = layout.Blocks.OfType<ParagraphLayout>().Single().Lines.Single();
+        var linkRun = line.Runs.Single(r => r.Kind == NodeKind.Link);
+
+        var y = line.Y + (line.Height / 2f);
+        var xOutside = linkRun.Bounds.Right + 40f;
+
+        MarkdownHitTester.TryHitTestNearest(layout, xOutside, y, out var hit).Should().BeTrue();
+        hit.Run.Kind.Should().Be(NodeKind.Link, "nearest hit-test clamps X to the last run");
+
+        var interaction = new SelectionPointerInteraction();
+        var down = interaction.OnPointerDown(hit, x: xOutside, y: y, selectionEnabled: true, modifiers: new PointerModifiers(Shift: false));
+        down.ActivateLinkUrl.Should().BeNull();
+
+        var up = interaction.OnPointerUp(hit, selectionEnabled: true);
+        up.ActivateLinkUrl.Should().BeNull("clicking outside link bounds must not activate");
     }
 
     [Test]
