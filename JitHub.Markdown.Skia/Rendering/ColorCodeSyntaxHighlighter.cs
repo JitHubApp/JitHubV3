@@ -414,6 +414,24 @@ internal static class ColorCodeSyntaxHighlighter
             // ignore
         }
 
+        // Some StyleDictionary implementations are not IDictionary but are enumerable.
+        // Scan contained styles by ScopeName as another case-insensitive fallback.
+        try
+        {
+            foreach (var s in styles)
+            {
+                if (string.Equals(s.ScopeName, scopeName, StringComparison.OrdinalIgnoreCase))
+                {
+                    style = s;
+                    return true;
+                }
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
         // Last resort: reflection for an indexer-like "Item" taking string.
         try
         {
@@ -1180,14 +1198,7 @@ internal static class ColorCodeSyntaxHighlighter
         {
             if (DiagnosticsEnabled)
             {
-                try
-                {
-                    Diag($"ScopeCapturer: parserType='{languageParser?.GetType().FullName ?? "<null>"}'");
-                }
-                catch
-                {
-                    // ignore
-                }
+                Diag($"ScopeCapturer: parserType='{languageParser?.GetType().FullName ?? "<null>"}'");
             }
         }
 

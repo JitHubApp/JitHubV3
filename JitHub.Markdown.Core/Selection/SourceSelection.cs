@@ -38,17 +38,8 @@ public static class SelectionSourceMapper
         var start = normalized.Start;
         var end = normalized.End;
 
-        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, mappers: null, out var startIndex))
-        {
-            selection = default;
-            return false;
-        }
-
-        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, mappers: null, out var endIndex))
-        {
-            selection = default;
-            return false;
-        }
+        _ = TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, mappers: null, out var startIndex);
+        _ = TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, mappers: null, out var endIndex);
 
         startIndex = Math.Clamp(startIndex, 0, sourceMarkdown.Length);
         endIndex = Math.Clamp(endIndex, 0, sourceMarkdown.Length);
@@ -81,17 +72,8 @@ public static class SelectionSourceMapper
         var start = normalized.Start;
         var end = normalized.End;
 
-        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, mappers, out var startIndex))
-        {
-            selection = default;
-            return false;
-        }
-
-        if (!TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, mappers, out var endIndex))
-        {
-            selection = default;
-            return false;
-        }
+        _ = TryMapCaretToSourceIndex(sourceMarkdown, document, start.Run, start.TextOffset, mappers, out var startIndex);
+        _ = TryMapCaretToSourceIndex(sourceMarkdown, document, end.Run, end.TextOffset, mappers, out var endIndex);
 
         startIndex = Math.Clamp(startIndex, 0, sourceMarkdown.Length);
         endIndex = Math.Clamp(endIndex, 0, sourceMarkdown.Length);
