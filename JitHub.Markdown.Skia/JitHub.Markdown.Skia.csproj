@@ -9,6 +9,7 @@
     <PackageReference Include="SkiaSharp" />
     <PackageReference Include="SkiaSharp.HarfBuzz" />
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" />
+    <PackageReference Include="Uno.ColorCode.Core" />
     <ProjectReference Include="..\JitHub.Markdown.Core\JitHub.Markdown.Core.csproj" />
   </ItemGroup>
 

@@ -238,7 +238,7 @@ public sealed class MarkdownLayoutEngine
         var bounds = new RectF(0, y, width, height);
         y += height + spacingAfter;
 
-        return new CodeBlockLayout(codeBlock.Id, codeBlock.Span, bounds, blockStyle, runsBuilder.ToImmutable());
+        return new CodeBlockLayout(codeBlock.Id, codeBlock.Span, bounds, blockStyle, runsBuilder.ToImmutable(), codeBlock.Info);
     }
 
     private BlockQuoteLayout LayoutBlockQuote(

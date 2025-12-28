@@ -56,7 +56,7 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
                 RenderLines(h.Lines, context, selectionGeometry, isInQuote);
                 break;
             case CodeBlockLayout c:
-                RenderLines(c.Lines, context, selectionGeometry, isInQuote);
+                RenderCodeBlock(c, context, selectionGeometry, isInQuote);
                 break;
             case BlockQuoteLayout q:
                 DrawBlockQuoteStripe(q, context);
@@ -340,6 +340,169 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
                 DrawRunForeground(run, context);
             }
         }
+    }
+
+    private static void RenderCodeBlock(CodeBlockLayout block, RenderContext context, SelectionGeometry? selectionGeometry, bool isInQuote)
+    {
+        // Use theme background luminance to choose ColorCode's light/dark palette.
+        var bg = context.Theme.Colors.PageBackground;
+        var luminance = (0.2126f * bg.R) + (0.7152f * bg.G) + (0.0722f * bg.B);
+        var isDark = luminance < 128f;
+
+        var code = GetCodeText(block);
+        var spans = ColorCodeSyntaxHighlighter.GetSpans(code, block.Info, isDark);
+
+        // Important: ColorCode spans are indexed relative to the code block (0..code.Length).
+        // Layout run offsets are document-global; we must use code-block-local offsets when applying spans.
+        // Precompute each line's start offset within the code block text.
+        var lineStarts = new int[block.Lines.Length];
+        var running = 0;
+        for (var i = 0; i < block.Lines.Length; i++)
+        {
+            lineStarts[i] = running;
+            var lineText = block.Lines[i].Runs.Length > 0 ? block.Lines[i].Runs[0].Text : string.Empty;
+            running += lineText.Length;
+            if (i < block.Lines.Length - 1)
+            {
+                running += 1; // '\n'
+            }
+        }
+
+        for (var i = 0; i < block.Lines.Length; i++)
+        {
+            var line = block.Lines[i];
+
+            // Pass 1: run backgrounds (inline code surface, images). Code blocks currently have none.
+            for (var j = 0; j < line.Runs.Length; j++)
+            {
+                DrawRunBackground(line.Runs[j], context);
+            }
+
+            // Pass 2: selection overlay.
+            if (selectionGeometry is not null)
+            {
+                DrawSelectionForLine(line, selectionGeometry, context, isInQuote);
+            }
+
+            // Pass 3: run foreground.
+            var withinLine = 0;
+            for (var j = 0; j < line.Runs.Length; j++)
+            {
+                var run = line.Runs[j];
+                var runStartInBlock = lineStarts[i] + withinLine;
+                DrawCodeBlockRunForeground(run, spans, context, runStartInBlock);
+                withinLine += run.Text?.Length ?? 0;
+            }
+        }
+    }
+
+    private static string GetCodeText(CodeBlockLayout block)
+    {
+        if (block.Lines.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        // LayoutCodeBlock split on '\n' and removed delimiters; re-insert a single '\n' between lines.
+        var sb = new System.Text.StringBuilder();
+        for (var i = 0; i < block.Lines.Length; i++)
+        {
+            var line = block.Lines[i];
+            var text = line.Runs.Length > 0 ? line.Runs[0].Text : string.Empty;
+            if (i > 0)
+            {
+                sb.Append('\n');
+            }
+
+            sb.Append(text);
+        }
+
+        return sb.ToString();
+    }
+
+    private static void DrawCodeBlockRunForeground(InlineRunLayout run, ColorCodeSyntaxHighlighter.CodeSpan[] spans, RenderContext context, int runStartInBlock)
+    {
+        if (string.IsNullOrEmpty(run.Text))
+        {
+            return;
+        }
+
+        // Fallback if we don't have caret positions for this run.
+        if (run.GlyphX.IsDefaultOrEmpty || run.GlyphX.Length < run.Text.Length + 1)
+        {
+            DrawRunForeground(run, context);
+            return;
+        }
+
+        var style = run.Style;
+        using var basePaint = CreateTextPaint(style, context.Scale);
+        basePaint.GetFontMetrics(out var metrics);
+
+        var baselineY = run.Bounds.Y - metrics.Ascent;
+        var globalStart = runStartInBlock;
+        var globalEnd = globalStart + run.Text.Length;
+
+        var localIndex = 0;
+        for (var i = 0; i < spans.Length; i++)
+        {
+            var s = spans[i];
+            var sStart = s.Start;
+            var sEnd = s.Start + s.Length;
+
+            if (sEnd <= globalStart)
+            {
+                continue;
+            }
+
+            if (sStart >= globalEnd)
+            {
+                break;
+            }
+
+            var segStart = Math.Max(sStart, globalStart) - globalStart;
+            var segEnd = Math.Min(sEnd, globalEnd) - globalStart;
+
+            if (segEnd <= segStart)
+            {
+                continue;
+            }
+
+            // Draw unstyled text before this span.
+            if (segStart > localIndex)
+            {
+                DrawCodeSubstring(run, localIndex, segStart - localIndex, baselineY, basePaint, context);
+                localIndex = segStart;
+            }
+
+            // Draw highlighted span.
+            using var spanPaint = new SKPaint
+            {
+                IsAntialias = basePaint.IsAntialias,
+                TextSize = basePaint.TextSize,
+                Color = s.Foreground,
+                Typeface = basePaint.Typeface,
+            };
+            DrawCodeSubstring(run, localIndex, segEnd - localIndex, baselineY, spanPaint, context);
+            localIndex = segEnd;
+        }
+
+        // Draw remaining unstyled text.
+        if (localIndex < run.Text.Length)
+        {
+            DrawCodeSubstring(run, localIndex, run.Text.Length - localIndex, baselineY, basePaint, context);
+        }
+    }
+
+    private static void DrawCodeSubstring(InlineRunLayout run, int start, int length, float baselineY, SKPaint paint, RenderContext context)
+    {
+        if (length <= 0)
+        {
+            return;
+        }
+
+        var x = run.GlyphX[start];
+        var text = run.Text.Substring(start, length);
+        DrawShapedText(context.Canvas, text, x, baselineY, paint, isRightToLeft: false);
     }
 
     private static void DrawSelectionForLine(LineLayout line, SelectionGeometry selectionGeometry, RenderContext context, bool isInQuote)

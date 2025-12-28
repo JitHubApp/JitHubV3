@@ -51,7 +51,8 @@ public sealed record CodeBlockLayout(
     SourceSpan Span,
     RectF Bounds,
     MarkdownBlockStyle Style,
-    ImmutableArray<LineLayout> Lines)
+    ImmutableArray<LineLayout> Lines,
+    string? Info)
     : BlockLayout(Id, NodeKind.CodeBlock, Span, Bounds, Style);
 
 public sealed record BlockQuoteLayout(

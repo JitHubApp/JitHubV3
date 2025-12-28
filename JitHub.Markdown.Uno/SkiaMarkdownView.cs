@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
 using System.Globalization;
+using System.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Dispatching;
@@ -16,6 +17,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
+using JitHub.Markdown;
 using Uno.Extensions;
 
 namespace JitHub.Markdown.Uno;
@@ -124,6 +126,27 @@ public class SkiaMarkdownView : ContentControl
         _layoutEngine.DefaultIsRtl = IsRightToLeft;
         _textMeasurer = new SkiaTextShaper();
         _renderer = new SkiaMarkdownRenderer();
+
+        var enableSyntaxDiag = false;
+#if DEBUG
+        enableSyntaxDiag = true;
+#else
+        // Opt-in for non-debug builds.
+        enableSyntaxDiag = string.Equals(Environment.GetEnvironmentVariable("JITHUB_SYNTAXHL_DIAG"), "1", StringComparison.Ordinal);
+#endif
+
+        if (enableSyntaxDiag)
+        {
+            var log = this.Log();
+            log.LogWarning("[SyntaxHL] diagnostics ENABLED");
+            SyntaxHighlightDiagnostics.Enable(msg =>
+            {
+                // Always emit to Debug output (useful on platforms where logging is filtered).
+                Debug.WriteLine(msg);
+                // Also emit via Uno logging; Warning is far more likely to be visible by default.
+                log.LogWarning(msg);
+            });
+        }
 
         _canvas = new Grid
         {

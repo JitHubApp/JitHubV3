@@ -22,6 +22,7 @@
     <PackageVersion Include="SkiaSharp" Version="3.119.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
     <PackageVersion Include="SkiaSharp.HarfBuzz" Version="3.119.1" />
+    <PackageVersion Include="Uno.ColorCode.Core" Version="2.1.0-uno.36" />
   </ItemGroup>
 
   <ItemGroup Condition="$(UsingUnoSdk) != 'true'">
