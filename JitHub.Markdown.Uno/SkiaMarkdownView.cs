@@ -168,6 +168,7 @@ public class SkiaMarkdownView : ContentControl
 
         KeyDown += OnKeyDown;
         KeyUp += OnKeyUp;
+        LostFocus += OnLostFocus;
 
         RebuildDocumentAndLayout();
     }
@@ -301,12 +302,16 @@ public class SkiaMarkdownView : ContentControl
             UpdateViewportFromScrollViewer();
         }
 
+        HookOutsidePointerDismiss();
+
         RequestRender();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _hasPointerCapture = false;
+
+        UnhookOutsidePointerDismiss();
 
         if (_scrollViewer is not null)
         {
@@ -325,6 +330,94 @@ public class SkiaMarkdownView : ContentControl
             System.Buffers.ArrayPool<byte>.Shared.Return(_renderPixelBuffer);
             _renderPixelBuffer = null;
         }
+    }
+
+    private UIElement? _outsidePointerRoot;
+    private PointerEventHandler? _outsidePointerPressedHandler;
+
+    private void HookOutsidePointerDismiss()
+    {
+        // Attach to the top-level visual root so we can clear selection when the user clicks anywhere
+        // outside this markdown view (even if the target doesn't take focus).
+        if (_outsidePointerRoot is not null)
+        {
+            return;
+        }
+
+        var root = XamlRoot?.Content as UIElement;
+        if (root is null)
+        {
+            return;
+        }
+
+        _outsidePointerRoot = root;
+        _outsidePointerPressedHandler = new PointerEventHandler(OnOutsidePointerPressed);
+        _outsidePointerRoot.AddHandler(UIElement.PointerPressedEvent, _outsidePointerPressedHandler, true);
+    }
+
+    private void UnhookOutsidePointerDismiss()
+    {
+        if (_outsidePointerRoot is null || _outsidePointerPressedHandler is null)
+        {
+            _outsidePointerRoot = null;
+            _outsidePointerPressedHandler = null;
+            return;
+        }
+
+        _outsidePointerRoot.RemoveHandler(UIElement.PointerPressedEvent, _outsidePointerPressedHandler);
+        _outsidePointerRoot = null;
+        _outsidePointerPressedHandler = null;
+    }
+
+    private void OnOutsidePointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        // If there's no active selection, nothing to dismiss.
+        if (Selection is null)
+        {
+            return;
+        }
+
+        // If the click is within this view subtree, let normal pointer logic handle it.
+        if (IsWithinThis(e.OriginalSource as DependencyObject))
+        {
+            return;
+        }
+
+        ClearSelectionAndRefresh();
+    }
+
+    private void OnLostFocus(object sender, RoutedEventArgs e)
+    {
+        if (Selection is null)
+        {
+            return;
+        }
+
+        ClearSelectionAndRefresh();
+    }
+
+    private bool IsWithinThis(DependencyObject? obj)
+    {
+        var cur = obj;
+        while (cur is not null)
+        {
+            if (ReferenceEquals(cur, this))
+            {
+                return true;
+            }
+
+            cur = VisualTreeHelper.GetParent(cur);
+        }
+
+        return false;
+    }
+
+    private void ClearSelectionAndRefresh()
+    {
+        _pointerInteraction.ClearSelection();
+        _keyboardInteraction.Selection = null;
+        ClearKeyboardLinkFocus();
+        Selection = null;
     }
 
     private void OnPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)

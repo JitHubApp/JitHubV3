@@ -716,11 +716,23 @@ public sealed class MarkdownLayoutEngine
         var isRtl = DetermineIsRtl(segments.Select(static s => s.Text));
 
         var lines = ImmutableArray.CreateBuilder<LineLayout>();
-        var currentRuns = ImmutableArray.CreateBuilder<InlineRunLayout>();
+        var pending = new List<PendingRun>(64);
 
         var x = paddingLeft;
-        var lineY = yTop + (paddingLeft); // reuse padding scale in Y direction for baseline simplicity
-        var lineHeight = Math.Max(textMeasurer.GetLineHeight(baseTextStyle, scale), 0);
+        var lineTop = yTop;
+
+        var metricsMeasurer = textMeasurer as ITextMeasurerWithFontMetrics;
+        var minBaseHeight = Math.Max(0, textMeasurer.GetLineHeight(baseTextStyle, scale));
+
+        var baseMetrics = metricsMeasurer is not null
+            ? metricsMeasurer.GetFontMetrics(baseTextStyle, scale)
+            : default;
+
+        var baseAscentFallback = Math.Max(0, minBaseHeight * 0.8f);
+        var baseDescentFallback = Math.Max(0, minBaseHeight - baseAscentFallback);
+
+        var lineAscent = metricsMeasurer is not null ? Math.Max(0, baseMetrics.Ascent) : baseAscentFallback;
+        var lineDescent = metricsMeasurer is not null ? Math.Max(0, baseMetrics.Descent) : baseDescentFallback;
 
         bool GetTokenIsRtl(Token token)
         {
@@ -734,17 +746,77 @@ public sealed class MarkdownLayoutEngine
 
         void FlushLine()
         {
-            var runs = currentRuns.ToImmutable();
+            var lineHeight = Math.Max(0, lineAscent + lineDescent);
+            if (lineHeight < minBaseHeight)
+            {
+                // Preserve the base line height as a lower bound.
+                lineDescent += (minBaseHeight - lineHeight);
+                lineHeight = minBaseHeight;
+            }
+
+            var baselineY = lineTop + lineAscent;
+
+            var runBuilder = ImmutableArray.CreateBuilder<InlineRunLayout>(pending.Count);
+            for (var i = 0; i < pending.Count; i++)
+            {
+                var r = pending[i];
+                var runHeight = Math.Max(0, r.Ascent + r.Descent);
+                var y = baselineY - r.Ascent;
+                var bounds = new RectF(r.X, y, r.Width, runHeight);
+
+                runBuilder.Add(new InlineRunLayout(
+                    r.Id,
+                    r.Kind,
+                    r.Span,
+                    bounds,
+                    r.Style,
+                    r.Text,
+                    r.Url,
+                    r.IsStrikethrough,
+                    r.IsCodeBlockLine,
+                    GlyphX: BuildGlyphX(r.Text, r.Style, scale, textMeasurer, startX: bounds.X, extraLeft: r.ExtraLeft, isRightToLeft: r.IsRightToLeft),
+                    IsRightToLeft: r.IsRightToLeft));
+            }
+
+            var runs = runBuilder.ToImmutable();
             if (runs.Length > 0)
             {
                 runs = RelayoutBidiRuns(runs, isRtl, paddingLeft, contentWidth, theme, scale, textMeasurer);
             }
 
-            lines.Add(new LineLayout(lineY, lineHeight, runs));
-            currentRuns.Clear();
+            lines.Add(new LineLayout(lineTop, lineHeight, runs));
+
+            pending.Clear();
             x = paddingLeft;
-            lineY += lineHeight;
-            lineHeight = Math.Max(textMeasurer.GetLineHeight(baseTextStyle, scale), 0);
+            lineTop += lineHeight;
+
+            // Reset line metrics.
+            lineAscent = metricsMeasurer is not null ? Math.Max(0, baseMetrics.Ascent) : baseAscentFallback;
+            lineDescent = metricsMeasurer is not null ? Math.Max(0, baseMetrics.Descent) : baseDescentFallback;
+        }
+
+        static (float ascent, float descent) MeasureAscentDescent(
+            ITextMeasurer measurer,
+            ITextMeasurerWithFontMetrics? metricsMeasurer,
+            MarkdownTextStyle style,
+            float scale,
+            float measuredHeight)
+        {
+            if (metricsMeasurer is not null)
+            {
+                var fm = metricsMeasurer.GetFontMetrics(style, scale);
+                var a = Math.Max(0, fm.Ascent);
+                var d = Math.Max(0, fm.Descent);
+                if (a + d > 0)
+                {
+                    return (a, d);
+                }
+            }
+
+            var h = Math.Max(0, measuredHeight);
+            var ascent = Math.Max(0, h * 0.8f);
+            var descent = Math.Max(0, h - ascent);
+            return (ascent, descent);
         }
 
         foreach (var segment in segments)
@@ -760,14 +832,14 @@ public sealed class MarkdownLayoutEngine
                 // They are laid out as a full-width run on their own line.
                 if (token.Kind == NodeKind.Image)
                 {
-                    if (currentRuns.Count > 0)
+                    if (pending.Count > 0)
                     {
                         FlushLine();
                     }
 
                     var imageHeight = Math.Max(0, theme.Metrics.ImagePlaceholderHeight) * scale;
-                    var imageRunBounds = new RectF(paddingLeft, lineY, contentWidth, imageHeight);
-                    currentRuns.Add(new InlineRunLayout(
+                    var imageRunBounds = new RectF(paddingLeft, lineTop, contentWidth, imageHeight);
+                    var imageRun = new InlineRunLayout(
                         token.Id,
                         token.Kind,
                         token.Span,
@@ -778,63 +850,74 @@ public sealed class MarkdownLayoutEngine
                         token.IsStrikethrough,
                         token.IsCodeBlockLine,
                         GlyphX: default,
-                        IsRightToLeft: isRtl));
+                        IsRightToLeft: isRtl);
 
-                    lineHeight = Math.Max(lineHeight, imageHeight);
-                    FlushLine();
+                    lines.Add(new LineLayout(lineTop, imageHeight, ImmutableArray.Create(imageRun)));
+                    lineTop += imageHeight;
+
+                    // Reset line metrics after the image line.
+                    x = paddingLeft;
+                    lineAscent = metricsMeasurer is not null ? Math.Max(0, baseMetrics.Ascent) : baseAscentFallback;
+                    lineDescent = metricsMeasurer is not null ? Math.Max(0, baseMetrics.Descent) : baseDescentFallback;
                     continue;
                 }
 
                 var m = textMeasurer.Measure(token.Text, token.Style, scale);
                 var tokenWidth = Math.Max(0, m.Width);
-                var tokenHeight = Math.Max(0, m.Height);
 
-                // Phase 4.2.5: inline-code gets a background surface with padding.
-                if (token.Kind == NodeKind.InlineCode && !token.IsCodeBlockLine)
-                {
-                    var inlinePad = Math.Max(0, theme.Metrics.InlineCodePadding) * scale;
-                    tokenWidth += inlinePad * 2;
-                    tokenHeight += inlinePad * 2;
-                }
-
-                var isWhitespace = token.IsWhitespace;
-
-                // Wrap only on non-leading, non-whitespace tokens.
-                if (!isWhitespace && currentRuns.Count > 0 && (x - paddingLeft) + tokenWidth > contentWidth)
-                {
-                    FlushLine();
-                }
-
-                var runBounds = new RectF(x, lineY, tokenWidth, tokenHeight);
+                var (runAscent, runDescent) = MeasureAscentDescent(textMeasurer, metricsMeasurer, token.Style, scale, m.Height);
 
                 var extraLeft = 0f;
                 if (token.Kind == NodeKind.InlineCode && !token.IsCodeBlockLine)
                 {
                     extraLeft = Math.Max(0, theme.Metrics.InlineCodePadding) * scale;
+                    tokenWidth += extraLeft * 2;
+                    runAscent += extraLeft;
+                    runDescent += extraLeft;
                 }
 
-                currentRuns.Add(new InlineRunLayout(
-                    token.Id,
-                    token.Kind,
-                    token.Span,
-                    runBounds,
-                    token.Style,
-                    token.Text,
-                    token.Url,
-                    token.IsStrikethrough,
-                    token.IsCodeBlockLine,
-                    GlyphX: BuildGlyphX(token.Text, token.Style, scale, textMeasurer, runBounds.X, extraLeft, isRightToLeft: GetTokenIsRtl(token)),
-                    IsRightToLeft: GetTokenIsRtl(token)));
+                var isWhitespace = token.IsWhitespace;
+
+                // Wrap only on non-leading, non-whitespace tokens.
+                if (!isWhitespace && pending.Count > 0 && (x - paddingLeft) + tokenWidth > contentWidth)
+                {
+                    FlushLine();
+                }
+
+                var runIsRtl = GetTokenIsRtl(token);
+
+                pending.Add(new PendingRun(
+                    Id: token.Id,
+                    Kind: token.Kind,
+                    Span: token.Span,
+                    Style: token.Style,
+                    Text: token.Text,
+                    Url: token.Url,
+                    IsStrikethrough: token.IsStrikethrough,
+                    IsCodeBlockLine: token.IsCodeBlockLine,
+                    X: x,
+                    Width: tokenWidth,
+                    Ascent: runAscent,
+                    Descent: runDescent,
+                    ExtraLeft: extraLeft,
+                    IsRightToLeft: runIsRtl));
 
                 x += tokenWidth;
-                lineHeight = Math.Max(lineHeight, tokenHeight);
+
+                lineAscent = Math.Max(lineAscent, runAscent);
+                lineDescent = Math.Max(lineDescent, runDescent);
             }
         }
 
-        if (currentRuns.Count == 0)
+        if (pending.Count == 0)
         {
             // Always produce at least one line for consistency.
-            lines.Add(new LineLayout(lineY, lineHeight, ImmutableArray<InlineRunLayout>.Empty));
+            var lineHeight = Math.Max(0, lineAscent + lineDescent);
+            if (lineHeight < minBaseHeight)
+            {
+                lineHeight = minBaseHeight;
+            }
+            lines.Add(new LineLayout(lineTop, lineHeight, ImmutableArray<InlineRunLayout>.Empty));
         }
         else
         {
@@ -843,6 +926,22 @@ public sealed class MarkdownLayoutEngine
 
         return lines.ToImmutable();
     }
+
+    private readonly record struct PendingRun(
+        NodeId Id,
+        NodeKind Kind,
+        SourceSpan Span,
+        MarkdownTextStyle Style,
+        string Text,
+        string? Url,
+        bool IsStrikethrough,
+        bool IsCodeBlockLine,
+        float X,
+        float Width,
+        float Ascent,
+        float Descent,
+        float ExtraLeft,
+        bool IsRightToLeft);
 
     private static ImmutableArray<InlineRunLayout> RelayoutBidiRuns(
         ImmutableArray<InlineRunLayout> runs,
@@ -942,7 +1041,6 @@ public sealed class MarkdownLayoutEngine
         // Build visual runs by grouping contiguous characters that belong to the same source run.
         var builder = ImmutableArray.CreateBuilder<InlineRunLayout>();
 
-        var lineY = runs[0].Bounds.Y;
         var cursorX = contentLeft;
 
         var consumedInlineCode = new bool[runs.Length];
@@ -1105,7 +1203,7 @@ public sealed class MarkdownLayoutEngine
                 height = Math.Max(height, Math.Max(0, m.Height) + (inlinePad * 2));
             }
 
-            var bounds = new RectF(cursorX, lineY, width, height);
+            var bounds = new RectF(cursorX, src.Bounds.Y, width, height);
             var glyphX = BuildGlyphX(text, src.Style, scale, textMeasurer, startX: bounds.X, extraLeft, isRightToLeft);
 
             builder.Add(new InlineRunLayout(

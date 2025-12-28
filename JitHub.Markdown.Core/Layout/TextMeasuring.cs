@@ -14,6 +14,20 @@ public interface ITextMeasurer
     float GetLineHeight(MarkdownTextStyle style, float scale);
 }
 
+public readonly record struct TextFontMetrics(float Ascent, float Descent)
+{
+    public float Height => Ascent + Descent;
+}
+
+/// <summary>
+/// Optional extension to <see cref="ITextMeasurer"/> that provides ascent/descent metrics.
+/// When available, layout can align mixed-style runs on a shared baseline.
+/// </summary>
+public interface ITextMeasurerWithFontMetrics : ITextMeasurer
+{
+    TextFontMetrics GetFontMetrics(MarkdownTextStyle style, float scale);
+}
+
 public readonly record struct TextShapingResult(
     float Width,
     float Height,
