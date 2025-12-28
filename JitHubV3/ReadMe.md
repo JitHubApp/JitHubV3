@@ -6,6 +6,12 @@ To discover how to get started with your new app: https://aka.platform.uno/get-s
 
 For more information on how to use the Uno.Sdk or upgrade Uno Platform packages in your solution: https://aka.platform.uno/using-uno-sdk
 
+## Markdown (developer docs)
+
+- [Markdown developer guide](../docs/markdown/getting-started.md)
+- [Golden render tests](../docs/markdown-rendering-architecture.md)
+- [Benchmarks](../docs/benchmarks.md)
+
 ## GitHub OAuth (local dev)
 
 This solution uses a **server-mediated** GitHub OAuth flow.

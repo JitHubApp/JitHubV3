@@ -2,7 +2,7 @@ using SkiaSharp;
 
 namespace JitHub.Markdown;
 
-public sealed class SkiaTextMeasurer : ITextMeasurerWithFontMetrics
+internal sealed class SkiaTextMeasurer : ITextMeasurerWithFontMetrics
 {
     public TextMeasurement Measure(string text, MarkdownTextStyle style, float scale)
     {

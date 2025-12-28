@@ -1,6 +1,6 @@
 namespace JitHub.Markdown;
 
-public sealed class MarkdownSpanMappingPolicy
+internal sealed class MarkdownSpanMappingPolicy
 {
     /// <summary>
     /// Controls how emphasis/strong/strikethrough selections map back to source spans.
@@ -9,7 +9,7 @@ public sealed class MarkdownSpanMappingPolicy
     public InlineMarkupSpanBehavior EmphasisBehavior { get; init; } = InlineMarkupSpanBehavior.InnerContent;
 }
 
-public enum InlineMarkupSpanBehavior
+internal enum InlineMarkupSpanBehavior
 {
     /// <summary>
     /// Prefer mapping to the human-visible content range (excluding markup markers).

@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace JitHub.Markdown;
 
-public static class MarkdownAccessibilityTreeBuilder
+internal static class MarkdownAccessibilityTreeBuilder
 {
     public static MarkdownAccessibilityTree Build(MarkdownLayout layout, float viewportTop, float viewportHeight, float overscan = 0)
     {

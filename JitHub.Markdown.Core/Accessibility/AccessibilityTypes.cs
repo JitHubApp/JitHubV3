@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace JitHub.Markdown;
 
-public enum MarkdownAccessibilityRole
+internal enum MarkdownAccessibilityRole
 {
     Document = 0,
     Group,
@@ -13,7 +13,7 @@ public enum MarkdownAccessibilityRole
     Link,
 }
 
-public sealed record AccessibilityNode(
+internal sealed record AccessibilityNode(
     NodeId Id,
     MarkdownAccessibilityRole Role,
     RectF Bounds,
@@ -23,4 +23,4 @@ public sealed record AccessibilityNode(
     bool? IsOrdered,
     ImmutableArray<AccessibilityNode> Children);
 
-public sealed record MarkdownAccessibilityTree(AccessibilityNode Root);
+internal sealed record MarkdownAccessibilityTree(AccessibilityNode Root);

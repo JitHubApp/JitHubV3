@@ -7,7 +7,7 @@ namespace JitHub.Markdown;
 /// Phase 1 scope: supports mapping for inline text/link/emphasis trees.
 /// </summary>
 [DebuggerDisplay("Len={RenderedText.Length}")]
-public sealed class TextOffsetMap
+internal sealed class TextOffsetMap
 {
     public TextOffsetMap(string renderedText, int[] renderedToSourceIndex)
     {

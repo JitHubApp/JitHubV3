@@ -2,7 +2,7 @@ using System;
 
 namespace JitHub.Markdown;
 
-public static class SyntaxHighlightDiagnostics
+internal static class SyntaxHighlightDiagnostics
 {
     /// <summary>
     /// Enables verbose syntax highlighting diagnostics. If <paramref name="sink"/> is null,

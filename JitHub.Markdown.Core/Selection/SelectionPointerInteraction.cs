@@ -1,8 +1,8 @@
 namespace JitHub.Markdown;
 
-public readonly record struct PointerModifiers(bool Shift);
+internal readonly record struct PointerModifiers(bool Shift);
 
-public readonly record struct PointerInteractionResult(
+internal readonly record struct PointerInteractionResult(
     bool SelectionChanged,
     SelectionRange? Selection,
     string? ActivateLinkUrl);
@@ -11,7 +11,7 @@ public readonly record struct PointerInteractionResult(
 /// Pure (platform-agnostic) pointer interaction state machine.
 /// The platform adapter is responsible for hit testing and for providing modifier keys.
 /// </summary>
-public sealed class SelectionPointerInteraction
+internal sealed class SelectionPointerInteraction
 {
     private const float DragThreshold = 3f;
 

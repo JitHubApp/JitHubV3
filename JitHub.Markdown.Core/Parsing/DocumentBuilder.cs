@@ -6,7 +6,7 @@ using Markdig.Syntax.Inlines;
 
 namespace JitHub.Markdown;
 
-public sealed class DocumentBuilder
+internal sealed class DocumentBuilder
 {
     private readonly bool _allowHtml;
 

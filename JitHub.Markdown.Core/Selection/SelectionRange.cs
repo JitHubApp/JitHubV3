@@ -23,7 +23,7 @@ public interface ISelectionNormalizer
     SelectionRange Normalize(MarkdownLayout layout, SelectionRange range);
 }
 
-public sealed class DefaultSelectionNormalizer : ISelectionNormalizer
+internal sealed class DefaultSelectionNormalizer : ISelectionNormalizer
 {
     public static DefaultSelectionNormalizer Instance { get; } = new();
 

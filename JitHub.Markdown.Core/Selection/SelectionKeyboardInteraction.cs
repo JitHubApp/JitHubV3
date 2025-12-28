@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 
 namespace JitHub.Markdown;
 
-public enum MarkdownKeyCommand
+internal enum MarkdownKeyCommand
 {
     Left,
     Right,
@@ -12,9 +12,9 @@ public enum MarkdownKeyCommand
     Enter,
 }
 
-public readonly record struct FocusedLink(NodeId Id, string Url, RectF Bounds);
+internal readonly record struct FocusedLink(NodeId Id, string Url, RectF Bounds);
 
-public readonly record struct KeyboardInteractionResult(
+internal readonly record struct KeyboardInteractionResult(
     bool SelectionChanged,
     SelectionRange? Selection,
     bool FocusChanged,
@@ -25,7 +25,7 @@ public readonly record struct KeyboardInteractionResult(
 /// <summary>
 /// Core (platform-agnostic) keyboard interaction for a markdown layout.
 /// </summary>
-public sealed class SelectionKeyboardInteraction
+internal sealed class SelectionKeyboardInteraction
 {
     public SelectionRange? Selection { get; set; }
 

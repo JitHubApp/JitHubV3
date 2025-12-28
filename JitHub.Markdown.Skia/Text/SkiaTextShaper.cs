@@ -5,7 +5,7 @@ using SkiaSharp.HarfBuzz;
 
 namespace JitHub.Markdown;
 
-public sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
+internal sealed class SkiaTextShaper : ITextShaper, ITextMeasurerWithFontMetrics
 {
     public TextMeasurement Measure(string text, MarkdownTextStyle style, float scale)
     {

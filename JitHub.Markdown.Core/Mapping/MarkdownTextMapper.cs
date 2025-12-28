@@ -2,7 +2,7 @@ using System.Text;
 
 namespace JitHub.Markdown;
 
-public static class MarkdownTextMapper
+internal static class MarkdownTextMapper
 {
     public static TextOffsetMap BuildForInlines(
         string sourceMarkdown,
