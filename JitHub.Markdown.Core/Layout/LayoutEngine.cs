@@ -489,6 +489,18 @@ public sealed class MarkdownLayoutEngine
         h.Add(theme.Metrics.BlockPadding);
         h.Add(theme.Metrics.BlockSpacing);
 
+        // Colors affect rendered output even when typography stays identical.
+        // Include them to avoid stale cached layouts (e.g., code block / quote backgrounds).
+        h.Add(theme.Colors.PageBackground);
+        h.Add(theme.Colors.InlineCodeBackground);
+        h.Add(theme.Colors.CodeBlockBackground);
+        h.Add(theme.Colors.QuoteBackground);
+        h.Add(theme.Colors.ThematicBreak);
+
+        // Selection impacts readability and some render overlays.
+        h.Add(theme.Selection.SelectionFill);
+        h.Add(theme.Selection.SelectionText);
+
         AddStyle(h, theme.Typography.Paragraph);
         AddStyle(h, theme.Typography.InlineCode);
         AddStyle(h, theme.Typography.Link);

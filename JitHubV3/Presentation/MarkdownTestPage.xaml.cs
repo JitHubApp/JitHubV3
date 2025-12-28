@@ -14,22 +14,45 @@ public sealed partial class MarkdownTestPage : Page
     private readonly Dictionary<uint, int> _moveCounts = new();
     private long _seq;
 
-#if DEBUG
+    private JitHub.Markdown.Uno.MarkdownPlatformThemeWatcher? _themeWatcher;
+
     // Runtime toggle (avoid compile-time unreachable warnings).
-    // Set env var `JITHUB_POINTER_MOVES=1` to enable.
+    // Set env var `JITHUB_POINTER_MOVES=1` to enable (DEBUG only).
     private static bool EnablePointerMoveLogging
-        => string.Equals(Environment.GetEnvironmentVariable("JITHUB_POINTER_MOVES"), "1", StringComparison.Ordinal);
+#if DEBUG
+    => string.Equals(Environment.GetEnvironmentVariable("JITHUB_POINTER_MOVES"), "1", StringComparison.Ordinal);
+#else
+    => false;
 #endif
 
     public MarkdownTestPage()
     {
         InitializeComponent();
+
+        Unloaded += OnUnloaded;
     }
 
     private void OnLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         // Per Uno focus management guidance: explicitly set initial focus away from TextBox.
         _ = MarkdownPreview?.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+
+        // Phase 7.4 wiring: follow platform Light/Dark/HighContrast changes.
+        // This is intentionally done at the app layer (page) rather than inside the markdown control.
+        _themeWatcher?.Dispose();
+        _themeWatcher = new JitHub.Markdown.Uno.MarkdownPlatformThemeWatcher(this);
+        _themeWatcher.VariantChanged += (_, variant) =>
+        {
+            if (DataContext is MarkdownTestViewModel vm)
+            {
+                vm.ThemeVariant = variant;
+            }
+        };
+
+        if (DataContext is MarkdownTestViewModel vm)
+        {
+            vm.ThemeVariant = _themeWatcher.CurrentVariant;
+        }
 
 #if DEBUG
         // Probe pointer routing at the page level. If this doesn't fire, something above the page
@@ -166,6 +189,12 @@ public sealed partial class MarkdownTestPage : Page
             AttachVerbosePointerLogging(MarkdownEditor, "Editor");
         }
 #endif
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _themeWatcher?.Dispose();
+        _themeWatcher = null;
     }
 
 #if DEBUG
