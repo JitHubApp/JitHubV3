@@ -16,15 +16,8 @@ This solution uses a **server-mediated** GitHub OAuth flow.
 ### Split hosting (Phase 1)
 
 - API backend: `https://localhost:5002`
-- WASM UI host: `http://localhost:5000`
 
-For `client=wasm`, the backend redirects back to the UI callback page and appends `handoffCode`.
-
-The backend validates redirects using `OAuthRedirect` in `JitHubV3.Server` configuration:
-
-- `OAuthRedirect:AllowedRedirectOrigins` (e.g., `http://localhost:5000`)
-- `OAuthRedirect:AllowedRedirectPaths` (e.g., `/authentication-callback.html`)
-- `OAuthRedirect:DefaultWasmRedirectUri` (used when the client doesn't pass `redirect_uri`)
+This repo currently uses native/desktop Uno heads (WinAppSDK + Skia Desktop + Android). The OAuth callback is handled via the server endpoint.
 
 ### 1) Create a GitHub OAuth App
 

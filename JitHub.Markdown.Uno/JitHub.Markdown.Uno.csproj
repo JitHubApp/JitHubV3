@@ -18,6 +18,12 @@
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Xaml\**\*.cs" />
+    <Page Remove="Xaml\**\*.xaml" />
+    <None Remove="Xaml\**\*" />
+  </ItemGroup>
+
   <!--
     XAML build constraint:
     - MSBuild (Full/.NET Framework) supports WinUI XAML compilation in class libraries.

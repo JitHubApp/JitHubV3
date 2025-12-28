@@ -1,13 +1,18 @@
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
     <!--
-      Building inside Visual Studio (WinAppSDK/WinUI tooling):
-      Keep a small set of TFMs to preserve a good IDE experience while still allowing choosing
-      Windows as the debug target.
-      Use CLI/CI builds (where BuildingInsideVisualStudio is false) to build the full matrix.
+      Target frameworks are selected based on the host OS.
+
+      - Windows: WinAppSDK + Skia Desktop + Android (emulator/device)
+      - macOS: iOS + MacCatalyst (macOS) + Skia Desktop
+      - Linux: Skia Desktop
+
+      This keeps `dotnet build` on Windows from attempting Apple targets.
     -->
-    <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100;net10.0-desktop</TargetFrameworks>
-    <TargetFrameworks Condition="'$(BuildingInsideVisualStudio)'!='true'">net10.0-android;net10.0-ios;net10.0-windows10.0.26100;net10.0-desktop;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100;net10.0-desktop;net10.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'!='true'">net10.0-windows10.0.26100;net10.0-desktop;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net10.0-ios;net10.0-maccatalyst;net10.0-desktop</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Linux'))">net10.0-desktop</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
