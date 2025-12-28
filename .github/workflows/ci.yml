@@ -58,3 +58,28 @@ jobs:
       - name: Run Unit Tests
         shell: pwsh
         run: dotnet test ./JitHubV3.Tests/JitHubV3.Tests.csproj --no-build -c Release --logger GitHubActions --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+  markdown_tests:
+    name: Markdown Tests (Unit + Golden)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+
+      - name: Run Markdown Tests
+        shell: pwsh
+        run: dotnet test ./JitHub.Markdown.Tests/JitHub.Markdown.Tests.csproj -c Release --logger GitHubActions --blame-crash
+
+      - name: Upload golden artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-artifacts
+          path: |
+            JitHub.Markdown.Tests/Golden/Artifacts/**
+            **/TestResults/**

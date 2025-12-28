@@ -15,11 +15,14 @@ This repo uses **BenchmarkDotNet** for Markdown pipeline performance.
 From repo root:
 
 ```powershell
-# Full suite (short run config)
-dotnet run -c Release --project .\JitHub.Markdown.Benchmarks\JitHub.Markdown.Benchmarks.csproj
+# Full suite (short job)
+dotnet run -c Release --project .\\JitHub.Markdown.Benchmarks\\JitHub.Markdown.Benchmarks.csproj -- -j Short
 
 # Filter (example: render only)
-dotnet run -c Release --project .\JitHub.Markdown.Benchmarks\JitHub.Markdown.Benchmarks.csproj -- --filter *Render*
+dotnet run -c Release --project .\\JitHub.Markdown.Benchmarks\\JitHub.Markdown.Benchmarks.csproj -- --filter *Render* -j Short
+
+# Quick smoke run
+dotnet run -c Release --project .\\JitHub.Markdown.Benchmarks\\JitHub.Markdown.Benchmarks.csproj -- -j Dry
 ```
 
 ## Notes

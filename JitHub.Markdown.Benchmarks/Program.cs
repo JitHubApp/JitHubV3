@@ -14,10 +14,7 @@ public static class Program
         var config = DefaultConfig.Instance
             .AddLogger(ConsoleLogger.Default)
             .AddColumnProvider(DefaultColumnProviders.Instance)
-            .AddDiagnoser(MemoryDiagnoser.Default)
-            .AddJob(Job.ShortRun
-                .WithWarmupCount(2)
-                .WithIterationCount(6));
+            .AddDiagnoser(MemoryDiagnoser.Default);
 
         BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
         return 0;
