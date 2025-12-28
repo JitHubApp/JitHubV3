@@ -26,6 +26,11 @@
           AutomationProperties.AutomationId="LoginButton"
           Command="{Binding Login}"
           HorizontalAlignment="Stretch" />
+
+      <Button Content="Markdown Test"
+          AutomationProperties.AutomationId="MarkdownTestButton"
+          Command="{Binding GoToMarkdownTest}"
+          HorizontalAlignment="Stretch" />
     </StackPanel>
   </Grid>
 </Page>

@@ -25,6 +25,10 @@ public partial class App : Application
     protected Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
 
+    // Exposed for library components (via reflection) that need access to DI services.
+    // Avoids creating compile-time dependencies from shared libraries back to the app.
+    public IServiceProvider? Services => Host?.Services;
+
 #if WINDOWS
     private bool _pendingWindowActivation;
 #endif
@@ -49,6 +53,9 @@ public partial class App : Application
 #endif
                 .UseLogging(configure: (context, logBuilder) =>
                 {
+                    // Allow category-level log filtering via appsettings.json (Logging:LogLevel:...).
+                    logBuilder.AddConfiguration(context.Configuration.GetSection("Logging"));
+
                     // Configure log levels for different categories of logging
                     logBuilder
                         .SetMinimumLevel(
@@ -74,7 +81,6 @@ public partial class App : Application
                     //// DevServer and HotReload related
                     //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
                     //// Debug JS interop
-                    //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
 
                 }, enableUnoLogging: true)
                 .UseSerilog(consoleLoggingEnabled: true, fileLoggingEnabled: true)
@@ -141,12 +147,6 @@ public partial class App : Application
             (initialNavigate: async (services, navigator) =>
             {
                 var auth = services.GetRequiredService<IAuthenticationService>();
-
-#if __WASM__
-                // If we returned from backend auth with an access token in the URL,
-                // persist it into the Uno authentication token cache and clear the URL.
-                await GitHubAuthFlow.TryConsumeAndPersistWasmRedirectTokensAsync(services);
-#endif
 
                 var authenticated = await auth.RefreshAsync();
                 if (authenticated)
@@ -267,6 +267,7 @@ public partial class App : Application
             new ViewMap(ViewModel: typeof(ShellViewModel)),
             new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
+            new ViewMap<MarkdownTestPage, MarkdownTestViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>()
         );
 
@@ -276,6 +277,7 @@ public partial class App : Application
                 [
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
                     new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                 ]
             )

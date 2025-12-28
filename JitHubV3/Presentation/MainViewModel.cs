@@ -11,11 +11,20 @@ public partial class MainViewModel : ObservableObject
 
     private INavigator _navigator;
 
-    [ObservableProperty]
-    private string? name;
+    private string? _name;
+    private string? _repoStatus;
 
-    [ObservableProperty]
-    private string? repoStatus;
+    public string? Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+
+    public string? RepoStatus
+    {
+        get => _repoStatus;
+        set => SetProperty(ref _repoStatus, value);
+    }
 
     public ObservableCollection<string> PrivateRepos { get; } = new();
 
@@ -33,12 +42,15 @@ public partial class MainViewModel : ObservableObject
         Title += $" - {localizer["ApplicationName"]}";
         Title += $" - {appInfo?.Value?.Environment}";
         GoToSecond = new AsyncRelayCommand(GoToSecondView);
+        GoToMarkdownTest = new AsyncRelayCommand(GoToMarkdownTestView);
         LoadPrivateRepos = new AsyncRelayCommand(DoLoadPrivateRepos);
         Logout = new AsyncRelayCommand(DoLogout);
     }
     public string? Title { get; }
 
     public ICommand GoToSecond { get; }
+
+    public ICommand GoToMarkdownTest { get; }
 
     public ICommand LoadPrivateRepos { get; }
 
@@ -47,6 +59,11 @@ public partial class MainViewModel : ObservableObject
     private async Task GoToSecondView()
     {
         await _navigator.NavigateViewModelAsync<SecondViewModel>(this, data: new Entity(Name!));
+    }
+
+    private async Task GoToMarkdownTestView()
+    {
+        await _navigator.NavigateViewModelAsync<MarkdownTestViewModel>(this);
     }
 
     private async Task DoLoadPrivateRepos()

@@ -1,9 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework Condition="'$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100</TargetFramework>
+    <TargetFramework Condition="'$(BuildingInsideVisualStudio)'!='true'">net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='net10.0-windows10.0.26100'">
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>

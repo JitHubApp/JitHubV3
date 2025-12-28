@@ -6,5 +6,40 @@
   },
   "files.associations": {
     "global.json": "jsonc"
+  },
+  "terminal.integrated.automationProfile.osx": {},
+  "terminal.integrated.defaultProfile.windows": "Developer PowerShell (VS DevShell)",
+  "terminal.integrated.automationProfile.windows": {
+    "profileName": "Developer PowerShell (VS DevShell)"
+  },
+  "terminal.integrated.profiles.windows": {
+    
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "Developer PowerShell (VS DevShell)": {
+      "source": "PowerShell",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& { $candidates = @(); $candidates += Get-ChildItem -ErrorAction SilentlyContinue (Join-Path $env:ProgramFiles 'Microsoft Visual Studio\\*\\*\\Common7\\Tools\\Launch-VsDevShell.ps1'); $pf86 = [System.Environment]::GetEnvironmentVariable('ProgramFiles(x86)'); if ($pf86) { $candidates += Get-ChildItem -ErrorAction SilentlyContinue (Join-Path $pf86 'Microsoft Visual Studio\\*\\*\\Common7\\Tools\\Launch-VsDevShell.ps1') }; $launcher = $candidates | Select-Object -First 1; if ($launcher) { $tools = Split-Path -Parent $launcher.FullName; $common7 = Split-Path -Parent $tools; $vsInstall = Split-Path -Parent $common7; & $launcher.FullName -VsInstallationPath $vsInstall -SkipAutomaticLocation -Arch amd64 -HostArch amd64 | Out-Null; Write-Host ('DevShell loaded: ' + $vsInstall) } else { Write-Warning 'Launch-VsDevShell.ps1 not found. Install Visual Studio (or Build Tools) to get MSBuild for XAML class libraries.' } }"
+      ],
+      "icon": "terminal-powershell"
+    },
+    "Command Prompt": {
+      "path": [
+        "${env:windir}\\Sysnative\\cmd.exe",
+        "${env:windir}\\System32\\cmd.exe"
+      ],
+      "args": [],
+      "icon": {
+        "id": "terminal-cmd"
+      }
+    },
+    "Git Bash": {
+      "source": "Git Bash",
+      "icon": "terminal-git-bash"
+    }
   }
 }

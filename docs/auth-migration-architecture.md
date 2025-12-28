@@ -133,20 +133,6 @@ We add a minimal OAuth surface that the Uno client can call.
   - Inputs: `handoffCode` (one-time)
   - Output: token payload (JSON) + user info
 
-#### Optional API Proxy (for WebAssembly security)
-For WebAssembly, secure token storage is not truly possible in-browser. If “secure on every platform” includes WASM, we should avoid returning a long-lived access token to the browser. Two options:
-
-- **Option A (Recommended for WASM security):**
-  - Store GitHub token server-side (encrypted at rest) and return an **HttpOnly secure cookie** session.
-  - Expose GitHub API endpoints on server which internally use Octokit.
-  - Client uses `IGitHubApi` implementation that calls server.
-
-- **Option B (Less secure, client-only):**
-  - Store token in browser storage (not a secure enclave).
-  - Only acceptable if product explicitly accepts browser-risk.
-
-We can support both by selecting the `IGitHubApi` implementation per target.
-
 ---
 
 ## Detailed Flows (Sequence)
@@ -168,9 +154,6 @@ We can support both by selecting the `IGitHubApi` implementation per target.
   - e.g. `jithubv3:/authentication-callback?handoffCode=...`
   - Uno WebAuthentication Broker notes:
     - iOS/macOS must register the custom scheme in `Info.plist`.
-- WebAssembly: origin-based callback
-  - e.g. `https://{host}/authentication-callback?handoffCode=...`
-  - Uno docs: WebAssembly redirect URI must match the app origin.
 
 ### Flow 3 — Exchange (Client ↔ Server)
 9. Client receives `handoffCode` and calls `POST /auth/exchange`.
@@ -202,11 +185,6 @@ We can support both by selecting the `IGitHubApi` implementation per target.
 
 ### Token Storage (Client)
 We should use the cross-platform `PasswordVault` APIs where possible.
-
-- Official Uno docs: PasswordVault is supported on Windows/Android/iOS, but **not on WebAssembly**.
-  - https://platform.uno/docs/articles/features/PasswordVault.html
-
-**Implication:** If “secure on any platform” includes WebAssembly, we must not store long-lived tokens in the browser; prefer server-side session and API proxy for WASM.
 
 ---
 
@@ -276,7 +254,6 @@ Registration would occur in the existing `.ConfigureServices(...)` in [JitHubV3/
 - Uno docs: https://platform.uno/docs/articles/features/web-authentication-broker.html
 - Key constraints:
   - iOS/macOS: redirect URI **must** be a custom scheme, registered in app manifest (Info.plist).
-  - WebAssembly: redirect URI **must** be the application origin.
 
 ### Custom Protocol Activation
 If we need custom scheme activation in native targets beyond the broker callback, Uno provides protocol activation guidance:
@@ -312,18 +289,13 @@ The client currently targets:
 - `net10.0-desktop` (Skia Desktop)
 - `net10.0-android`
 - `net10.0-ios`
-- `net10.0-browserwasm`
 
-For the first milestone, we will **exclude WebAssembly** and target native/desktop only. Security differs:
-
-- Native (Windows/Android/iOS/Desktop): we can store tokens using `PasswordVault` (platform secure stores).
-- WebAssembly: there is no secure equivalent for persisting secrets in-browser; we’ll handle this in a later phase.
+For the first milestone, we will target native/desktop only.
 
 #### Phase 0D — App callback URIs (for the broker)
 The Uno Web Authentication Broker uses a redirect URI of the form:
 
 - Native: `<scheme>:/authentication-callback` (custom scheme; must be registered per platform)
-- WebAssembly: must be an origin URL (protocol + host + port)
 
 Recommended initial scheme name for native targets:
 

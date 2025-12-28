@@ -6,6 +6,7 @@
     See https://aka.platform.uno/using-uno-sdk#implicit-packages for more information regarding the Implicit Packages.
   -->
   <ItemGroup>
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="FluentAssertions" Version="6.12.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
@@ -18,6 +19,11 @@
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageVersion Include="Uno.UITest.Helpers" Version="1.1.0-dev.70" />
     <PackageVersion Include="Xamarin.UITest" Version="4.3.4" />
+    <PackageVersion Include="Markdig" Version="0.42.0" />
+    <PackageVersion Include="SkiaSharp" Version="3.119.1" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+    <PackageVersion Include="SkiaSharp.HarfBuzz" Version="3.119.1" />
+    <PackageVersion Include="Uno.ColorCode.Core" Version="2.1.0-uno.36" />
   </ItemGroup>
 
   <ItemGroup Condition="$(UsingUnoSdk) != 'true'">

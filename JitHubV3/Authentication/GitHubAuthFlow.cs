@@ -6,9 +6,6 @@ using Windows.Security.Authentication.Web;
 #if WINDOWS || __WINDOWS__
 using Windows.System;
 #endif
-#if __WASM__
-using Uno.Foundation;
-#endif
 
 namespace JitHubV3.Authentication;
 
@@ -87,17 +84,9 @@ internal static class GitHubAuthFlow
 
         var logoutUriRaw = config["WebAuthentication:LogoutStartUri"];
 
-    #if __WASM__
-        // On WebAssembly the broker detects completion by polling the popup window URL from the opener.
-        // That requires the popup to end on the SAME origin as the WASM app; otherwise browser cross-origin
-        // restrictions prevent reading popup.location and the broker never completes.
-        var uiOrigin = GetBrowserOrigin();
-        var callbackUri = new Uri($"{uiOrigin}/authentication-callback.html");
-    #else
-        // Native platforms (Windows, iOS, Android, macOS) use registered schemes.
+        // Native platforms (iOS, Android, macOS) use registered schemes.
         var callbackUriRaw = config["WebAuthentication:CallbackUri"];
         var callbackUri = new Uri(string.IsNullOrWhiteSpace(callbackUriRaw) ? DefaultCallbackUri : callbackUriRaw);
-    #endif
 
         var scope = credentials is not null && credentials.TryGetValue("scope", out var scopeFromCreds) && !string.IsNullOrWhiteSpace(scopeFromCreds)
             ? scopeFromCreds
@@ -127,13 +116,8 @@ internal static class GitHubAuthFlow
         // Other platforms: use WebAuthenticationBroker.
         var startUri = new Uri(AppendQuery(startUriRaw, new Dictionary<string, string>
         {
-    #if __WASM__
-            ["client"] = "wasm",
-            ["redirect_uri"] = callbackUri.ToString(),
-    #else
             ["client"] = "native",
             ["redirect_uri"] = callbackUri.ToString(),
-    #endif
             ["scope"] = scope,
         }));
 
@@ -192,108 +176,6 @@ internal static class GitHubAuthFlow
 
         return tokens;
     }
-
-#if __WASM__
-    private static string GetBrowserOrigin()
-    {
-        // location.origin includes scheme + host + port (e.g., http://localhost:5000)
-        var origin = WebAssemblyRuntime.InvokeJS("globalThis.location && globalThis.location.origin ? globalThis.location.origin : ''");
-        if (string.IsNullOrWhiteSpace(origin))
-        {
-            throw new InvalidOperationException("Unable to determine browser origin for WebAssembly redirect URI.");
-        }
-
-        return origin;
-    }
-
-    internal static async Task TryConsumeAndPersistWasmRedirectTokensAsync(IServiceProvider services)
-    {
-        try
-        {
-            // Prefer fragment because it's not sent to the server.
-            var href = WebAssemblyRuntime.InvokeJS("globalThis.location && globalThis.location.href ? globalThis.location.href : ''");
-            if (string.IsNullOrWhiteSpace(href))
-            {
-                return;
-            }
-
-            var accessToken = TryGetUriParam(href, "access_token");
-            var tokenType = TryGetUriParam(href, "token_type");
-            var scope = TryGetUriParam(href, "scope");
-
-            if (string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrWhiteSpace(tokenType))
-            {
-                return;
-            }
-
-            var tokenCache = services.GetRequiredService<Uno.Extensions.Authentication.ITokenCache>();
-            var tokens = new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["access_token"] = accessToken,
-                ["token_type"] = tokenType,
-            };
-
-            if (!string.IsNullOrWhiteSpace(scope))
-            {
-                tokens["scope"] = scope;
-            }
-
-            // Persist under the configured provider name used in App.xaml.cs ("GitHub").
-            await tokenCache.SaveAsync("GitHub", tokens, CancellationToken.None);
-
-            // Ensure the token does NOT remain visible in the address bar.
-            // Some browsers/devservers can preserve fragments despite replaceState during early startup;
-            // force a clean reload without the fragment.
-            WebAssemblyRuntime.InvokeJS("globalThis.location && globalThis.location.replace ? globalThis.location.replace(globalThis.location.origin + '/') : void 0");
-        }
-        catch
-        {
-            // Non-fatal: worst-case the user stays logged out.
-        }
-    }
-
-    private static string? TryGetUriParam(string href, string key)
-    {
-        if (!Uri.TryCreate(href, UriKind.Absolute, out var uri))
-        {
-            return null;
-        }
-
-        // Check query first.
-        var queryValue = GetQueryParameter(uri, key);
-        if (!string.IsNullOrWhiteSpace(queryValue))
-        {
-            return queryValue;
-        }
-
-        // Then check fragment formatted as key=value&key2=value2.
-        var fragment = uri.Fragment;
-        if (string.IsNullOrWhiteSpace(fragment))
-        {
-            return null;
-        }
-
-        var trimmed = fragment.TrimStart('#');
-        foreach (var part in trimmed.Split('&', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var kv = part.Split('=', 2);
-            if (kv.Length == 0)
-            {
-                continue;
-            }
-
-            var name = Uri.UnescapeDataString(kv[0]);
-            if (!string.Equals(name, key, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            return kv.Length == 2 ? Uri.UnescapeDataString(kv[1]) : string.Empty;
-        }
-
-        return null;
-    }
-#endif
 
     private static string AppendQuery(string baseUri, IReadOnlyDictionary<string, string> query)
     {

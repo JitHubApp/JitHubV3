@@ -1,6 +1,18 @@
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-windows10.0.26100;net10.0-browserwasm;net10.0-desktop;net10.0</TargetFrameworks>
+    <!--
+      Target frameworks are selected based on the host OS.
+
+      - Windows: WinAppSDK + Skia Desktop + Android (emulator/device)
+      - macOS: iOS + MacCatalyst (macOS) + Skia Desktop
+      - Linux: Skia Desktop
+
+      This keeps `dotnet build` on Windows from attempting Apple targets.
+    -->
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100;net10.0-desktop;net10.0-android</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'!='true'">net10.0-windows10.0.26100;net10.0-desktop;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net10.0-ios;net10.0-maccatalyst;net10.0-desktop</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Linux'))">net10.0-desktop</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
@@ -48,6 +60,22 @@
     </UnoFeatures>
   </PropertyGroup>
 
+  <!--
+    Enable packaged WinAppSDK debugging support in Visual Studio (MsixPackage launch profile).
+    IMPORTANT: This must be set at project-load time. Conditioning on $(TargetFramework) prevents
+    VS from recognizing the MsixPackage command for the launch profile.
+  -->
+  <PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <PackagingOutputs>
+      <ProjectName>%(Filename)</ProjectName>
+    </PackagingOutputs>
+  </ItemDefinitionGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(IsUiAutomationMappingEnabled)'=='True'">
     <IsUiAutomationMappingEnabled>True</IsUiAutomationMappingEnabled>
     <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
@@ -55,6 +83,10 @@
 
   <ItemGroup>
     <PackageReference Include="Octokit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JitHub.Markdown.Uno\JitHub.Markdown.Uno.csproj" />
   </ItemGroup>
 
 </Project>

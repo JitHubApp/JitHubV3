@@ -1,0 +1,51 @@
+<Page x:Class="JitHubV3.Presentation.MarkdownTestPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:md="using:JitHub.Markdown.Uno"
+      mc:Ignorable="d"
+      IsTabStop="False"
+      NavigationCacheMode="Required"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+  <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12" Loaded="OnLoaded">
+
+    <utu:NavigationBar Content="{Binding Title}" />
+
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="12" MaxWidth="960">
+        <ComboBox
+          Header="Theme"
+          ItemsSource="{Binding ThemeVariants}"
+          SelectedItem="{Binding ThemeVariant, Mode=TwoWay}" />
+
+        <ToggleSwitch
+          x:Name="RtlToggle"
+          Header="RTL"
+          OnContent="Forced RTL (test)"
+          OffContent="Platform default"
+          IsOn="{Binding ForceRtl, Mode=TwoWay}" />
+
+        <TextBox
+          x:Name="MarkdownEditor"
+          Header="Markdown"
+          AcceptsReturn="True"
+          TextWrapping="Wrap"
+          TextAlignment="{Binding PreviewTextAlignment}"
+          Text="{Binding Markdown, Mode=TwoWay}" />
+
+        <md:MarkdownView
+          x:Name="MarkdownPreview"
+          IsRightToLeft="{Binding PreviewIsRightToLeft}"
+          Theme="{Binding PreviewTheme}"
+          GitHubBaseUrl="https://example.invalid/github"
+          GitHubRepositorySlug="mock-owner/mock-repo"
+          Markdown="{Binding Markdown}" />
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</Page>

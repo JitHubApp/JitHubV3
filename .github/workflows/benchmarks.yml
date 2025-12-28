@@ -1,0 +1,35 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly at 03:00 UTC
+    - cron: "0 3 * * *"
+
+env:
+  STEP_TIMEOUT_MINUTES: 60
+
+jobs:
+  markdown_benchmarks:
+    name: Markdown Benchmarks (Nightly)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        timeout-minutes: ${{ fromJSON(env.STEP_TIMEOUT_MINUTES) }}
+        uses: "./.github/steps/install_dependencies"
+
+      - name: Run benchmarks (Short)
+        shell: pwsh
+        run: dotnet run -c Release --project ./JitHub.Markdown.Benchmarks/JitHub.Markdown.Benchmarks.csproj -- -j Short --memory --filter *
+
+      - name: Upload BenchmarkDotNet artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            **/BenchmarkDotNet.Artifacts/results/**

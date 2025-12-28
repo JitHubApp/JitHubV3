@@ -6,6 +6,12 @@ To discover how to get started with your new app: https://aka.platform.uno/get-s
 
 For more information on how to use the Uno.Sdk or upgrade Uno Platform packages in your solution: https://aka.platform.uno/using-uno-sdk
 
+## Markdown (developer docs)
+
+- [Markdown developer guide](../docs/markdown/getting-started.md)
+- [Golden render tests](../docs/markdown-rendering-architecture.md)
+- [Benchmarks](../docs/benchmarks.md)
+
 ## GitHub OAuth (local dev)
 
 This solution uses a **server-mediated** GitHub OAuth flow.
@@ -16,15 +22,8 @@ This solution uses a **server-mediated** GitHub OAuth flow.
 ### Split hosting (Phase 1)
 
 - API backend: `https://localhost:5002`
-- WASM UI host: `http://localhost:5000`
 
-For `client=wasm`, the backend redirects back to the UI callback page and appends `handoffCode`.
-
-The backend validates redirects using `OAuthRedirect` in `JitHubV3.Server` configuration:
-
-- `OAuthRedirect:AllowedRedirectOrigins` (e.g., `http://localhost:5000`)
-- `OAuthRedirect:AllowedRedirectPaths` (e.g., `/authentication-callback.html`)
-- `OAuthRedirect:DefaultWasmRedirectUri` (used when the client doesn't pass `redirect_uri`)
+This repo currently uses native/desktop Uno heads (WinAppSDK + Skia Desktop + Android). The OAuth callback is handled via the server endpoint.
 
 ### 1) Create a GitHub OAuth App
 
@@ -48,3 +47,16 @@ Alternative (Environment variables):
 - `setx GitHub__ClientSecret "<your-client-secret>"`
 
 Restart the server after changing secrets.
+
+## Markdown logging (segmented)
+
+The markdown renderer exposes a few category names you can enable/disable via `appsettings.json` / `appsettings.development.json`:
+
+- `JitHub.Markdown.Skia.SyntaxHighlighting` (very verbose; emits at `Debug`)
+- `JitHub.Markdown.Uno.Input`
+- `JitHub.Markdown.Uno.Selection`
+
+To enable syntax highlight diagnostics temporarily:
+
+- Set `Logging:LogLevel:JitHub.Markdown.Skia.SyntaxHighlighting` to `Debug`, or
+- Set environment variable `JITHUB_SYNTAXHL_DIAG=1`
