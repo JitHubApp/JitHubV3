@@ -1,6 +1,5 @@
 ﻿namespace JitHub.Data.Caching;
 
-public class Class1
+internal static class CachingAssembly
 {
-
 }
