@@ -12,6 +12,10 @@ For more information on how to use the Uno.Sdk or upgrade Uno Platform packages 
 - [Golden render tests](../docs/markdown-rendering-architecture.md)
 - [Benchmarks](../docs/benchmarks.md)
 
+## GitHub (architecture)
+
+- [GitHub service layer + data/networking architecture](../docs/github-service-layer-architecture.md)
+
 ## GitHub OAuth (local dev)
 
 This solution uses a **server-mediated** GitHub OAuth flow.
