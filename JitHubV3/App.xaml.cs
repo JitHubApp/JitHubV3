@@ -161,6 +161,8 @@ public partial class App : Application
                         new OctokitClientFactory(
                             sp.GetRequiredService<IGitHubTokenProvider>(),
                             sp.GetRequiredService<OctokitClientOptions>()));
+
+                    services.AddJitHubGitHubServices();
                 })
                 .UseNavigation(RegisterRoutes)
             );
