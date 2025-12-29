@@ -43,22 +43,20 @@
 
         <TextBlock Text="Resize the window (Auto) or switch mode to exercise CardDeckLayout." Opacity="0.72" TextWrapping="Wrap" />
 
-        <muxc:ItemsRepeater ItemsSource="{Binding Cards}">
-          <muxc:ItemsRepeater.Layout>
-            <layouts:CardDeckLayout
-              Mode="{Binding SelectedMode}"
-              ModeWidthThreshold="{StaticResource DashboardGridToDeckMinWidth}"
-              CardMinWidth="320"
-              CardHeight="180"
-              Spacing="{StaticResource DashboardSpacingL}"
-              MaxColumns="3"
-              DeckMaxVisibleCount="5"
-              DeckOffsetY="{StaticResource DashboardSpacingM}"
-              DeckAngleStepDegrees="1.25"
-              DeckScaleStep="0" />
-          </muxc:ItemsRepeater.Layout>
+        <layouts:CardDeckPresenter
+          ItemsSource="{Binding Cards}"
+          Mode="{Binding SelectedMode}"
+          ModeWidthThreshold="{StaticResource DashboardGridToDeckMinWidth}"
+          CardMinWidth="320"
+          CardHeight="180"
+          Spacing="{StaticResource DashboardSpacingL}"
+          MaxColumns="3"
+          DeckMaxVisibleCount="5"
+          DeckOffsetY="{StaticResource DashboardSpacingM}"
+          DeckAngleStepDegrees="1.25"
+          DeckScaleStep="0">
 
-          <muxc:ItemsRepeater.ItemTemplate>
+          <layouts:CardDeckPresenter.ItemTemplate>
             <DataTemplate>
               <!--
                    CardBackgroundFillColorDefaultBrush can be semi-transparent in some themes.
@@ -96,8 +94,8 @@
                 </Grid>
               </Border>
             </DataTemplate>
-          </muxc:ItemsRepeater.ItemTemplate>
-        </muxc:ItemsRepeater>
+          </layouts:CardDeckPresenter.ItemTemplate>
+        </layouts:CardDeckPresenter>
 
       </StackPanel>
     </ScrollViewer>

@@ -230,17 +230,41 @@ public sealed class CardDeckLayout : VirtualizingLayout
             return;
         }
 
-        if (element.RenderTransform is not CompositeTransform ct)
+        // Important for morph animations:
+        // - Layout needs to set its own transform (deck offsets/rotation/scale)
+        // - A presenter may want to apply an additive animation transform on top
+        // Keep them separate to avoid fighting over the same CompositeTransform.
+        var (layoutTransform, _) = EnsureTransforms(element);
+
+        layoutTransform.TranslateX = transform.TranslateX;
+        layoutTransform.TranslateY = transform.TranslateY;
+        layoutTransform.Rotation = transform.RotationDegrees;
+        layoutTransform.ScaleX = transform.Scale;
+        layoutTransform.ScaleY = transform.Scale;
+    }
+
+    internal static (CompositeTransform Layout, CompositeTransform Animation) EnsureTransforms(UIElement element)
+    {
+        if (element.RenderTransform is TransformGroup group
+            && group.Children.Count >= 2
+            && group.Children[0] is CompositeTransform existingLayout
+            && group.Children[1] is CompositeTransform existingAnimation)
         {
-            ct = new CompositeTransform();
-            element.RenderTransform = ct;
             element.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
+            return (existingLayout, existingAnimation);
         }
 
-        ct.TranslateX = transform.TranslateX;
-        ct.TranslateY = transform.TranslateY;
-        ct.Rotation = transform.RotationDegrees;
-        ct.ScaleX = transform.Scale;
-        ct.ScaleY = transform.Scale;
+        // Migrate any existing CompositeTransform into the layout slot.
+        var layout = element.RenderTransform as CompositeTransform ?? new CompositeTransform();
+        var animation = new CompositeTransform();
+
+        var newGroup = new TransformGroup();
+        newGroup.Children.Add(layout);
+        newGroup.Children.Add(animation);
+
+        element.RenderTransform = newGroup;
+        element.RenderTransformOrigin = new Windows.Foundation.Point(0.5, 0.5);
+
+        return (layout, animation);
     }
 }
