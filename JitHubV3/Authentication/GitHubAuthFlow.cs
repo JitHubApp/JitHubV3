@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,65 +13,8 @@ namespace JitHubV3.Authentication;
 internal static class GitHubAuthFlow
 {
     // Default callback URI for native broker-based platforms.
-    // Windows does NOT use WebAuthenticationBroker in this app (see below); it uses browser + protocol activation.
+    // Desktop uses a loopback redirect; mobile uses WebAuthenticationBroker.
     internal const string DefaultCallbackUri = "jithubv3://authentication-callback";
-
-#if WINDOWS || __WINDOWS__
-    private static TaskCompletionSource<string>? _protocolHandoffTcs;
-    private static string? _pendingHandoffCode;
-
-    internal static bool HasPendingProtocolHandoff() => !string.IsNullOrWhiteSpace(_pendingHandoffCode);
-
-    internal static void TryHandleProtocolActivation(Uri uri)
-    {
-        // Expected: jithubv3://auth?handoffCode=...
-        if (!string.Equals(uri.Scheme, "jithubv3", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        var handoffCode = GetQueryParameter(uri, "handoffCode");
-        if (string.IsNullOrWhiteSpace(handoffCode))
-        {
-            return;
-        }
-
-        // If a login is currently waiting, complete it.
-        // Otherwise store it so startup/login can consume it and skip the login screen.
-        if (!(_protocolHandoffTcs?.TrySetResult(handoffCode) ?? false))
-        {
-            _pendingHandoffCode = handoffCode;
-        }
-    }
-
-    private static Task<string> BeginWindowsProtocolWait(TimeSpan timeout)
-    {
-        _protocolHandoffTcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        if (!string.IsNullOrWhiteSpace(_pendingHandoffCode))
-        {
-            var handoff = _pendingHandoffCode;
-            _pendingHandoffCode = null;
-            _protocolHandoffTcs.TrySetResult(handoff);
-            return _protocolHandoffTcs.Task;
-        }
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(timeout);
-                _protocolHandoffTcs.TrySetException(new TimeoutException("Timed out waiting for protocol callback."));
-            }
-            catch
-            {
-                // ignored
-            }
-        });
-
-        return _protocolHandoffTcs.Task;
-    }
-#endif
 
     internal static async Task<IDictionary<string, string>> LoginAsync(IServiceProvider services, IDictionary<string, string>? credentials)
     {
@@ -92,25 +36,22 @@ internal static class GitHubAuthFlow
             ? scopeFromCreds
             : "repo";
 
-#if WINDOWS || __WINDOWS__
-        // Windows: follow the old app's proven pattern.
-        // - Open the server auth start URL in the system browser
-        // - Server completes OAuth then redirects back into the app via protocol activation
-        // This avoids WebAuthenticationBroker callback URI restrictions that caused COMException 0x8007007D.
+#if WINDOWS || __WINDOWS__ || __SKIA__
+        // Desktop (WinAppSDK + Skia): system browser + loopback redirect.
+        // This avoids WebAuthenticationBroker (not available on Skia) and avoids protocol activation races.
+        await using var listener = new LoopbackHandoffListener("/oauth2/callback");
+        var loopbackUri = listener.Start();
+
         var startUri = new Uri(AppendQuery(startUriRaw, new Dictionary<string, string>
         {
-            ["client"] = "windows",
+            ["client"] = "desktop",
+            ["redirect_uri"] = loopbackUri.ToString(),
             ["scope"] = scope,
         }));
 
-        var handoffWait = BeginWindowsProtocolWait(TimeSpan.FromMinutes(2));
-        var launched = await Launcher.LaunchUriAsync(startUri);
-        if (!launched)
-        {
-            throw new InvalidOperationException("Failed to launch system browser for authentication.");
-        }
+        await LaunchBrowserAsync(startUri);
 
-        var handoffCode = await handoffWait;
+        var handoffCode = await listener.WaitForHandoffCodeAsync(TimeSpan.FromMinutes(2), CancellationToken.None);
         var exchangeUri = new Uri($"{startUri.GetLeftPart(UriPartial.Authority)}/auth/exchange");
 #else
         // Other platforms: use WebAuthenticationBroker.
@@ -175,6 +116,32 @@ internal static class GitHubAuthFlow
         }
 
         return tokens;
+    }
+
+    private static async Task LaunchBrowserAsync(Uri uri)
+    {
+#if WINDOWS || __WINDOWS__
+        var launched = await Launcher.LaunchUriAsync(uri);
+        if (!launched)
+        {
+            throw new InvalidOperationException("Failed to launch system browser for authentication.");
+        }
+#else
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = uri.ToString(),
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to launch system browser for authentication.", ex);
+        }
+
+        await Task.CompletedTask;
+#endif
     }
 
     private static string AppendQuery(string baseUri, IReadOnlyDictionary<string, string> query)

@@ -16,6 +16,21 @@
     <Project Path="JitHubV3.UITests/JitHubV3.UITests.csproj">
       <Deploy />
     </Project>
+    <Project Path="JitHub.GitHub.Tests/JitHub.GitHub.Tests.csproj">
+      <Deploy />
+    </Project>
+  </Folder>
+
+  <Folder Name="/GitHub/">
+    <Project Path="JitHub.GitHub.Abstractions/JitHub.GitHub.Abstractions.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="JitHub.Data.Caching/JitHub.Data.Caching.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="JitHub.GitHub.Octokit/JitHub.GitHub.Octokit.csproj">
+      <Deploy />
+    </Project>
   </Folder>
 
   <Folder Name="/Markdown/">

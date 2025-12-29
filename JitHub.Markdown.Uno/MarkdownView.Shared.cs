@@ -1,11 +1,18 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Globalization;
+using JitHub.Markdown;
 
 namespace JitHub.Markdown.Uno;
 
 public sealed partial class MarkdownView : UserControl
 {
+	public static readonly DependencyProperty AutoThemeEnabledProperty = DependencyProperty.Register(
+		nameof(AutoThemeEnabled),
+		typeof(bool),
+		typeof(MarkdownView),
+		new PropertyMetadata(true, OnAutoThemeEnabledChanged));
+
 	public static readonly DependencyProperty GitHubBaseUrlProperty = DependencyProperty.Register(
 		nameof(GitHubBaseUrl),
 		typeof(string),
@@ -47,6 +54,19 @@ public sealed partial class MarkdownView : UserControl
 		typeof(bool),
 		typeof(MarkdownView),
 		new PropertyMetadata(true, OnSelectionEnabledChanged));
+
+	private MarkdownPlatformThemeWatcher? _autoThemeWatcher;
+	private bool _autoThemeEligible;
+
+	/// <summary>
+	/// When enabled (default), and when <see cref="Theme"/> is not explicitly set by the consumer,
+	/// the control will track platform Light/Dark/HighContrast and apply the matching markdown theme.
+	/// </summary>
+	public bool AutoThemeEnabled
+	{
+		get => (bool)GetValue(AutoThemeEnabledProperty);
+		set => SetValue(AutoThemeEnabledProperty, value);
+	}
 
 	public bool IsRightToLeft
 	{
@@ -104,6 +124,11 @@ public sealed partial class MarkdownView : UserControl
 		((MarkdownView)d).SyncMarkdown();
 	}
 
+	private static void OnAutoThemeEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+	{
+		((MarkdownView)d).SyncAutoTheme();
+	}
+
 	private static void OnThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 	{
 		((MarkdownView)d).SyncTheme();
@@ -131,6 +156,7 @@ public sealed partial class MarkdownView : UserControl
 		SyncSelectionEnabled();
 		SyncIsRightToLeft();
 		SyncGitHubEnrichments();
+		SyncAutoTheme();
 	}
 
 	private void SyncMarkdown()
@@ -158,6 +184,50 @@ public sealed partial class MarkdownView : UserControl
 	{
 		_host.GitHubBaseUrl = GitHubBaseUrl;
 		_host.GitHubRepositorySlug = GitHubRepositorySlug;
+	}
+
+	private void InitializeAutoThemeSupport()
+	{
+		Loaded += (_, __) =>
+		{
+			// Only auto-theme when the consumer hasn't set Theme explicitly (binding/local value).
+			// This prevents overriding pages that intentionally drive Theme (e.g., MarkdownTestPage).
+			_autoThemeEligible = ReadLocalValue(ThemeProperty) == DependencyProperty.UnsetValue;
+			SyncAutoTheme();
+		};
+
+		Unloaded += (_, __) =>
+		{
+			_autoThemeWatcher?.Dispose();
+			_autoThemeWatcher = null;
+		};
+	}
+
+	private void SyncAutoTheme()
+	{
+		if (!IsLoaded)
+		{
+			return;
+		}
+
+		if (!AutoThemeEnabled || !_autoThemeEligible)
+		{
+			_autoThemeWatcher?.Dispose();
+			_autoThemeWatcher = null;
+			return;
+		}
+
+		if (_autoThemeWatcher is null)
+		{
+			_autoThemeWatcher = new MarkdownPlatformThemeWatcher(this);
+			_autoThemeWatcher.VariantChanged += (_, variant) =>
+			{
+				// Apply via Theme DP so the existing SyncTheme pipeline updates the renderer.
+				Theme = MarkdownThemeEngine.Resolve(variant);
+			};
+		}
+
+		Theme = MarkdownThemeEngine.Resolve(_autoThemeWatcher.CurrentVariant);
 	}
 
 	public Task CopySelectionToClipboardAsync(bool includePlainText = true)

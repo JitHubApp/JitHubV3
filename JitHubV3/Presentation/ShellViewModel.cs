@@ -6,18 +6,22 @@ public class ShellViewModel
 
 
     private readonly INavigator _navigator;
+    public StatusBarViewModel StatusBar { get; }
 
     public ShellViewModel(
         IAuthenticationService authentication,
-        INavigator navigator)
+        INavigator navigator,
+        StatusBarViewModel statusBar)
     {
         _navigator = navigator;
         _authentication = authentication;
+        StatusBar = statusBar;
         _authentication.LoggedOut += LoggedOut;
     }
 
     private async void LoggedOut(object? sender, EventArgs e)
     {
+        StatusBar.Clear();
         await _navigator.NavigateViewModelAsync<LoginViewModel>(this, qualifier: Qualifiers.ClearBackStack);
     }
 }

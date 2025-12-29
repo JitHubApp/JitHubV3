@@ -131,6 +131,23 @@ internal static class AuthApi
             return "/auth/complete?client=windows";
         }
 
+        // Desktop loopback flow: accept an explicit loopback redirect_uri (http://127.0.0.1:{port}/oauth2/callback).
+        if (string.Equals(client, AuthClientKinds.Desktop, StringComparison.Ordinal))
+        {
+            if (string.IsNullOrWhiteSpace(redirectUriFromQuery))
+            {
+                return null;
+            }
+
+            var allowed = redirectPolicy.TryGetAllowedRedirectUri(redirectUriFromQuery);
+            if (allowed is null || !allowed.IsLoopback)
+            {
+                return null;
+            }
+
+            return allowed.ToString();
+        }
+
         // For native broker-based clients (iOS/Android/macOS/etc), accept an explicit redirect_uri
         // but only when it matches our allowlist rules.
         if (!string.IsNullOrWhiteSpace(redirectUriFromQuery))

@@ -8,29 +8,76 @@
       mc:Ignorable="d"
       d:DesignHeight="300"
       d:DesignWidth="400">
-  <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-    <utu:ExtendedSplashScreen x:Name="Splash"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch">
-      <utu:ExtendedSplashScreen.LoadingContentTemplate>
-        <DataTemplate>
-          <Grid>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="2*" />
-              <RowDefinition />
-            </Grid.RowDefinitions>
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </ResourceDictionary>
+  </UserControl.Resources>
 
-            <ProgressRing IsActive="True"
-                  Grid.Row="1"
-                  VerticalAlignment="Center"
-                  HorizontalAlignment="Center"
-                  Height="100"
-                  Width="100" />
-          </Grid>
-        </DataTemplate>
-      </utu:ExtendedSplashScreen.LoadingContentTemplate>
-    </utu:ExtendedSplashScreen>
+  <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <utu:ExtendedSplashScreen x:Name="Splash"
+                  Grid.Row="0"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Stretch">
+        <utu:ExtendedSplashScreen.LoadingContentTemplate>
+          <DataTemplate>
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="2*" />
+                <RowDefinition />
+              </Grid.RowDefinitions>
+
+              <ProgressRing IsActive="True"
+                    Grid.Row="1"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Height="100"
+                    Width="100" />
+            </Grid>
+          </DataTemplate>
+        </utu:ExtendedSplashScreen.LoadingContentTemplate>
+      </utu:ExtendedSplashScreen>
+
+      <Border Grid.Row="1"
+              Padding="16,8"
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <Grid ColumnSpacing="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <ProgressRing Width="16" Height="16"
+                          IsActive="{Binding StatusBar.IsBusy}"
+                          Visibility="{Binding StatusBar.IsBusy, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <ProgressRing Width="16" Height="16"
+                          IsActive="{Binding StatusBar.IsRefreshing}"
+                          Visibility="{Binding StatusBar.IsRefreshing, Converter={StaticResource BoolToVisibilityConverter}}" />
+          </StackPanel>
+
+          <TextBlock Grid.Column="1"
+                     Text="{Binding StatusBar.Message}"
+                     TextWrapping="NoWrap"
+                     TextTrimming="CharacterEllipsis" />
+
+          <StackPanel Grid.Column="2"
+                      Orientation="Horizontal"
+                      Spacing="8">
+            <TextBlock Text="{Binding StatusBar.FreshnessLabel}" />
+            <TextBlock Text="{Binding StatusBar.LastUpdatedLabel}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
   </Border>
 </UserControl>

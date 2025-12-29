@@ -24,6 +24,5 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JitHubV3\JitHubV3.csproj" />
   </ItemGroup>
 </Project>

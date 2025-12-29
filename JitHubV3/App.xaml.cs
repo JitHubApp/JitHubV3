@@ -1,6 +1,11 @@
 using Uno.Resizetizer;
 using JitHubV3.Authentication;
 using JitHubV3.Services.GitHub;
+using JitHub.GitHub.Abstractions.Security;
+using JitHub.GitHub.Abstractions.Services;
+using JitHub.GitHub.Abstractions.Models;
+using JitHub.GitHub.Abstractions.Polling;
+using JitHub.GitHub.Octokit;
 
 namespace JitHubV3;
 
@@ -17,7 +22,7 @@ public partial class App : Application
         // Ensure the broker callback URI matches the app's registered custom scheme.
         // See: https://platform.uno/docs/articles/features/web-authentication-broker.html
         // Windows uses ms-app:// (handled by default); non-Windows native platforms use custom schemes.
-#if __IOS__ || __ANDROID__ || __MACOS__ || __MACCATALYST__ || __SKIA__
+#if __IOS__ || __ANDROID__ || __MACOS__ || __MACCATALYST__
         Uno.WinRTFeatureConfiguration.WebAuthenticationBroker.DefaultReturnUri = new Uri(GitHubAuthFlow.DefaultCallbackUri);
 #endif
     }
@@ -41,7 +46,7 @@ public partial class App : Application
             return;
         }
 
-        RegisterWindowsProtocolActivation();
+    // Auth flow uses loopback redirect on desktop; protocol activation not required.
 #endif
         var builder = this.CreateBuilder(args)
             // Add navigation support for toolkit controls such as TabBar and NavigationView
@@ -75,7 +80,10 @@ public partial class App : Application
                     //// Storage messages
                     //logBuilder.StorageLogLevel(LogLevel.Debug);
                     //// Binding related messages
-                    //logBuilder.XamlBindingLogLevel(LogLevel.Debug);
+                    if (context.HostingEnvironment.IsDevelopment())
+                    {
+                        logBuilder.XamlBindingLogLevel(LogLevel.Debug);
+                    }
                     //// Binder memory references tracking
                     //logBuilder.BinderMemoryReferenceLogLevel(LogLevel.Debug);
                     //// DevServer and HotReload related
@@ -98,6 +106,12 @@ public partial class App : Application
                             .Login(async (services, dispatcher, credentials, ct) =>
                             {
                                 var resultTokens = await GitHubAuthFlow.LoginAsync(services, credentials);
+
+                                if (services.GetService<IGitHubTokenProvider>() is UnoTokenCacheGitHubTokenProvider provider)
+                                {
+                                    provider.UpdateFromTokens(resultTokens);
+                                }
+
                                 return resultTokens;
                             })
                             .Refresh((services, tokens, ct) =>
@@ -114,6 +128,12 @@ public partial class App : Application
                             .Logout(async (services, dispatcher, tokenCache, tokens, ct) =>
                             {
                                 await tokenCache.ClearAsync(ct);
+
+                                if (services.GetService<IGitHubTokenProvider>() is UnoTokenCacheGitHubTokenProvider provider)
+                                {
+                                    provider.UpdateFromTokens(null);
+                                }
+
                                 return true;
                             });
                     }, name: "GitHub")
@@ -123,7 +143,33 @@ public partial class App : Application
                     // TODO: Register your services
                     //services.AddSingleton<IMyService, MyService>();
 
-                    services.AddSingleton<IGitHubApi, OctokitGitHubApi>();
+                    services.AddSingleton<IGitHubTokenProvider, UnoTokenCacheGitHubTokenProvider>();
+                    services.AddSingleton<ISecretStore, PlatformSecretStore>();
+
+                    services.AddSingleton<StatusBarViewModel>();
+
+                    services.AddSingleton(sp =>
+                    {
+                        var baseUrl = context.Configuration["GitHub:ApiBaseUrl"];
+                        Uri? apiBase = null;
+                        if (!string.IsNullOrWhiteSpace(baseUrl) && Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsed))
+                        {
+                            apiBase = parsed;
+                        }
+
+                        return new OctokitClientOptions(
+                            ProductName: "JitHubV3",
+                            ProductVersion: null,
+                            ApiBaseAddress: apiBase);
+                    });
+
+                    services.AddSingleton<IOctokitClientFactory>(sp =>
+                        new OctokitClientFactory(
+                            sp.GetRequiredService<IGitHubTokenProvider>(),
+                            sp.GetRequiredService<OctokitClientOptions>(),
+                            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OctokitClientFactory>>()));
+
+                    services.AddJitHubGitHubServices();
                 })
                 .UseNavigation(RegisterRoutes)
             );
@@ -155,20 +201,6 @@ public partial class App : Application
                 }
                 else
                 {
-#if WINDOWS
-                    // If the app was activated via protocol (handoffCode), try to complete login immediately
-                    // so we can skip the login screen and navigate to the authenticated route.
-                    if (GitHubAuthFlow.HasPendingProtocolHandoff())
-                    {
-                        var dispatcher = services.GetRequiredService<IDispatcher>();
-                        var protocolLoginSuccess = await auth.LoginAsync(dispatcher);
-                        if (protocolLoginSuccess)
-                        {
-                            await navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.Nested);
-                            return;
-                        }
-                    }
-#endif
                     await navigator.NavigateViewModelAsync<LoginViewModel>(this, qualifier: Qualifiers.Nested);
                 }
             });
@@ -190,39 +222,7 @@ public partial class App : Application
         return true;
     }
 
-    private void RegisterWindowsProtocolActivation()
-    {
-        // WinUI 3 (Windows App SDK) doesn't support overriding Application.OnActivated like UWP.
-        // Use AppInstance activation events instead.
-        var instance = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent();
-
-        HandleWindowsActivation(instance.GetActivatedEventArgs());
-        instance.Activated += (_, e) => HandleWindowsActivation(e);
-    }
-
-    private void HandleWindowsActivation(Microsoft.Windows.AppLifecycle.AppActivationArguments args)
-    {
-        if (args.Kind != Microsoft.Windows.AppLifecycle.ExtendedActivationKind.Protocol)
-        {
-            return;
-        }
-
-        if (args.Data is Windows.ApplicationModel.Activation.IProtocolActivatedEventArgs protocolArgs && protocolArgs.Uri is not null)
-        {
-            GitHubAuthFlow.TryHandleProtocolActivation(protocolArgs.Uri);
-
-            // Bring the existing window to foreground.
-            // AppInstance.Activated can come in on a non-UI thread; marshal activation to the window dispatcher.
-            if (MainWindow is null)
-            {
-                _pendingWindowActivation = true;
-            }
-            else
-            {
-                TryActivateMainWindow();
-            }
-        }
-    }
+    // Protocol activation was previously used for OAuth handoff; desktop now uses a loopback redirect.
 
     private void TryActivateMainWindow()
     {
@@ -267,6 +267,8 @@ public partial class App : Application
             new ViewMap(ViewModel: typeof(ShellViewModel)),
             new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
+            new DataViewMap<IssuesPage, IssuesViewModel, RepoRouteData>(),
+            new DataViewMap<IssueConversationPage, IssueConversationViewModel, IssueConversationRouteData>(),
             new ViewMap<MarkdownTestPage, MarkdownTestViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>()
         );
@@ -277,6 +279,8 @@ public partial class App : Application
                 [
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
                     new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("Issues", View: views.FindByViewModel<IssuesViewModel>()),
+                    new ("IssueConversation", View: views.FindByViewModel<IssueConversationViewModel>()),
                     new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                 ]

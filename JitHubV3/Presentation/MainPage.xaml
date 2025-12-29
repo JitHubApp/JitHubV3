@@ -1,4 +1,4 @@
-﻿<Page x:Class="JitHubV3.Presentation.MainPage"
+﻿<local:ActivatablePage x:Class="JitHubV3.Presentation.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="using:JitHubV3.Presentation"
@@ -6,37 +6,66 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       NavigationCacheMode="Required"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-  <ScrollViewer IsTabStop="True">
-    <Grid utu:SafeArea.Insets="VisibleBounds">
+  <Grid utu:SafeArea.Insets="VisibleBounds">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <utu:NavigationBar Content="{Binding Title}" />
+
+    <Grid Grid.Row="1"
+          Padding="16"
+          RowSpacing="12"
+          MaxWidth="720"
+          HorizontalAlignment="Center">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
-        <RowDefinition />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
-      <utu:NavigationBar Content="{Binding Title}" />
+
+      <TextBlock Text="{Binding RepoStatus}"
+                 TextWrapping="Wrap" />
 
       <StackPanel Grid.Row="1"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Spacing="16">
-        <TextBox Text="{Binding Name, Mode=TwoWay}"
-            PlaceholderText="Enter your name:" />
-        <Button Content="Go to Second Page"
-            AutomationProperties.AutomationId="SecondPageButton"
-            Command="{Binding GoToSecond}" />
-        <Button Content="Markdown Test"
-          AutomationProperties.AutomationId="MarkdownTestButton"
-          Command="{Binding GoToMarkdownTest}" />
-        <Button Content="Load Private Repos"
-          Command="{Binding LoadPrivateRepos}" />
-        <TextBlock Text="{Binding RepoStatus}"
-          TextWrapping="Wrap"
-          MaxWidth="420" />
-        <ListView ItemsSource="{Binding PrivateRepos}"
-          MaxHeight="240"
-          MinWidth="420" />
-        <Button Content="Logout"
-            Command="{Binding Logout}" />
+          Orientation="Horizontal"
+          Spacing="12">
+        <TextBlock Text="Repos:" />
+        <TextBlock Text="{Binding RepositoryCount}"
+           TextWrapping="NoWrap" />
+        <ProgressRing IsActive="{Binding IsLoading}"
+              Visibility="{Binding IsLoading}"
+              HorizontalAlignment="Left" />
       </StackPanel>
+
+      <ListView Grid.Row="2"
+                ItemsSource="{Binding Repositories}"
+                IsItemClickEnabled="True"
+                ItemClick="OnRepoClicked"
+                SelectionMode="None"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch">
+        <ListView.ItemTemplate>
+          <DataTemplate>
+            <StackPanel Spacing="4">
+              <StackPanel Orientation="Horizontal" Spacing="0">
+                <TextBlock Text="{Binding OwnerLogin}" />
+                <TextBlock Text="/" />
+                <TextBlock Text="{Binding Name}" />
+              </StackPanel>
+              <TextBlock Text="{Binding Description}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+
+      <Button Grid.Row="3"
+              Content="Logout"
+              Command="{Binding Logout}"
+              HorizontalAlignment="Left" />
     </Grid>
-  </ScrollViewer>
-</Page>
+  </Grid>
+</local:ActivatablePage>
