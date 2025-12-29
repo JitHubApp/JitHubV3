@@ -42,10 +42,30 @@
                      Margin="{StaticResource DashboardEdgePadding}" />
         </NavigationView.PaneHeader>
 
-        <NavigationView.MenuItems>
-          <NavigationViewItemHeader Content="Repositories" />
-          <NavigationViewItem Content="Repo list (Phase 3)" IsEnabled="False" />
-        </NavigationView.MenuItems>
+        <NavigationView.PaneCustomContent>
+          <Grid>
+            <ListView ItemsSource="{Binding Repositories}"
+                      SelectedValuePath="Id"
+                      SelectedValue="{Binding SelectedRepositoryId, Mode=TwoWay}"
+                      SelectionMode="Single"
+                      Margin="{StaticResource DashboardEdgePadding}"
+                      AutomationProperties.Name="Repositories">
+              <ListView.ItemTemplate>
+                <DataTemplate>
+                  <Grid MinHeight="44">
+                    <StackPanel Spacing="{StaticResource DashboardSpacingXS}">
+                      <TextBlock TextTrimming="CharacterEllipsis" TextWrapping="NoWrap">
+                        <Run Text="{Binding OwnerLogin}" />
+                        <Run Text="/" />
+                        <Run Text="{Binding Name}" />
+                      </TextBlock>
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ListView.ItemTemplate>
+            </ListView>
+          </Grid>
+        </NavigationView.PaneCustomContent>
 
         <NavigationView.Content>
           <Grid Padding="{StaticResource DashboardContentPadding}">
