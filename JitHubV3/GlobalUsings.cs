@@ -8,4 +8,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Localization;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
+global using Uno.Extensions;
+global using Uno.Extensions.Authentication;
+global using Uno.Extensions.Navigation;
 global using ApplicationExecutionState = Windows.ApplicationModel.Activation.ApplicationExecutionState;

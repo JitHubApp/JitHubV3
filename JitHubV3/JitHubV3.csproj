@@ -10,7 +10,7 @@
       This keeps `dotnet build` on Windows from attempting Apple targets.
     -->
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'=='true'">net10.0-windows10.0.26100;net10.0-desktop;net10.0-android</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'!='true'">net10.0-windows10.0.26100;net10.0-desktop;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(BuildingInsideVisualStudio)'!='true'">net10.0-windows10.0.26100;net10.0-desktop</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('OSX'))">net10.0-ios;net10.0-maccatalyst;net10.0-desktop</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('Linux'))">net10.0-desktop</TargetFrameworks>
 
@@ -87,6 +87,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JitHub.Markdown.Uno\JitHub.Markdown.Uno.csproj" />
+    <ProjectReference Include="..\JitHub.GitHub.Abstractions\JitHub.GitHub.Abstractions.csproj" />
+    <ProjectReference Include="..\JitHub.GitHub.Octokit\JitHub.GitHub.Octokit.csproj" />
   </ItemGroup>
 
 </Project>

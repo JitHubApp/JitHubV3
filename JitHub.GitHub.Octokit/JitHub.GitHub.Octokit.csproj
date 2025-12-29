@@ -11,4 +11,8 @@
     <ProjectReference Include="..\JitHub.Data.Caching\JitHub.Data.Caching.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Octokit" />
+  </ItemGroup>
+
 </Project>

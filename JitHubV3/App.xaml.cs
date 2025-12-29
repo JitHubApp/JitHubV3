@@ -1,6 +1,8 @@
 using Uno.Resizetizer;
 using JitHubV3.Authentication;
 using JitHubV3.Services.GitHub;
+using JitHub.GitHub.Abstractions.Security;
+using JitHub.GitHub.Octokit;
 
 namespace JitHubV3;
 
@@ -98,6 +100,12 @@ public partial class App : Application
                             .Login(async (services, dispatcher, credentials, ct) =>
                             {
                                 var resultTokens = await GitHubAuthFlow.LoginAsync(services, credentials);
+
+                                if (services.GetService<IGitHubTokenProvider>() is UnoTokenCacheGitHubTokenProvider provider)
+                                {
+                                    provider.UpdateFromTokens(resultTokens);
+                                }
+
                                 return resultTokens;
                             })
                             .Refresh((services, tokens, ct) =>
@@ -114,6 +122,12 @@ public partial class App : Application
                             .Logout(async (services, dispatcher, tokenCache, tokens, ct) =>
                             {
                                 await tokenCache.ClearAsync(ct);
+
+                                if (services.GetService<IGitHubTokenProvider>() is UnoTokenCacheGitHubTokenProvider provider)
+                                {
+                                    provider.UpdateFromTokens(null);
+                                }
+
                                 return true;
                             });
                     }, name: "GitHub")
@@ -124,6 +138,29 @@ public partial class App : Application
                     //services.AddSingleton<IMyService, MyService>();
 
                     services.AddSingleton<IGitHubApi, OctokitGitHubApi>();
+
+                    services.AddSingleton<IGitHubTokenProvider, UnoTokenCacheGitHubTokenProvider>();
+                    services.AddSingleton<ISecretStore, PlatformSecretStore>();
+
+                    services.AddSingleton(sp =>
+                    {
+                        var baseUrl = context.Configuration["GitHub:ApiBaseUrl"];
+                        Uri? apiBase = null;
+                        if (!string.IsNullOrWhiteSpace(baseUrl) && Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsed))
+                        {
+                            apiBase = parsed;
+                        }
+
+                        return new OctokitClientOptions(
+                            ProductName: "JitHubV3",
+                            ProductVersion: null,
+                            ApiBaseAddress: apiBase);
+                    });
+
+                    services.AddSingleton<IOctokitClientFactory>(sp =>
+                        new OctokitClientFactory(
+                            sp.GetRequiredService<IGitHubTokenProvider>(),
+                            sp.GetRequiredService<OctokitClientOptions>()));
                 })
                 .UseNavigation(RegisterRoutes)
             );
