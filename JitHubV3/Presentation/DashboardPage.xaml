@@ -1,0 +1,24 @@
+<local:ActivatablePage x:Class="JitHubV3.Presentation.DashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:JitHubV3.Presentation"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+  <Grid utu:SafeArea.Insets="VisibleBounds">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <utu:NavigationBar Content="{Binding Title}" />
+
+    <Grid Grid.Row="1"
+          Padding="16"
+          MaxWidth="720"
+          HorizontalAlignment="Center">
+      <TextBlock Text="Dashboard (scaffolding)"
+                 TextWrapping="Wrap" />
+    </Grid>
+  </Grid>
+</local:ActivatablePage>

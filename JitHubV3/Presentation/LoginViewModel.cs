@@ -28,7 +28,7 @@ public partial class LoginViewModel : ObservableObject
         var success = await _authentication.LoginAsync(_dispatcher);
         if (success)
         {
-            await _navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.ClearBackStack);
+            await _navigator.NavigateViewModelAsync<DashboardViewModel>(this, qualifier: Qualifiers.ClearBackStack);
         }
     }
 

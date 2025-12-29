@@ -60,7 +60,7 @@ Non-goals (explicitly out of scope in this phase):
 ## Current repo baseline (what we build on)
 
 - Navigation + DI are already Uno.Extensions-based.
-- Login navigates to `MainViewModel` after success.
+- Login navigates to `DashboardViewModel` after success.
 - A global status bar exists in `Shell.xaml` and is driven by `StatusBarViewModel`.
 - Repository list + issues list POC exists and uses the service layer and cache invalidation event bus.
 

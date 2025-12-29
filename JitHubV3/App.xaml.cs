@@ -197,7 +197,7 @@ public partial class App : Application
                 var authenticated = await auth.RefreshAsync();
                 if (authenticated)
                 {
-                    await navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.Nested);
+                    await navigator.NavigateViewModelAsync<DashboardViewModel>(this, qualifier: Qualifiers.Nested);
                 }
                 else
                 {
@@ -266,6 +266,7 @@ public partial class App : Application
         views.Register(
             new ViewMap(ViewModel: typeof(ShellViewModel)),
             new ViewMap<LoginPage, LoginViewModel>(),
+            new ViewMap<DashboardPage, DashboardViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
             new DataViewMap<IssuesPage, IssuesViewModel, RepoRouteData>(),
             new DataViewMap<IssueConversationPage, IssueConversationViewModel, IssueConversationRouteData>(),
@@ -278,7 +279,8 @@ public partial class App : Application
                 Nested:
                 [
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
-                    new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("Dashboard", View: views.FindByViewModel<DashboardViewModel>(), IsDefault:true),
+                    new ("Main", View: views.FindByViewModel<MainViewModel>()),
                     new ("Issues", View: views.FindByViewModel<IssuesViewModel>()),
                     new ("IssueConversation", View: views.FindByViewModel<IssueConversationViewModel>()),
                     new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
