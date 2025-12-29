@@ -20,6 +20,9 @@
   <Thickness x:Key="DashboardComposeMargin">16</Thickness>
   <Thickness x:Key="DashboardComposePadding">16</Thickness>
 
+  <!-- Repo list metrics -->
+  <Thickness x:Key="DashboardRepoItemPadding">12,8,12,8</Thickness>
+
   <!-- Corner radius -->
   <CornerRadius x:Key="DashboardRadiusS">8</CornerRadius>
   <CornerRadius x:Key="DashboardRadiusM">12</CornerRadius>
