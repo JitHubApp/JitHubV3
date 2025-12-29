@@ -34,10 +34,13 @@
                  TextWrapping="Wrap" />
 
       <ListView Grid.Row="2"
+                x:Name="IssuesList"
                 ItemsSource="{Binding Issues}"
                 SelectionMode="None"
                 IsItemClickEnabled="True"
-                ItemClick="OnIssueClicked">
+                ItemClick="OnIssueClicked"
+                Loaded="OnIssuesListLoaded"
+                Unloaded="OnIssuesListUnloaded">
         <ListView.ItemTemplate>
           <DataTemplate>
             <StackPanel Spacing="4">

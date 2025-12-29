@@ -27,6 +27,14 @@ public partial class IssuesViewModel : ObservableObject
     private IDisposable? _subscription;
     private string? _status;
 
+    private readonly IssueQuery _query = new(IssueStateFilter.Open);
+    private readonly int _pageSize = 30;
+    private PageRequest _firstPage;
+    private PageRequest? _nextPage;
+    private readonly List<IssueSummary> _loaded = new();
+
+    private int _loadMoreGate;
+
     public IssuesViewModel(
         RepoRouteData repo,
         IGitHubIssueService issueService,
@@ -49,6 +57,8 @@ public partial class IssuesViewModel : ObservableObject
         Title = repo.DisplayName;
         Logout = new AsyncRelayCommand(DoLogout);
         GoBack = new AsyncRelayCommand(DoGoBack);
+
+        _firstPage = PageRequest.FirstPage(_pageSize);
     }
 
     public string Title { get; }
@@ -90,8 +100,11 @@ public partial class IssuesViewModel : ObservableObject
 
         Status = "Loading...";
 
-        var query = new IssueQuery(IssueStateFilter.Open);
-        var page = PageRequest.FirstPage(pageSize: 30);
+        var query = _query;
+        var page = _firstPage;
+
+        _loaded.Clear();
+        _nextPage = null;
 
         _logger.LogInformation("Issues activate: {Repo} state={State}", _repo.DisplayName, query.State);
 
@@ -121,7 +134,12 @@ public partial class IssuesViewModel : ObservableObject
                 try
                 {
                     var cached = await _issueService.GetIssuesAsync(_repo.Repo, query, page, RefreshMode.CacheOnly, ct);
-                    ApplyIssues(cached.Items);
+
+                    // Keep already-loaded additional pages, but refresh the first page.
+                    var cachedIds = cached.Items.Select(i => i.Id).ToHashSet();
+                    var merged = cached.Items.Concat(_loaded.Where(i => !cachedIds.Contains(i.Id))).ToArray();
+                    SetLoaded(merged, next: _nextPage);
+
                     Status = null;
 
                     _statusBar.Set(
@@ -141,7 +159,7 @@ public partial class IssuesViewModel : ObservableObject
         try
         {
             var first = await _issueService.GetIssuesAsync(_repo.Repo, query, page, RefreshMode.PreferCacheThenRefresh, ct);
-            ApplyIssues(first.Items);
+            SetLoaded(first.Items, next: first.Next);
             Status = Issues.Count == 0 ? "No issues found." : null;
 
             _logger.LogInformation("Issues loaded: {Count} (polling every {Interval}s)", Issues.Count, 10);
@@ -175,6 +193,63 @@ public partial class IssuesViewModel : ObservableObject
         }
     }
 
+    public Task TryLoadNextPageAsync()
+    {
+        if (_nextPage is not { } next)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (_activeCts is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (Interlocked.Exchange(ref _loadMoreGate, 1) == 1)
+        {
+            return Task.CompletedTask;
+        }
+
+        return LoadNextPageCoreAsync(next);
+    }
+
+    private async Task LoadNextPageCoreAsync(PageRequest next)
+    {
+        try
+        {
+            var ct = _activeCts?.Token ?? CancellationToken.None;
+            var result = await _issueService.GetIssuesAsync(_repo.Repo, _query, next, RefreshMode.PreferCacheThenRefresh, ct);
+
+            if (result.Items.Count > 0)
+            {
+                var existingIds = _loaded.Select(i => i.Id).ToHashSet();
+                foreach (var item in result.Items)
+                {
+                    if (existingIds.Add(item.Id))
+                    {
+                        _loaded.Add(item);
+                    }
+                }
+
+                ApplyIssues(_loaded);
+            }
+
+            _nextPage = result.Next;
+        }
+        catch (OperationCanceledException)
+        {
+            // ignore
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load next issues page for {Repo}", _repo.DisplayName);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _loadMoreGate, 0);
+        }
+    }
+
     private Task DoGoBack(CancellationToken token)
         => _navigator.NavigateBackAsync(this, cancellation: token);
 
@@ -188,6 +263,14 @@ public partial class IssuesViewModel : ObservableObject
         _subscription = null;
 
         _statusBar.Set(isBusy: false, isRefreshing: false);
+    }
+
+    private void SetLoaded(IReadOnlyList<IssueSummary> items, PageRequest? next)
+    {
+        _loaded.Clear();
+        _loaded.AddRange(items);
+        _nextPage = next;
+        ApplyIssues(_loaded);
     }
 
     private void ApplyIssues(IReadOnlyList<IssueSummary> items)

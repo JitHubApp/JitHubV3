@@ -73,6 +73,43 @@ public sealed class CachedServicesTests
     }
 
     [Test]
+    public async Task IssueService_cache_key_varies_by_page_number()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var now = DateTimeOffset.UtcNow;
+        var dataSource = new FakeGitHubDataSource
+        {
+            IssuesFactory = (_, _, page, _) =>
+            {
+                var n = page.PageNumber ?? 0;
+                return Task.FromResult<IReadOnlyList<OctokitIssueData>>(
+                [
+                    new OctokitIssueData(Id: n, Number: n, Title: $"page {n}", State: "open", AuthorLogin: "me", CommentCount: 0, UpdatedAt: now),
+                ]);
+            }
+        };
+
+        var sut = new CachedGitHubIssueService(cache, dataSource);
+        var repo = new RepoKey("octo", "hello");
+        var query = new IssueQuery(IssueStateFilter.Open);
+
+        var p1 = PageRequest.FromPageNumber(1, pageSize: 30);
+        var p2 = PageRequest.FromPageNumber(2, pageSize: 30);
+
+        var r1 = await sut.GetIssuesAsync(repo, query, p1, RefreshMode.ForceRefresh, CancellationToken.None);
+        var r2 = await sut.GetIssuesAsync(repo, query, p2, RefreshMode.ForceRefresh, CancellationToken.None);
+
+        dataSource.GetIssuesCallCount.Should().Be(2);
+
+        var cached1 = await sut.GetIssuesAsync(repo, query, p1, RefreshMode.CacheOnly, CancellationToken.None);
+        cached1.Items.Should().ContainSingle();
+
+        cached1.Items[0].Id.Should().Be(r1.Items[0].Id);
+        cached1.Items[0].Id.Should().NotBe(r2.Items[0].Id);
+    }
+
+    [Test]
     public void IssueService_cursor_paging_is_not_supported()
     {
         var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
