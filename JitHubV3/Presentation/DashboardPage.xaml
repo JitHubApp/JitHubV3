@@ -5,20 +5,71 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-  <Grid utu:SafeArea.Insets="VisibleBounds">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
-    </Grid.RowDefinitions>
+  <ContentControl x:Name="StateHost">
+    <VisualStateManager.VisualStateGroups>
+      <VisualStateGroup x:Name="DashboardWidthStates">
+        <VisualState x:Name="Narrow">
+          <VisualState.Setters>
+            <Setter Target="NavView.PaneDisplayMode" Value="LeftMinimal" />
+            <Setter Target="NavView.IsPaneOpen" Value="False" />
+          </VisualState.Setters>
+        </VisualState>
 
-    <utu:NavigationBar Content="{Binding Title}" />
+        <VisualState x:Name="Wide">
+          <VisualState.Setters>
+            <Setter Target="NavView.PaneDisplayMode" Value="Left" />
+            <Setter Target="NavView.IsPaneOpen" Value="True" />
+          </VisualState.Setters>
+        </VisualState>
+      </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
 
-    <Grid Grid.Row="1"
-          Padding="16"
-          MaxWidth="720"
-          HorizontalAlignment="Center">
-      <TextBlock Text="Dashboard (scaffolding)"
-                 TextWrapping="Wrap" />
+    <Grid utu:SafeArea.Insets="VisibleBounds">
+      <NavigationView x:Name="NavView"
+                      IsBackButtonVisible="Collapsed"
+                      IsSettingsVisible="False"
+                      PaneDisplayMode="LeftMinimal"
+                      IsPaneOpen="False">
+
+        <NavigationView.PaneHeader>
+          <TextBlock Text="JitHub"
+                     Margin="{StaticResource DashboardEdgePadding}" />
+        </NavigationView.PaneHeader>
+
+        <NavigationView.MenuItems>
+          <NavigationViewItemHeader Content="Repositories" />
+          <NavigationViewItem Content="Repo list (Phase 3)" IsEnabled="False" />
+        </NavigationView.MenuItems>
+
+        <NavigationView.Content>
+          <Grid Padding="{StaticResource DashboardContentPadding}">
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="{StaticResource DashboardRadiusM}"
+                    Padding="{StaticResource DashboardEdgePadding}">
+              <TextBlock Text="Center content placeholder"
+                         TextWrapping="Wrap" />
+            </Border>
+          </Grid>
+        </NavigationView.Content>
+      </NavigationView>
+
+      <!-- Compose box placeholder (Phase 1.3 will implement the actual ChatGPT-like composer UI). -->
+      <Border x:Name="ComposePlaceholder"
+              VerticalAlignment="Bottom"
+              HorizontalAlignment="Center"
+              Margin="{StaticResource DashboardComposeMargin}"
+              MaxWidth="720"
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+              CornerRadius="{StaticResource DashboardRadiusL}"
+              Padding="{StaticResource DashboardComposePadding}"
+              Translation="0,0,16">
+        <Border.Shadow>
+          <ThemeShadow />
+        </Border.Shadow>
+
+        <TextBlock Text="Compose (Phase 1.3)"
+                   TextWrapping="Wrap" />
+      </Border>
     </Grid>
-  </Grid>
+  </ContentControl>
 </local:ActivatablePage>
