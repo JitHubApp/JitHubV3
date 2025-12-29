@@ -12,7 +12,18 @@ public sealed partial class StatusBarViewModel : ObservableObject
 
     public void AttachToCurrentThread()
     {
-        _uiContext ??= SynchronizationContext.Current;
+        var current = SynchronizationContext.Current;
+        if (current is null)
+        {
+            return;
+        }
+
+        // Always allow the UI layer (Shell) to re-attach on the real UI thread.
+        // This prevents a first call from a background thread from “poisoning” the context.
+        if (_uiContext is null || !ReferenceEquals(_uiContext, current))
+        {
+            _uiContext = current;
+        }
     }
 
     public string? Message
