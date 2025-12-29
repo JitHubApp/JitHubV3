@@ -194,7 +194,16 @@ public sealed class CacheRuntime
             inflight.RefCount++;
         }
 
-        var registration = callerToken.Register(() => Release(key));
+        var released = 0;
+        void ReleaseOnce()
+        {
+            if (Interlocked.Exchange(ref released, 1) == 0)
+            {
+                Release(key);
+            }
+        }
+
+        var registration = callerToken.Register(ReleaseOnce);
 
         if (!awaitResult)
         {
@@ -202,7 +211,7 @@ public sealed class CacheRuntime
                 _ =>
                 {
                     registration.Dispose();
-                    Release(key);
+                    ReleaseOnce();
                 },
                 CancellationToken.None,
                 TaskContinuationOptions.ExecuteSynchronously,
@@ -223,7 +232,7 @@ public sealed class CacheRuntime
             finally
             {
                 registration.Dispose();
-                Release(key);
+                ReleaseOnce();
             }
         }
     }

@@ -24,7 +24,14 @@ public sealed class CacheEventBus : ICacheEventBus
     {
         foreach (var subscriber in _subscribers.Values)
         {
-            subscriber(cacheEvent);
+            try
+            {
+                subscriber(cacheEvent);
+            }
+            catch
+            {
+                // Intentionally isolate subscribers. Cache publication should never fail because a consumer misbehaves.
+            }
         }
     }
 

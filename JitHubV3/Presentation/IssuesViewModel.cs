@@ -275,81 +275,22 @@ public partial class IssuesViewModel : ObservableObject
 
     private void ApplyIssues(IReadOnlyList<IssueSummary> items)
     {
-        SyncById(
+        ObservableCollectionSync.SyncById(
             Issues,
             items,
             getId: x => x.Id,
             shouldReplace: (current, next) => current.UpdatedAt != next.UpdatedAt || current != next);
     }
 
-    private static void SyncById<T>(
-        ObservableCollection<T> target,
-        IReadOnlyList<T> source,
-        Func<T, long> getId,
-        Func<T, T, bool> shouldReplace)
-    {
-        if (source.Count == 0)
-        {
-            if (target.Count != 0)
-            {
-                target.Clear();
-            }
-
-            return;
-        }
-
-        // Build desired order without a full reset (avoids ListView flicker).
-        for (var desiredIndex = 0; desiredIndex < source.Count; desiredIndex++)
-        {
-            var desiredItem = source[desiredIndex];
-            var desiredId = getId(desiredItem);
-
-            var currentIndex = -1;
-            for (var i = desiredIndex; i < target.Count; i++)
-            {
-                if (getId(target[i]) == desiredId)
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            if (currentIndex < 0)
-            {
-                target.Insert(desiredIndex, desiredItem);
-                continue;
-            }
-
-            if (currentIndex != desiredIndex)
-            {
-                target.Move(currentIndex, desiredIndex);
-            }
-
-            if (shouldReplace(target[desiredIndex], desiredItem))
-            {
-                target[desiredIndex] = desiredItem;
-            }
-        }
-
-        // Remove any trailing items not present in the source.
-        while (target.Count > source.Count)
-        {
-            target.RemoveAt(target.Count - 1);
-        }
-    }
-
     private static bool IsForCurrentRequest(CacheKey key, RepoKey repo, IssueQuery query, PageRequest page)
     {
-        static string? Get(CacheKey k, string name)
-            => k.Parameters.FirstOrDefault(p => string.Equals(p.Key, name, StringComparison.Ordinal)).Value;
-
-        var owner = Get(key, "owner");
-        var repoName = Get(key, "repo");
-        var state = Get(key, "state");
-        var search = Get(key, "search");
-        var pageSize = Get(key, "pageSize");
-        var pageNumber = Get(key, "pageNumber");
-        var cursor = Get(key, "cursor");
+        var owner = key.GetParameterValue("owner");
+        var repoName = key.GetParameterValue("repo");
+        var state = key.GetParameterValue("state");
+        var search = key.GetParameterValueOrEmpty("search");
+        var pageSize = key.GetParameterValue("pageSize");
+        var pageNumber = key.GetParameterValueOrEmpty("pageNumber");
+        var cursor = key.GetParameterValueOrEmpty("cursor");
 
         var expectedSearch = string.IsNullOrWhiteSpace(query.SearchText) ? string.Empty : query.SearchText.Trim();
         var expectedPageNumber = page.PageNumber?.ToString() ?? string.Empty;

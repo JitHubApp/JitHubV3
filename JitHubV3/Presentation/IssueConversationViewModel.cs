@@ -133,7 +133,7 @@ public partial class IssueConversationViewModel : ObservableObject, IActivatable
                     if (isComments)
                     {
                         var cachedComments = await _conversation.GetCommentsAsync(_data.Repo, _data.IssueNumber, RefreshMode.CacheOnly, ct);
-                        SyncById(
+                        ObservableCollectionSync.SyncById(
                             Comments,
                             cachedComments,
                             getId: x => x.Id,
@@ -182,7 +182,7 @@ public partial class IssueConversationViewModel : ObservableObject, IActivatable
             await _dispatcher.ExecuteAsync(_ =>
             {
                 Issue ??= cachedIssue;
-                SyncById(
+                ObservableCollectionSync.SyncById(
                     Comments,
                     cachedComments,
                     getId: x => x.Id,
@@ -212,7 +212,7 @@ public partial class IssueConversationViewModel : ObservableObject, IActivatable
             await _dispatcher.ExecuteAsync(_ =>
             {
                 Issue = issue;
-                SyncById(
+                ObservableCollectionSync.SyncById(
                     Comments,
                     comments,
                     getId: x => x.Id,
@@ -268,12 +268,9 @@ public partial class IssueConversationViewModel : ObservableObject, IActivatable
 
     private static bool IsForCurrentIssue(CacheKey key, RepoKey repo, int issueNumber)
     {
-        static string? Get(CacheKey k, string name)
-            => k.Parameters.FirstOrDefault(p => string.Equals(p.Key, name, StringComparison.Ordinal)).Value;
-
-        var owner = Get(key, "owner");
-        var repoName = Get(key, "repo");
-        var num = Get(key, "issueNumber");
+        var owner = key.GetParameterValue("owner");
+        var repoName = key.GetParameterValue("repo");
+        var num = key.GetParameterValue("issueNumber");
 
         return string.Equals(owner, repo.Owner, StringComparison.Ordinal)
             && string.Equals(repoName, repo.Name, StringComparison.Ordinal)
@@ -282,58 +279,4 @@ public partial class IssueConversationViewModel : ObservableObject, IActivatable
 
     private Task DoGoBack(CancellationToken ct)
         => _navigator.NavigateBackAsync(this, cancellation: ct);
-
-    private static void SyncById<T>(
-        ObservableCollection<T> target,
-        IReadOnlyList<T> source,
-        Func<T, long> getId,
-        Func<T, T, bool> shouldReplace)
-    {
-        if (source.Count == 0)
-        {
-            if (target.Count != 0)
-            {
-                target.Clear();
-            }
-
-            return;
-        }
-
-        for (var desiredIndex = 0; desiredIndex < source.Count; desiredIndex++)
-        {
-            var desiredItem = source[desiredIndex];
-            var desiredId = getId(desiredItem);
-
-            var currentIndex = -1;
-            for (var i = desiredIndex; i < target.Count; i++)
-            {
-                if (getId(target[i]) == desiredId)
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            if (currentIndex < 0)
-            {
-                target.Insert(desiredIndex, desiredItem);
-                continue;
-            }
-
-            if (currentIndex != desiredIndex)
-            {
-                target.Move(currentIndex, desiredIndex);
-            }
-
-            if (shouldReplace(target[desiredIndex], desiredItem))
-            {
-                target[desiredIndex] = desiredItem;
-            }
-        }
-
-        while (target.Count > source.Count)
-        {
-            target.RemoveAt(target.Count - 1);
-        }
-    }
 }

@@ -238,54 +238,7 @@ public partial class MainViewModel : ObservableObject
         IReadOnlyList<T> source,
         Func<T, long> getId,
         Func<T, T, bool> shouldReplace)
-    {
-        if (source.Count == 0)
-        {
-            if (target.Count != 0)
-            {
-                target.Clear();
-            }
-
-            return;
-        }
-
-        for (var desiredIndex = 0; desiredIndex < source.Count; desiredIndex++)
-        {
-            var desiredItem = source[desiredIndex];
-            var desiredId = getId(desiredItem);
-
-            var currentIndex = -1;
-            for (var i = desiredIndex; i < target.Count; i++)
-            {
-                if (getId(target[i]) == desiredId)
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            if (currentIndex < 0)
-            {
-                target.Insert(desiredIndex, desiredItem);
-                continue;
-            }
-
-            if (currentIndex != desiredIndex)
-            {
-                target.Move(currentIndex, desiredIndex);
-            }
-
-            if (shouldReplace(target[desiredIndex], desiredItem))
-            {
-                target[desiredIndex] = desiredItem;
-            }
-        }
-
-        while (target.Count > source.Count)
-        {
-            target.RemoveAt(target.Count - 1);
-        }
-    }
+        => ObservableCollectionSync.SyncById(target, source, getId, shouldReplace);
 
     public Task OpenRepoAsync(RepositorySummary repo)
     {
