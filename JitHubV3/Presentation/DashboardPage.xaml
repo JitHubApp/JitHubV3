@@ -5,7 +5,11 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-  <ContentControl x:Name="StateHost">
+  <ContentControl x:Name="StateHost"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Stretch">
     <VisualStateManager.VisualStateGroups>
       <VisualStateGroup x:Name="DashboardWidthStates">
         <VisualState x:Name="Narrow">
@@ -24,7 +28,9 @@
       </VisualStateGroup>
     </VisualStateManager.VisualStateGroups>
 
-    <Grid utu:SafeArea.Insets="VisibleBounds">
+        <Grid utu:SafeArea.Insets="VisibleBounds"
+          HorizontalAlignment="Stretch"
+          VerticalAlignment="Stretch">
       <NavigationView x:Name="NavView"
                       IsBackButtonVisible="Collapsed"
                       IsSettingsVisible="False"
@@ -53,22 +59,45 @@
         </NavigationView.Content>
       </NavigationView>
 
-      <!-- Compose box placeholder (Phase 1.3 will implement the actual ChatGPT-like composer UI). -->
-      <Border x:Name="ComposePlaceholder"
+      <!-- Compose box (ChatGPT-like; no-op for now). -->
+      <Border x:Name="ComposeBox"
               VerticalAlignment="Bottom"
-              HorizontalAlignment="Center"
+              HorizontalAlignment="Stretch"
               Margin="{StaticResource DashboardComposeMargin}"
-              MaxWidth="720"
+              MaxWidth="{StaticResource DashboardComposeMaxWidth}"
               Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+              BorderThickness="1"
               CornerRadius="{StaticResource DashboardRadiusL}"
-              Padding="{StaticResource DashboardComposePadding}"
-              Translation="0,0,16">
+              Padding="{StaticResource DashboardComposePadding}">
         <Border.Shadow>
           <ThemeShadow />
         </Border.Shadow>
 
-        <TextBlock Text="Compose (Phase 1.3)"
-                   TextWrapping="Wrap" />
+        <Grid ColumnSpacing="{StaticResource DashboardSpacingS}">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <TextBox x:Name="ComposeInput"
+                   Grid.Column="0"
+                   AcceptsReturn="True"
+                   TextWrapping="Wrap"
+                   PlaceholderText="Ask anything…"
+                   HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch"
+                   AutomationProperties.Name="Dashboard composer" />
+
+          <Button Grid.Column="1"
+                  IsEnabled="False"
+                  VerticalAlignment="Bottom"
+                  MinWidth="44"
+                  MinHeight="44"
+                  AutomationProperties.Name="Send (disabled)">
+            <SymbolIcon Symbol="Send" />
+          </Button>
+        </Grid>
       </Border>
     </Grid>
   </ContentControl>
