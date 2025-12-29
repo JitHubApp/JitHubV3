@@ -7,6 +7,7 @@ using JitHub.GitHub.Abstractions.Queries;
 using JitHub.GitHub.Abstractions.Refresh;
 using JitHub.GitHub.Octokit.Mapping;
 using JitHub.GitHub.Octokit.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
 namespace JitHub.GitHub.Tests;
@@ -26,7 +27,7 @@ public sealed class CachedServicesTests
             ]
         };
 
-        var sut = new CachedGitHubRepositoryService(cache, dataSource);
+        var sut = new CachedGitHubRepositoryService(cache, dataSource, NullLogger<CachedGitHubRepositoryService>.Instance);
 
         var first = await sut.GetMyRepositoriesAsync(RefreshMode.ForceRefresh, CancellationToken.None);
         first.Should().HaveCount(1);
@@ -102,7 +103,7 @@ public sealed class CachedServicesTests
         };
 
         var issueService = new CachedGitHubIssueService(cache, dataSource);
-        var pollingService = new CachedGitHubIssuePollingService(cache, dataSource);
+        var pollingService = new CachedGitHubIssuePollingService(cache, dataSource, NullLogger<CachedGitHubIssuePollingService>.Instance);
 
         var repo = new RepoKey("octo", "hello");
         var query = new IssueQuery(IssueStateFilter.Open);
@@ -142,6 +143,10 @@ public sealed class CachedServicesTests
 
         public Func<RepoKey, IssueQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueData>>>? IssuesFactory { get; init; }
 
+        public Func<RepoKey, int, CancellationToken, Task<OctokitIssueDetailData?>>? IssueFactory { get; init; }
+
+        public Func<RepoKey, int, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueCommentData>>>? IssueCommentsFactory { get; init; }
+
         public int GetMyRepositoriesCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
 
@@ -161,6 +166,26 @@ public sealed class CachedServicesTests
             }
 
             return Task.FromResult<IReadOnlyList<OctokitIssueData>>(Array.Empty<OctokitIssueData>());
+        }
+
+        public Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)
+        {
+            if (IssueFactory is not null)
+            {
+                return IssueFactory(repo, issueNumber, ct);
+            }
+
+            return Task.FromResult<OctokitIssueDetailData?>(null);
+        }
+
+        public Task<IReadOnlyList<OctokitIssueCommentData>> GetIssueCommentsAsync(RepoKey repo, int issueNumber, PageRequest page, CancellationToken ct)
+        {
+            if (IssueCommentsFactory is not null)
+            {
+                return IssueCommentsFactory(repo, issueNumber, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitIssueCommentData>>(Array.Empty<OctokitIssueCommentData>());
         }
     }
 }

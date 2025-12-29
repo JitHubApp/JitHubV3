@@ -8,6 +8,14 @@ namespace JitHubV3.Presentation;
 
 public sealed partial class MarkdownTestViewModel : ObservableObject
 {
+    private readonly INavigator _navigator;
+
+    public MarkdownTestViewModel(INavigator navigator)
+    {
+        _navigator = navigator;
+        GoBack = new AsyncRelayCommand(DoGoBack);
+    }
+
     private string _title = "Markdown Test";
     private string _markdown = DefaultMarkdownLtr;
     private bool _forceRtl;
@@ -80,6 +88,11 @@ public sealed partial class MarkdownTestViewModel : ObservableObject
     ];
 
     public MarkdownTheme PreviewTheme => MarkdownThemeEngine.Resolve(ThemeVariant);
+
+    public ICommand GoBack { get; }
+
+    private Task DoGoBack(CancellationToken ct)
+        => _navigator.NavigateBackAsync(this, cancellation: ct);
 
     private void OnForceRtlChanged(bool value)
     {

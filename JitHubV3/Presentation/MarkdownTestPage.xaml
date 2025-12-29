@@ -11,11 +11,16 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-  <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12" Loaded="OnLoaded">
+  <Grid RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="12" Loaded="OnLoaded">
 
     <utu:NavigationBar Content="{Binding Title}" />
 
-    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Button Grid.Row="1"
+            Content="Back"
+            Command="{Binding GoBack}"
+            HorizontalAlignment="Left" />
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="12" MaxWidth="960">
         <ComboBox
           Header="Theme"

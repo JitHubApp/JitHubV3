@@ -6,6 +6,7 @@ using JitHub.GitHub.Abstractions.Polling;
 using JitHub.GitHub.Abstractions.Queries;
 using JitHub.GitHub.Abstractions.Refresh;
 using JitHub.GitHub.Abstractions.Services;
+using Microsoft.Extensions.Logging;
 
 namespace JitHubV3.Presentation;
 
@@ -17,6 +18,8 @@ public partial class IssuesViewModel : ObservableObject
     private readonly ICacheEventBus _events;
     private readonly IDispatcher _dispatcher;
     private readonly INavigator _navigator;
+    private readonly StatusBarViewModel _statusBar;
+    private readonly ILogger<IssuesViewModel> _logger;
 
     private readonly RepoRouteData _repo;
 
@@ -29,6 +32,8 @@ public partial class IssuesViewModel : ObservableObject
         IGitHubIssueService issueService,
         IGitHubIssuePollingService polling,
         ICacheEventBus events,
+        StatusBarViewModel statusBar,
+        ILogger<IssuesViewModel> logger,
         IDispatcher dispatcher,
         INavigator navigator)
     {
@@ -36,11 +41,14 @@ public partial class IssuesViewModel : ObservableObject
         _issueService = issueService;
         _polling = polling;
         _events = events;
+        _statusBar = statusBar;
+        _logger = logger;
         _dispatcher = dispatcher;
         _navigator = navigator;
 
         Title = repo.DisplayName;
         Logout = new AsyncRelayCommand(DoLogout);
+        GoBack = new AsyncRelayCommand(DoGoBack);
     }
 
     public string Title { get; }
@@ -55,6 +63,15 @@ public partial class IssuesViewModel : ObservableObject
 
     public ICommand Logout { get; }
 
+    public ICommand GoBack { get; }
+
+    public Task OpenIssueAsync(IssueSummary issue)
+    {
+        var display = $"{_repo.DisplayName} #{issue.Number}";
+        var data = new IssueConversationRouteData(_repo.Repo, issue.Number, display);
+        return _navigator.NavigateViewModelAsync<IssueConversationViewModel>(this, data: data);
+    }
+
     public async Task ActivateAsync()
     {
         Deactivate();
@@ -62,10 +79,21 @@ public partial class IssuesViewModel : ObservableObject
         _activeCts = new CancellationTokenSource();
         var ct = _activeCts.Token;
 
+        var sawCacheUpdate = false;
+
+        _statusBar.Set(
+            message: $"Loading issues for {_repo.DisplayName}…",
+            isBusy: true,
+            isRefreshing: false,
+            freshness: DataFreshnessState.Unknown,
+            lastUpdatedAt: null);
+
         Status = "Loading...";
 
         var query = new IssueQuery(IssueStateFilter.Open);
         var page = PageRequest.FirstPage(pageSize: 30);
+
+        _logger.LogInformation("Issues activate: {Repo} state={State}", _repo.DisplayName, query.State);
 
         _subscription = _events.Subscribe(e =>
         {
@@ -84,6 +112,9 @@ public partial class IssuesViewModel : ObservableObject
                 return;
             }
 
+            _logger.LogDebug("Issues cache updated; refreshing UI: {Repo}", _repo.DisplayName);
+            sawCacheUpdate = true;
+
             // Re-read from cache and update UI without flicker.
             _ = _dispatcher.ExecuteAsync(async _ =>
             {
@@ -92,6 +123,13 @@ public partial class IssuesViewModel : ObservableObject
                     var cached = await _issueService.GetIssuesAsync(_repo.Repo, query, page, RefreshMode.CacheOnly, ct);
                     ApplyIssues(cached.Items);
                     Status = null;
+
+                    _statusBar.Set(
+                        message: "Issues updated",
+                        isBusy: false,
+                        isRefreshing: false,
+                        freshness: DataFreshnessState.Fresh,
+                        lastUpdatedAt: DateTimeOffset.Now);
                 }
                 catch
                 {
@@ -106,6 +144,15 @@ public partial class IssuesViewModel : ObservableObject
             ApplyIssues(first.Items);
             Status = Issues.Count == 0 ? "No issues found." : null;
 
+            _logger.LogInformation("Issues loaded: {Count} (polling every {Interval}s)", Issues.Count, 10);
+
+            _statusBar.Set(
+                message: Issues.Count == 0 ? "No issues" : $"{Issues.Count} issues",
+                isBusy: false,
+                isRefreshing: false,
+                freshness: sawCacheUpdate ? DataFreshnessState.Fresh : DataFreshnessState.Cached,
+                lastUpdatedAt: sawCacheUpdate ? DateTimeOffset.Now : null);
+
             _ = _polling.StartIssuesPollingAsync(
                 _repo.Repo,
                 query,
@@ -113,11 +160,23 @@ public partial class IssuesViewModel : ObservableObject
                 new PollingRequest(TimeSpan.FromSeconds(10)),
                 ct);
         }
+        catch (OperationCanceledException)
+        {
+            _statusBar.Set(isBusy: false, isRefreshing: false);
+        }
         catch (Exception ex)
         {
             Status = $"Failed to load issues: {ex.Message}";
+            _statusBar.Set(
+                message: "Failed to load issues",
+                isBusy: false,
+                isRefreshing: false,
+                freshness: DataFreshnessState.Unknown);
         }
     }
+
+    private Task DoGoBack(CancellationToken token)
+        => _navigator.NavigateBackAsync(this, cancellation: token);
 
     public void Deactivate()
     {
@@ -127,33 +186,72 @@ public partial class IssuesViewModel : ObservableObject
 
         _subscription?.Dispose();
         _subscription = null;
+
+        _statusBar.Set(isBusy: false, isRefreshing: false);
     }
 
     private void ApplyIssues(IReadOnlyList<IssueSummary> items)
     {
-        // Simple in-place update to avoid visible flicker.
-        if (Issues.Count == items.Count)
+        SyncById(
+            Issues,
+            items,
+            getId: x => x.Id,
+            shouldReplace: (current, next) => current.UpdatedAt != next.UpdatedAt || current != next);
+    }
+
+    private static void SyncById<T>(
+        ObservableCollection<T> target,
+        IReadOnlyList<T> source,
+        Func<T, long> getId,
+        Func<T, T, bool> shouldReplace)
+    {
+        if (source.Count == 0)
         {
-            var same = true;
-            for (var i = 0; i < items.Count; i++)
+            if (target.Count != 0)
             {
-                if (Issues[i].Id != items[i].Id || Issues[i].UpdatedAt != items[i].UpdatedAt)
+                target.Clear();
+            }
+
+            return;
+        }
+
+        // Build desired order without a full reset (avoids ListView flicker).
+        for (var desiredIndex = 0; desiredIndex < source.Count; desiredIndex++)
+        {
+            var desiredItem = source[desiredIndex];
+            var desiredId = getId(desiredItem);
+
+            var currentIndex = -1;
+            for (var i = desiredIndex; i < target.Count; i++)
+            {
+                if (getId(target[i]) == desiredId)
                 {
-                    same = false;
+                    currentIndex = i;
                     break;
                 }
             }
 
-            if (same)
+            if (currentIndex < 0)
             {
-                return;
+                target.Insert(desiredIndex, desiredItem);
+                continue;
+            }
+
+            if (currentIndex != desiredIndex)
+            {
+                target.Move(currentIndex, desiredIndex);
+            }
+
+            if (shouldReplace(target[desiredIndex], desiredItem))
+            {
+                target[desiredIndex] = desiredItem;
             }
         }
 
-        Issues.Clear();
-        foreach (var item in items)
+        // Remove any trailing items not present in the source.
+        while (target.Count > source.Count)
         {
-            Issues.Add(item);
+            target.RemoveAt(target.Count - 1);
         }
     }
 

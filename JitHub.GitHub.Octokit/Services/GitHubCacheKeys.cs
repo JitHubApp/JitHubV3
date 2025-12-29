@@ -29,4 +29,28 @@ internal static class GitHubCacheKeys
             ("pageNumber", pageNumber),
             ("cursor", cursor));
     }
+
+    public static CacheKey Issue(RepoKey repo, int issueNumber)
+        => CacheKey.Create(
+            "github.issue.get",
+            userScope: null,
+            ("owner", repo.Owner),
+            ("repo", repo.Name),
+            ("issueNumber", issueNumber.ToString()));
+
+    public static CacheKey IssueComments(RepoKey repo, int issueNumber, PageRequest page)
+    {
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.issue.comments.list",
+            userScope: null,
+            ("owner", repo.Owner),
+            ("repo", repo.Name),
+            ("issueNumber", issueNumber.ToString()),
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
 }

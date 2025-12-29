@@ -787,12 +787,9 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         }
 
         var image = (uri is not null && context.ImageResolver is not null) ? context.ImageResolver(uri) : null;
-        if (image is not null)
-        {
-            context.Canvas.DrawImage(image, bounds);
-            return;
-        }
 
+        // Always paint the placeholder surface first so the area reads as an image block even
+        // before the image loads (or when it fails to load).
         using var paint = new SKPaint
         {
             IsAntialias = true,
@@ -808,6 +805,27 @@ public sealed class SkiaMarkdownRenderer : IMarkdownRenderer
         {
             context.Canvas.DrawRoundRect(bounds, radius, radius, paint);
         }
+
+        if (image is null)
+        {
+            return;
+        }
+
+        // User preference: render images at their intrinsic size (no fit-to-width scaling).
+        // If they overflow the placeholder surface, they will be clipped.
+        context.Canvas.Save();
+        if (radius <= 0)
+        {
+            context.Canvas.ClipRect(bounds, antialias: true);
+        }
+        else
+        {
+            var rr = new SKRoundRect(bounds, radius, radius);
+            context.Canvas.ClipRoundRect(rr, antialias: true);
+        }
+
+        context.Canvas.DrawImage(image, bounds.Left, bounds.Top);
+        context.Canvas.Restore();
     }
 
     private static ColorRgba Multiply(ColorRgba c, float factor)

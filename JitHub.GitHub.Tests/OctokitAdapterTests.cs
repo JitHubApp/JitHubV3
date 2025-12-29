@@ -3,6 +3,7 @@ using JitHub.GitHub.Abstractions.Models;
 using JitHub.GitHub.Abstractions.Security;
 using JitHub.GitHub.Octokit;
 using JitHub.GitHub.Octokit.Mapping;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
 namespace JitHub.GitHub.Tests;
@@ -22,7 +23,7 @@ public sealed class OctokitAdapterTests
             ApiBaseAddress: new Uri("https://api.github.com/"),
             OnClientCreated: e => created.Add(e));
 
-        var factory = new OctokitClientFactory(tokenProvider, options);
+        var factory = new OctokitClientFactory(tokenProvider, options, NullLogger<OctokitClientFactory>.Instance);
         var client = await factory.CreateAsync(CancellationToken.None);
 
         client.Credentials.Should().NotBeNull();

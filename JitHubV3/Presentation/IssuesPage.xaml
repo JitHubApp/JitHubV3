@@ -5,45 +5,60 @@
       xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-  <ScrollViewer IsTabStop="True">
-    <Grid utu:SafeArea.Insets="VisibleBounds">
+  <Grid utu:SafeArea.Insets="VisibleBounds">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <utu:NavigationBar Content="{Binding Title}" />
+
+    <Grid Grid.Row="1"
+          Padding="16"
+          RowSpacing="12"
+          MaxWidth="720"
+          HorizontalAlignment="Center">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
-        <RowDefinition />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <utu:NavigationBar Content="{Binding Title}" />
+      <Button Content="Back"
+              Command="{Binding GoBack}"
+              HorizontalAlignment="Left" />
 
-      <StackPanel Grid.Row="1"
-                  Padding="16"
-                  Spacing="12"
-                  MaxWidth="720">
-        <TextBlock Text="{Binding Status}"
-                   TextWrapping="Wrap" />
+      <TextBlock Grid.Row="1"
+                 Text="{Binding Status}"
+                 TextWrapping="Wrap" />
 
-        <ListView ItemsSource="{Binding Issues}"
-                  SelectionMode="None">
-          <ListView.ItemTemplate>
-            <DataTemplate>
-              <StackPanel Spacing="4">
-                <TextBlock TextWrapping="Wrap">
-                  <Run Text="#" />
-                  <Run Text="{Binding Number}" />
-                  <Run Text=" · " />
-                  <Run Text="{Binding Title}" />
-                </TextBlock>
-                <TextBlock TextWrapping="Wrap">
-                  <Run Text="By " />
-                  <Run Text="{Binding AuthorLogin}" />
-                </TextBlock>
-              </StackPanel>
-            </DataTemplate>
-          </ListView.ItemTemplate>
-        </ListView>
+      <ListView Grid.Row="2"
+                ItemsSource="{Binding Issues}"
+                SelectionMode="None"
+                IsItemClickEnabled="True"
+                ItemClick="OnIssueClicked">
+        <ListView.ItemTemplate>
+          <DataTemplate>
+            <StackPanel Spacing="4">
+              <TextBlock TextWrapping="Wrap">
+                <Run Text="#" />
+                <Run Text="{Binding Number}" />
+                <Run Text=" · " />
+                <Run Text="{Binding Title}" />
+              </TextBlock>
+              <TextBlock TextWrapping="Wrap">
+                <Run Text="By " />
+                <Run Text="{Binding AuthorLogin}" />
+              </TextBlock>
+            </StackPanel>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
 
-        <Button Content="Logout"
-                Command="{Binding Logout}" />
-      </StackPanel>
+      <Button Grid.Row="3"
+              Content="Logout"
+              Command="{Binding Logout}" />
     </Grid>
-  </ScrollViewer>
+  </Grid>
 </local:ActivatablePage>

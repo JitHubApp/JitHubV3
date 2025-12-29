@@ -38,6 +38,40 @@ public static class OctokitMappings
             UpdatedAt: issue.UpdatedAt);
     }
 
+    public static IssueDetail ToIssueDetail(OctokitIssueDetailData issue)
+    {
+        if (issue is null)
+        {
+            throw new ArgumentNullException(nameof(issue));
+        }
+
+        return new IssueDetail(
+            Id: issue.Id,
+            Number: issue.Number,
+            Title: issue.Title ?? string.Empty,
+            State: ParseIssueState(issue.State),
+            AuthorLogin: issue.AuthorLogin,
+            Body: issue.Body,
+            CommentCount: issue.CommentCount,
+            CreatedAt: issue.CreatedAt,
+            UpdatedAt: issue.UpdatedAt);
+    }
+
+    public static IssueComment ToIssueComment(OctokitIssueCommentData comment)
+    {
+        if (comment is null)
+        {
+            throw new ArgumentNullException(nameof(comment));
+        }
+
+        return new IssueComment(
+            Id: comment.Id,
+            AuthorLogin: comment.AuthorLogin,
+            Body: comment.Body,
+            CreatedAt: comment.CreatedAt,
+            UpdatedAt: comment.UpdatedAt);
+    }
+
     private static IssueState ParseIssueState(string? state)
     {
         if (string.Equals(state, "closed", StringComparison.OrdinalIgnoreCase))

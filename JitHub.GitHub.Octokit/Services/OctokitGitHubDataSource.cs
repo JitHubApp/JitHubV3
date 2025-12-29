@@ -103,6 +103,52 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             .ToArray();
     }
 
+    public async Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)
+    {
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var issue = await client.Issue.Get(repo.Owner, repo.Name, issueNumber).ConfigureAwait(false);
+
+        return new OctokitIssueDetailData(
+            Id: issue.Id,
+            Number: issue.Number,
+            Title: issue.Title,
+            State: issue.State.ToString(),
+            AuthorLogin: issue.User?.Login,
+            Body: issue.Body,
+            CommentCount: issue.Comments,
+            CreatedAt: issue.CreatedAt,
+            UpdatedAt: issue.UpdatedAt);
+    }
+
+    public async Task<IReadOnlyList<OctokitIssueCommentData>> GetIssueCommentsAsync(RepoKey repo, int issueNumber, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var apiOptions = new ApiOptions
+        {
+            PageCount = 1,
+            PageSize = page.PageSize,
+            StartPage = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        var comments = await client.Issue.Comment.GetAllForIssue(repo.Owner, repo.Name, issueNumber, apiOptions).ConfigureAwait(false);
+
+        return comments
+            .Select(c => new OctokitIssueCommentData(
+                Id: c.Id,
+                AuthorLogin: c.User?.Login,
+                Body: c.Body,
+                CreatedAt: c.CreatedAt,
+                UpdatedAt: c.UpdatedAt))
+            .ToArray();
+    }
+
     private static string BuildSearchQuery(RepoKey repo, IssueQuery query)
     {
         var terms = new List<string>

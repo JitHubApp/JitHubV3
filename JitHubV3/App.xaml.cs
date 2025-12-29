@@ -146,6 +146,8 @@ public partial class App : Application
                     services.AddSingleton<IGitHubTokenProvider, UnoTokenCacheGitHubTokenProvider>();
                     services.AddSingleton<ISecretStore, PlatformSecretStore>();
 
+                    services.AddSingleton<StatusBarViewModel>();
+
                     services.AddSingleton(sp =>
                     {
                         var baseUrl = context.Configuration["GitHub:ApiBaseUrl"];
@@ -266,6 +268,7 @@ public partial class App : Application
             new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
             new DataViewMap<IssuesPage, IssuesViewModel, RepoRouteData>(),
+            new DataViewMap<IssueConversationPage, IssueConversationViewModel, IssueConversationRouteData>(),
             new ViewMap<MarkdownTestPage, MarkdownTestViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>()
         );
@@ -277,6 +280,7 @@ public partial class App : Application
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
                     new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
                     new ("Issues", View: views.FindByViewModel<IssuesViewModel>()),
+                    new ("IssueConversation", View: views.FindByViewModel<IssueConversationViewModel>()),
                     new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                 ]

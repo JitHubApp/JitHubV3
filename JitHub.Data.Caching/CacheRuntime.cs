@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 
 namespace JitHub.Data.Caching;
 
@@ -21,15 +22,17 @@ public sealed class CacheRuntime
     private readonly ICacheEventBus _events;
     private readonly CacheRuntimeOptions _options;
     private readonly SemaphoreSlim _refreshConcurrency;
+    private readonly ILogger<CacheRuntime>? _logger;
 
     private readonly object _gate = new();
     private readonly Dictionary<CacheKey, Inflight> _inflight = new();
 
-    public CacheRuntime(ICacheStore store, ICacheEventBus events, CacheRuntimeOptions? options = null)
+    public CacheRuntime(ICacheStore store, ICacheEventBus events, CacheRuntimeOptions? options = null, ILogger<CacheRuntime>? logger = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _events = events ?? throw new ArgumentNullException(nameof(events));
         _options = options ?? new CacheRuntimeOptions();
+        _logger = logger;
 
         if (_options.MaxConcurrentRefreshes <= 0)
         {
@@ -43,9 +46,11 @@ public sealed class CacheRuntime
     {
         if (_store.TryGet<T>(key, out var value, out var metadata))
         {
+            _logger?.LogDebug("Cache hit: {Operation} {Key}", key.Operation, key.ToString());
             return new CacheSnapshot<T>(key, HasValue: true, value, metadata, IsFromCache: true);
         }
 
+        _logger?.LogDebug("Cache miss: {Operation} {Key}", key.Operation, key.ToString());
         return new CacheSnapshot<T>(key, HasValue: false, Value: default, Metadata: null, IsFromCache: true);
     }
 
@@ -62,16 +67,19 @@ public sealed class CacheRuntime
 
         if (!preferCacheThenRefresh)
         {
+            _logger?.LogDebug("Cache refresh (forced): {Operation} {Key}", key.Operation, key.ToString());
             return RefreshAsync<T>(key, fetchAsync, ct);
         }
 
         var cached = GetCached<T>(key);
         if (cached.HasValue)
         {
+            _logger?.LogDebug("Cache returning cached value and starting refresh in background: {Operation} {Key}", key.Operation, key.ToString());
             _ = StartRefreshInBackground<T>(key, fetchAsync, ct);
             return Task.FromResult(cached);
         }
 
+        _logger?.LogDebug("Cache empty; fetching: {Operation} {Key}", key.Operation, key.ToString());
         return RefreshAsync<T>(key, fetchAsync, ct);
     }
 
@@ -82,6 +90,7 @@ public sealed class CacheRuntime
             throw new ArgumentNullException(nameof(fetchAsync));
         }
 
+        _logger?.LogDebug("Cache refresh requested: {Operation} {Key}", key.Operation, key.ToString());
         return JoinOrStartInflight<T>(key, fetchAsync, ct, awaitResult: true);
     }
 
@@ -101,6 +110,12 @@ public sealed class CacheRuntime
             throw new ArgumentNullException(nameof(fetchAsync));
         }
 
+        _logger?.LogInformation(
+            "Polling started: {Operation} interval={IntervalMs}ms jitterMax={JitterMs}ms",
+            key.Operation,
+            (long)options.Interval.TotalMilliseconds,
+            (long)options.JitterMax.GetValueOrDefault(TimeSpan.Zero).TotalMilliseconds);
+
         return PollLoop();
 
         async Task PollLoop()
@@ -109,18 +124,28 @@ public sealed class CacheRuntime
             var rng = jitterMax > TimeSpan.Zero ? Random.Shared : null;
 
             using var timer = new PeriodicTimer(options.Interval);
-            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+            try
             {
-                if (rng is not null)
+                while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
                 {
-                    var jitterMs = rng.NextDouble() * jitterMax.TotalMilliseconds;
-                    if (jitterMs >= 1)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(jitterMs), ct).ConfigureAwait(false);
-                    }
-                }
+                    _logger?.LogDebug("Polling tick: {Operation}", key.Operation);
 
-                await RefreshAsync<T>(key, fetchAsync, ct).ConfigureAwait(false);
+                    if (rng is not null)
+                    {
+                        var jitterMs = rng.NextDouble() * jitterMax.TotalMilliseconds;
+                        if (jitterMs >= 1)
+                        {
+                            _logger?.LogDebug("Polling jitter: {Operation} jitterMs={JitterMs}", key.Operation, (long)jitterMs);
+                            await Task.Delay(TimeSpan.FromMilliseconds(jitterMs), ct).ConfigureAwait(false);
+                        }
+                    }
+
+                    await RefreshAsync<T>(key, fetchAsync, ct).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                _logger?.LogInformation("Polling stopped: {Operation}", key.Operation);
             }
         }
     }
@@ -141,6 +166,7 @@ public sealed class CacheRuntime
         {
             if (!_inflight.TryGetValue(key, out inflight!))
             {
+                _logger?.LogDebug("Inflight start: {Operation} {Key} await={Await}", key.Operation, key.ToString(), awaitResult);
                 var cts = new CancellationTokenSource();
                 var task = RunRefresh<T>(key, fetchAsync, cts.Token);
 
@@ -159,6 +185,10 @@ public sealed class CacheRuntime
                     CancellationToken.None,
                     TaskContinuationOptions.ExecuteSynchronously,
                     TaskScheduler.Default);
+            }
+            else
+            {
+                _logger?.LogDebug("Inflight join: {Operation} {Key} await={Await}", key.Operation, key.ToString(), awaitResult);
             }
 
             inflight.RefCount++;
@@ -217,6 +247,7 @@ public sealed class CacheRuntime
 
     private async Task RunRefresh<T>(CacheKey key, Func<CancellationToken, Task<T>> fetchAsync, CancellationToken ct)
     {
+        _logger?.LogDebug("Refresh start: {Operation} {Key}", key.Operation, key.ToString());
         await _refreshConcurrency.WaitAsync(ct).ConfigureAwait(false);
         try
         {
@@ -228,14 +259,19 @@ public sealed class CacheRuntime
             _store.Set(key, value, metadata);
 
             _events.Publish(new CacheEvent(CacheEventKind.Updated, key, typeof(T), value, Error: null, TimestampUtc: now));
+
+            _logger?.LogInformation("Refresh success: {Operation} {Key}", key.Operation, key.ToString());
         }
         catch (OperationCanceledException)
         {
             // Silent; cancellation is expected for navigation/polling scopes.
+            _logger?.LogDebug("Refresh canceled: {Operation} {Key}", key.Operation, key.ToString());
         }
         catch (Exception ex)
         {
             _events.Publish(new CacheEvent(CacheEventKind.RefreshFailed, key, typeof(T), Value: null, Error: ex, TimestampUtc: DateTimeOffset.UtcNow));
+
+            _logger?.LogWarning(ex, "Refresh failed: {Operation} {Key}", key.Operation, key.ToString());
         }
         finally
         {
