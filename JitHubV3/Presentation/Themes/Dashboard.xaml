@@ -17,6 +17,7 @@
   <!-- Common thickness tokens -->
   <Thickness x:Key="DashboardEdgePadding">16</Thickness>
   <Thickness x:Key="DashboardContentPadding">16</Thickness>
+  <Thickness x:Key="DashboardContentPaddingWithComposeClearance">16,16,16,112</Thickness>
   <Thickness x:Key="DashboardComposeMargin">16</Thickness>
   <Thickness x:Key="DashboardComposePadding">16</Thickness>
 

@@ -148,6 +148,8 @@ public partial class App : Application
 
                     services.AddSingleton<StatusBarViewModel>();
 
+                    services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
+
                     services.AddSingleton(sp =>
                     {
                         var baseUrl = context.Configuration["GitHub:ApiBaseUrl"];

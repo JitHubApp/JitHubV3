@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading;
 using JitHub.Data.Caching;
 using JitHub.GitHub.Abstractions.Models;
@@ -16,14 +17,25 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     private readonly IGitHubRepositoryService _repositoryService;
     private readonly ICacheEventBus _events;
     private readonly StatusBarViewModel _statusBar;
+    private readonly IReadOnlyList<IDashboardCardProvider> _cardProviders;
 
     private CancellationTokenSource? _activeCts;
+    private CancellationTokenSource? _cardsCts;
     private IDisposable? _subscription;
     private int _loadGate;
 
     public DashboardContext Context { get; } = new();
 
     public ObservableCollection<RepositorySummary> Repositories { get; } = new();
+
+    public ObservableCollection<DashboardCardModel> Cards { get; } = new();
+
+    private bool _isLoadingCards;
+    public bool IsLoadingCards
+    {
+        get => _isLoadingCards;
+        set => SetProperty(ref _isLoadingCards, value);
+    }
 
     private bool _isLoadingRepos;
     public bool IsLoadingRepos
@@ -61,13 +73,18 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         IDispatcher dispatcher,
         IGitHubRepositoryService repositoryService,
         ICacheEventBus events,
-        StatusBarViewModel statusBar)
+        StatusBarViewModel statusBar,
+        IEnumerable<IDashboardCardProvider> cardProviders)
     {
         _logger = logger;
         _dispatcher = dispatcher;
         _repositoryService = repositoryService;
         _events = events;
         _statusBar = statusBar;
+        _cardProviders = (cardProviders ?? Enumerable.Empty<IDashboardCardProvider>())
+            .OrderBy(p => p.Priority)
+            .ThenBy(p => p.ProviderId, StringComparer.Ordinal)
+            .ToArray();
 
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
     }
@@ -79,6 +96,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         Deactivate();
         _activeCts = new CancellationTokenSource();
 
+        Context.PropertyChanged += OnContextPropertyChanged;
+
         _statusBar.Set(
             message: "Dashboard",
             isBusy: false,
@@ -86,20 +105,45 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             freshness: DataFreshnessState.Unknown,
             lastUpdatedAt: null);
 
+        _ = RefreshCardsAsync(RefreshMode.CacheOnly, _activeCts.Token);
+
         await LoadReposAsync(_activeCts.Token);
     }
 
     public void Deactivate()
     {
+        Context.PropertyChanged -= OnContextPropertyChanged;
+
         _activeCts?.Cancel();
         _activeCts?.Dispose();
         _activeCts = null;
+
+        _cardsCts?.Cancel();
+        _cardsCts?.Dispose();
+        _cardsCts = null;
 
         _subscription?.Dispose();
         _subscription = null;
 
         Interlocked.Exchange(ref _loadGate, 0);
         IsLoadingRepos = false;
+        IsLoadingCards = false;
+    }
+
+    private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(DashboardContext.SelectedRepo))
+        {
+            return;
+        }
+
+        var ct = _activeCts?.Token;
+        if (ct is null)
+        {
+            return;
+        }
+
+        _ = RefreshCardsAsync(RefreshMode.CacheOnly, ct.Value);
     }
 
     private void OnSelectedRepositoryIdChanged(long? value)
@@ -234,5 +278,82 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         Context.SelectedRepo = new RepoKey(repo.OwnerLogin, repo.Name);
         SelectedRepositoryId = repo.Id;
         _statusBar.Set(message: $"Repo: {repo.OwnerLogin}/{repo.Name}");
+    }
+
+    private async Task RefreshCardsAsync(RefreshMode refresh, CancellationToken ct)
+    {
+        if (_cardProviders.Count == 0)
+        {
+            return;
+        }
+
+        CancellationTokenSource? previousCts;
+        var nextCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+        previousCts = Interlocked.Exchange(ref _cardsCts, nextCts);
+        previousCts?.Cancel();
+        previousCts?.Dispose();
+
+        var localCt = nextCts.Token;
+
+        await _dispatcher.ExecuteAsync(_ =>
+        {
+            IsLoadingCards = true;
+            return ValueTask.CompletedTask;
+        });
+
+        try
+        {
+            var combined = new List<DashboardCardModel>();
+
+            foreach (var provider in _cardProviders)
+            {
+                localCt.ThrowIfCancellationRequested();
+
+                try
+                {
+                    var cards = await provider.GetCardsAsync(Context, refresh, localCt);
+                    if (cards is null || cards.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    combined.AddRange(cards
+                        .OrderByDescending(c => c.Importance)
+                        .ThenBy(c => c.Title, StringComparer.Ordinal));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Dashboard card provider failed (ProviderId={ProviderId})", provider.ProviderId);
+                }
+            }
+
+            await _dispatcher.ExecuteAsync(_ =>
+            {
+                ObservableCollectionSync.SyncById(
+                    Cards,
+                    combined,
+                    getId: x => x.CardId,
+                    shouldReplace: (current, next) => current != next);
+
+                return ValueTask.CompletedTask;
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation.
+        }
+        finally
+        {
+            await _dispatcher.ExecuteAsync(_ =>
+            {
+                IsLoadingCards = false;
+                return ValueTask.CompletedTask;
+            });
+        }
     }
 }
