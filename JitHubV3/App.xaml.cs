@@ -273,6 +273,7 @@ public partial class App : Application
             new DataViewMap<IssuesPage, IssuesViewModel, RepoRouteData>(),
             new DataViewMap<IssueConversationPage, IssueConversationViewModel, IssueConversationRouteData>(),
             new ViewMap<MarkdownTestPage, MarkdownTestViewModel>(),
+            new ViewMap<DashboardLayoutTestPage, DashboardLayoutTestViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>()
         );
 
@@ -286,6 +287,7 @@ public partial class App : Application
                     new ("Issues", View: views.FindByViewModel<IssuesViewModel>()),
                     new ("IssueConversation", View: views.FindByViewModel<IssueConversationViewModel>()),
                     new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
+                    new ("DashboardLayoutTest", View: views.FindByViewModel<DashboardLayoutTestViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                 ]
             )

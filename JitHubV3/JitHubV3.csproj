@@ -102,6 +102,7 @@
     <ProjectReference Include="..\JitHub.Markdown.Uno\JitHub.Markdown.Uno.csproj" />
     <ProjectReference Include="..\JitHub.GitHub.Abstractions\JitHub.GitHub.Abstractions.csproj" />
     <ProjectReference Include="..\JitHub.GitHub.Octokit\JitHub.GitHub.Octokit.csproj" />
+    <ProjectReference Include="..\JitHub.Dashboard.Layouts\JitHub.Dashboard.Layouts.csproj" />
   </ItemGroup>
 
 </Project>
