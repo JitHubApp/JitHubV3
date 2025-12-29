@@ -9,6 +9,9 @@
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
         <!-- Load Uno.UI.Toolkit resources -->
         <ToolkitResources xmlns="using:Uno.Toolkit.UI" />
+
+        <!-- Dashboard UI tokens (metrics only; no colors) -->
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/Dashboard.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <!-- Add resources here -->

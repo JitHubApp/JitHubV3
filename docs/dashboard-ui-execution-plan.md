@@ -118,8 +118,11 @@ Properties animated:
 
 ### 0.1 Confirm design system inputs
 Deliverables:
-- Confirm whether Material resources are active and preferred (app uses `UnoFeatures` including `Toolkit` and `ThemeService`; ensure chosen theme is consistent).
+- Confirm whether Material resources are active and preferred.
+  - Current state: the app merges `XamlControlsResources` + `ToolkitResources` in `App.xaml` and does not explicitly load Material dictionaries.
+  - Decision for now: keep the current Fluent/WinUI baseline and rely on semantic theme resources; do not introduce Material-specific overrides in Phase 0.
 - Identify existing resource dictionaries and where to place `Dashboard.xaml`.
+  - Decision: dashboard tokens live in `JitHubV3/Presentation/Themes/Dashboard.xaml` and are merged from `App.xaml`.
 
 Gate:
 - A single source of truth for dashboard tokens/resources is agreed.
@@ -127,9 +130,9 @@ Gate:
 ### 0.2 Define the responsive ruleset
 Deliverables:
 - Define the threshold for “large enough” that switches grid ↔ deck.
-- Decide whether threshold is:
-  - Uno Toolkit breakpoints (Narrow/Normal/Wide), or
-  - explicit `ResponsiveLayout` numeric values for the dashboard content.
+  - Decision: use an explicit numeric min width resource: `DashboardGridToDeckMinWidth`.
+  - Current value: `900` (stored in `JitHubV3/Presentation/Themes/Dashboard.xaml`).
+- Implementation rule: the dashboard host/layout control must reference this resource (not duplicate a number inline).
 
 Gate:
 - Threshold documented and referenced by the host control.
