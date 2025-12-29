@@ -9,4 +9,5 @@ public sealed record DashboardCardModel(
     string? Subtitle,
     string? Summary,
     int Importance = 0,
-    IReadOnlyList<DashboardCardActionModel>? Actions = null);
+    IReadOnlyList<DashboardCardActionModel>? Actions = null,
+    int? TintVariant = null);

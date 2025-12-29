@@ -1,4 +1,4 @@
-<Page x:Class="JitHubV3.Presentation.DashboardLayoutTestPage"
+﻿<Page x:Class="JitHubV3.Presentation.DashboardLayoutTestPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,6 +8,7 @@
       xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
       xmlns:layouts="using:JitHub.Dashboard.Layouts"
       xmlns:local="using:JitHubV3.Presentation"
+      xmlns:infra="using:JitHubV3.Presentation.Infrastructure"
       mc:Ignorable="d"
       IsTabStop="False"
       NavigationCacheMode="Required"
@@ -16,6 +17,7 @@
   <Page.Resources>
     <ResourceDictionary>
       <local:StringNullOrWhiteSpaceToVisibilityConverter x:Key="StringNullOrWhiteSpaceToVisibilityConverter" />
+      <infra:CardTintVariantToBrushConverter x:Key="CardTintVariantToBrushConverter" />
     </ResourceDictionary>
   </Page.Resources>
 
@@ -37,7 +39,7 @@
     </StackPanel>
 
     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Spacing="{StaticResource DashboardSpacingL}" MaxWidth="960">
+      <StackPanel Spacing="{StaticResource DashboardSpacingL}" MaxWidth="1200">
 
         <TextBlock Text="Resize the window (Auto) or switch mode to exercise CardDeckLayout." Opacity="0.72" TextWrapping="Wrap" />
 
@@ -58,24 +60,40 @@
 
           <muxc:ItemsRepeater.ItemTemplate>
             <DataTemplate>
-              <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+              <!--
+                   CardBackgroundFillColorDefaultBrush can be semi-transparent in some themes.
+                   When cards overlap (Deck mode), that causes “see-through stacking” artifacts.
+                   Layer an opaque theme brush under it, then add a subtle per-card tint overlay.
+              -->
+              <Border Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                       BorderThickness="1"
-                      CornerRadius="{StaticResource DashboardRadiusM}"
-                      Padding="{StaticResource DashboardEdgePadding}">
-                <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-                  <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                      CornerRadius="{StaticResource DashboardRadiusM}">
+                <Grid>
+                  <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                          CornerRadius="{StaticResource DashboardRadiusM}" />
 
-                  <TextBlock Text="{Binding Subtitle}"
-                             Visibility="{Binding Subtitle, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
-                             Opacity="0.72"
-                             TextWrapping="Wrap" />
+                  <Border Background="{Binding TintVariant, Converter={StaticResource CardTintVariantToBrushConverter}}"
+                          CornerRadius="{StaticResource DashboardRadiusM}" />
 
-                  <TextBlock Text="{Binding Summary}"
-                             Visibility="{Binding Summary, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
-                             Opacity="0.72"
-                             TextWrapping="Wrap" />
-                </StackPanel>
+                  <Border Background="Transparent"
+                          CornerRadius="{StaticResource DashboardRadiusM}"
+                          Padding="{StaticResource DashboardEdgePadding}">
+                    <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+                      <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+
+                      <TextBlock Text="{Binding Subtitle}"
+                                 Visibility="{Binding Subtitle, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
+                                 Opacity="0.72"
+                                 TextWrapping="Wrap" />
+
+                      <TextBlock Text="{Binding Summary}"
+                                 Visibility="{Binding Summary, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
+                                 Opacity="0.72"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
               </Border>
             </DataTemplate>
           </muxc:ItemsRepeater.ItemTemplate>

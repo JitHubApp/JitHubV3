@@ -8,6 +8,7 @@ public sealed partial class Shell : UserControl
     private ILogger<Shell>? _logger;
     private double _lastMeasuredRootGridWidth;
     private bool? _lastAppliedIsNarrow;
+    private bool _isUnloaded;
 
     public Shell()
     {
@@ -34,7 +35,15 @@ public sealed partial class Shell : UserControl
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        RootGrid.SizeChanged -= OnRootGridSizeChanged;
+        _isUnloaded = true;
+
+        // On some platforms (notably Skia desktop), named XAML fields may already be cleared
+        // during teardown. Make unhooking idempotent and null-safe.
+        if (RootGrid is not null)
+        {
+            RootGrid.SizeChanged -= OnRootGridSizeChanged;
+        }
+
         Loaded -= OnLoaded;
         Unloaded -= OnUnloaded;
     }
@@ -47,6 +56,11 @@ public sealed partial class Shell : UserControl
 
     private void ApplyStatusBarLayout(string reason)
     {
+        if (_isUnloaded || RootGrid is null || TopStatusBar is null || BottomStatusBar is null)
+        {
+            return;
+        }
+
         var gridWidth = RootGrid.ActualWidth;
         var xamlRootWidth = XamlRoot?.Size.Width ?? 0d;
         var rasterizationScale = XamlRoot?.RasterizationScale ?? 0d;
