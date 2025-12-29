@@ -22,7 +22,7 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
         var request = new RepositoryRequest
         {
             // Align with the POC: show repositories the user can access.
-            Affiliation = RepositoryAffiliation.Owner,
+            Affiliation = RepositoryAffiliation.Owner | RepositoryAffiliation.Collaborator | RepositoryAffiliation.OrganizationMember,
         };
 
         var repos = await client.Repository.GetAllForCurrent(request).ConfigureAwait(false);

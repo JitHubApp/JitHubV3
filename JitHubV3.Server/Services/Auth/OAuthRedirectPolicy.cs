@@ -36,6 +36,20 @@ internal sealed class OAuthRedirectPolicy : IOAuthRedirectPolicy
             return null;
         }
 
+        // Desktop loopback redirects (used by the app for local callback capture).
+        // Allow only loopback and only a fixed callback path to avoid open-redirect issues.
+        if (uri.IsLoopback)
+        {
+            if (string.IsNullOrWhiteSpace(uri.Fragment)
+                && (string.Equals(uri.AbsolutePath, "/oauth2/callback", StringComparison.Ordinal)
+                    || string.Equals(uri.AbsolutePath, "/oauth2/callback/", StringComparison.Ordinal)))
+            {
+                return uri;
+            }
+
+            return null;
+        }
+
         // Disallow fragments for HTTP(S) redirects; caller may append query params (handoffCode).
         if (!string.IsNullOrWhiteSpace(uri.Fragment))
         {

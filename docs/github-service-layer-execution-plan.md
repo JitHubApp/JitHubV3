@@ -302,10 +302,19 @@ Deliverables:
 
 - Main page loads repos and renders quickly.
 - Uses cached-first flow where possible.
+- Uses Uno.Extensions Navigation as intended: navigate via ViewModel (ViewMap), and treat ViewModel activation as the single place that starts navigation-scoped work.
+  - Rationale: with Uno.Extensions Navigation, the Page can be reused (e.g., `NavigationCacheMode="Required"`) and the `DataContext` can be assigned/changed independently of `OnNavigatedTo` timing.
+  - Guardrail: **never start the initial load from `OnNavigatedTo` by casting `DataContext`**; instead, use a ViewModel activation contract so the *current* DataContext instance is always the one that loads.
+  - Implementation in this repo:
+    - Activation contract: [JitHubV3/Presentation/Infrastructure/IActivatableViewModel.cs](JitHubV3/Presentation/Infrastructure/IActivatableViewModel.cs)
+    - Centralized activation wiring: [JitHubV3/Presentation/Infrastructure/ActivatablePage.cs](JitHubV3/Presentation/Infrastructure/ActivatablePage.cs)
+    - Main page uses `local:ActivatablePage` as its XAML root so activation is handled consistently: [JitHubV3/Presentation/MainPage.xaml](JitHubV3/Presentation/MainPage.xaml)
+  - Docs reference (Uno.Extensions Navigation): https://platform.uno/docs/articles/external/uno.extensions/doc/Learn/Navigation/Walkthrough/NavigateBetweenPagesViaViewModel.html
 
 Validation:
 
 - Navigate away during loading: no crash, no UI freeze.
+- Navigate away and back repeatedly (with caching enabled): no “loaded on wrong VM instance” symptoms (e.g., repo count stays correct, list renders).
 
 ### 5.2 Issues list page wiring
 

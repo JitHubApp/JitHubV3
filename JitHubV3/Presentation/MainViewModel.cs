@@ -2,23 +2,27 @@ namespace JitHubV3.Presentation;
 
 using System.Collections.ObjectModel;
 using System.Linq;
+using JitHub.GitHub.Abstractions.Models;
+using JitHub.GitHub.Abstractions.Refresh;
+using JitHub.GitHub.Abstractions.Services;
+using Microsoft.Extensions.Logging;
 
 public partial class MainViewModel : ObservableObject
+    , IActivatableViewModel
 {
+    private readonly ILogger<MainViewModel> _logger;
+    private readonly IDispatcher _dispatcher;
     private IAuthenticationService _authentication;
-
-    private readonly Services.GitHub.IGitHubApi _gitHubApi;
+    private readonly IGitHubRepositoryService _repositoryService;
 
     private INavigator _navigator;
 
-    private string? _name;
-    private string? _repoStatus;
+    private CancellationTokenSource? _activeCts;
 
-    public string? Name
-    {
-        get => _name;
-        set => SetProperty(ref _name, value);
-    }
+    private string? _repoStatus;
+    private bool _isLoading;
+    private int _repositoryCount;
+    private ObservableCollection<RepositorySummary> _repositories = new();
 
     public string? RepoStatus
     {
@@ -26,69 +30,125 @@ public partial class MainViewModel : ObservableObject
         set => SetProperty(ref _repoStatus, value);
     }
 
-    public ObservableCollection<string> PrivateRepos { get; } = new();
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set => SetProperty(ref _isLoading, value);
+    }
+
+    public int RepositoryCount
+    {
+        get => _repositoryCount;
+        set => SetProperty(ref _repositoryCount, value);
+    }
+
+    public ObservableCollection<RepositorySummary> Repositories
+    {
+        get => _repositories;
+        set => SetProperty(ref _repositories, value);
+    }
 
     public MainViewModel(
         IStringLocalizer localizer,
         IOptions<AppConfig> appInfo,
+        ILogger<MainViewModel> logger,
+        IDispatcher dispatcher,
         IAuthenticationService authentication,
-        Services.GitHub.IGitHubApi gitHubApi,
+        IGitHubRepositoryService repositoryService,
         INavigator navigator)
     {
         _navigator = navigator;
+        _logger = logger;
+        _dispatcher = dispatcher;
         _authentication = authentication;
-        _gitHubApi = gitHubApi;
+        _repositoryService = repositoryService;
         Title = "Main";
         Title += $" - {localizer["ApplicationName"]}";
         Title += $" - {appInfo?.Value?.Environment}";
-        GoToSecond = new AsyncRelayCommand(GoToSecondView);
-        GoToMarkdownTest = new AsyncRelayCommand(GoToMarkdownTestView);
-        LoadPrivateRepos = new AsyncRelayCommand(DoLoadPrivateRepos);
         Logout = new AsyncRelayCommand(DoLogout);
     }
     public string? Title { get; }
 
-    public ICommand GoToSecond { get; }
-
-    public ICommand GoToMarkdownTest { get; }
-
-    public ICommand LoadPrivateRepos { get; }
-
     public ICommand Logout { get; }
 
-    private async Task GoToSecondView()
+    public async Task LoadReposAsync(CancellationToken ct)
     {
-        await _navigator.NavigateViewModelAsync<SecondViewModel>(this, data: new Entity(Name!));
-    }
+        if (IsLoading)
+        {
+            return;
+        }
 
-    private async Task GoToMarkdownTestView()
-    {
-        await _navigator.NavigateViewModelAsync<MarkdownTestViewModel>(this);
-    }
-
-    private async Task DoLoadPrivateRepos()
-    {
-        RepoStatus = "Loading...";
-        PrivateRepos.Clear();
+        await _dispatcher.ExecuteAsync(_ =>
+        {
+            IsLoading = true;
+            RepoStatus = "Loading...";
+            Repositories = new ObservableCollection<RepositorySummary>();
+            RepositoryCount = 0;
+            return ValueTask.CompletedTask;
+        });
 
         try
         {
-            var repos = await _gitHubApi.GetMyPrivateReposAsync(CancellationToken.None);
-            foreach (var repo in repos.Take(10))
-            {
-                PrivateRepos.Add(repo.FullName);
-            }
+            _logger.LogInformation("Loading repositories (RefreshMode={RefreshMode})", RefreshMode.PreferCacheThenRefresh);
+            var repos = await _repositoryService.GetMyRepositoriesAsync(RefreshMode.PreferCacheThenRefresh, ct);
 
-            RepoStatus = repos.Count switch
+            _logger.LogInformation("Repositories loaded: {Count}", repos.Count);
+            await _dispatcher.ExecuteAsync(_ =>
             {
-                0 => "No private repos found.",
-                _ => $"Loaded {repos.Count} private repos (showing first {Math.Min(10, repos.Count)})."
-            };
+                Repositories = new ObservableCollection<RepositorySummary>(repos);
+                RepositoryCount = repos.Count;
+
+                RepoStatus = repos.Count switch
+                {
+                    0 => "No repos found.",
+                    _ => $"Loaded {repos.Count} repos."
+                };
+
+                return ValueTask.CompletedTask;
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigation away / re-activation. Don't treat as an error.
         }
         catch (Exception ex)
         {
-            RepoStatus = $"Failed to load repos: {ex.Message}";
+            _logger.LogError(ex, "Failed to load repositories");
+            await _dispatcher.ExecuteAsync(_ =>
+            {
+                RepoStatus = $"Failed to load repos: {ex.Message}";
+                return ValueTask.CompletedTask;
+            });
         }
+        finally
+        {
+            await _dispatcher.ExecuteAsync(_ =>
+            {
+                IsLoading = false;
+                return ValueTask.CompletedTask;
+            });
+        }
+    }
+
+    public Task ActivateAsync()
+    {
+        Deactivate();
+        _activeCts = new CancellationTokenSource();
+        return LoadReposAsync(_activeCts.Token);
+    }
+
+    public void Deactivate()
+    {
+        _activeCts?.Cancel();
+        _activeCts?.Dispose();
+        _activeCts = null;
+    }
+
+    public Task OpenRepoAsync(RepositorySummary repo)
+    {
+        var key = new RepoKey(repo.OwnerLogin, repo.Name);
+        var data = new RepoRouteData(key, DisplayName: $"{repo.OwnerLogin}/{repo.Name}");
+        return _navigator.NavigateViewModelAsync<IssuesViewModel>(this, data: data);
     }
 
     public async Task DoLogout(CancellationToken token)
@@ -99,8 +159,10 @@ public partial class MainViewModel : ObservableObject
         }
         finally
         {
+            Deactivate();
             RepoStatus = null;
-            PrivateRepos.Clear();
+            Repositories = new ObservableCollection<RepositorySummary>();
+            RepositoryCount = 0;
             await _navigator.NavigateViewModelAsync<LoginViewModel>(this, qualifier: Qualifiers.ClearBackStack);
         }
     }
