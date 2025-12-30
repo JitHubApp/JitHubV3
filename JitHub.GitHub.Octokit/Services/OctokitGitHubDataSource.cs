@@ -55,7 +55,7 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             StartPage = page.PageNumber.GetValueOrDefault(1),
         };
 
-        if (!string.IsNullOrWhiteSpace(query.SearchText))
+        if (!string.IsNullOrWhiteSpace(query.SearchText) || query.Sort is not null || query.Direction is not null)
         {
             var q = BuildSearchQuery(repo, query);
             var request = new SearchIssuesRequest(q)
@@ -63,6 +63,8 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
                 PerPage = page.PageSize,
                 Page = page.PageNumber.GetValueOrDefault(1),
             };
+
+            ApplySearchSorting(request, query);
 
             var result = await client.Search.SearchIssues(request).ConfigureAwait(false);
 
@@ -171,5 +173,73 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
         }
 
         return string.Join(" ", terms);
+    }
+
+    private static void ApplySearchSorting(SearchIssuesRequest request, IssueQuery query)
+    {
+        if (query.Sort is null && query.Direction is null)
+        {
+            return;
+        }
+
+        var requestType = request.GetType();
+
+        if (query.Sort is not null)
+        {
+            var sortProperty = requestType.GetProperty("SortField") ?? requestType.GetProperty("Sort");
+            if (sortProperty is not null && sortProperty.CanWrite)
+            {
+                var sortValueName = query.Sort.Value switch
+                {
+                    IssueSortField.Created => "Created",
+                    IssueSortField.Updated => "Updated",
+                    IssueSortField.Comments => "Comments",
+                    _ => "Updated",
+                };
+
+                TrySetEnumValue(request, sortProperty, sortValueName);
+            }
+        }
+
+        if (query.Direction is not null)
+        {
+            var orderProperty = requestType.GetProperty("Order") ?? requestType.GetProperty("Direction");
+            if (orderProperty is not null && orderProperty.CanWrite)
+            {
+                var orderValueName = query.Direction.Value switch
+                {
+                    IssueSortDirection.Asc => "Ascending",
+                    IssueSortDirection.Desc => "Descending",
+                    _ => "Descending",
+                };
+
+                if (!TrySetEnumValue(request, orderProperty, orderValueName))
+                {
+                    // Some Octokit versions use Asc/Desc.
+                    var alt = query.Direction.Value == IssueSortDirection.Asc ? "Asc" : "Desc";
+                    _ = TrySetEnumValue(request, orderProperty, alt);
+                }
+            }
+        }
+    }
+
+    private static bool TrySetEnumValue(object target, System.Reflection.PropertyInfo property, string valueName)
+    {
+        try
+        {
+            var enumType = property.PropertyType;
+            if (!enumType.IsEnum)
+            {
+                return false;
+            }
+
+            var parsed = Enum.Parse(enumType, valueName, ignoreCase: true);
+            property.SetValue(target, parsed);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

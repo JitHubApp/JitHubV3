@@ -14,6 +14,8 @@ internal static class GitHubCacheKeys
     {
         var state = query.State.ToString();
         var search = string.IsNullOrWhiteSpace(query.SearchText) ? string.Empty : query.SearchText.Trim();
+        var sort = query.Sort?.ToString() ?? string.Empty;
+        var direction = query.Direction?.ToString() ?? string.Empty;
 
         var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
         var cursor = page.Cursor ?? string.Empty;
@@ -25,6 +27,8 @@ internal static class GitHubCacheKeys
             ("repo", repo.Name),
             ("state", state),
             ("search", search),
+            ("sort", sort),
+            ("direction", direction),
             ("pageSize", page.PageSize.ToString()),
             ("pageNumber", pageNumber),
             ("cursor", cursor));
