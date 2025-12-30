@@ -23,6 +23,37 @@ public sealed class ActivityProvidersTests
     }
 
     [Test]
+    public async Task MyRecentActivity_ReturnsOneCardPerItem_WhenNotEmpty()
+    {
+        var items = new[]
+        {
+            new ActivitySummary(
+                Id: "evt_1",
+                Repo: new RepoKey("octo", "one"),
+                Type: "PushEvent",
+                ActorLogin: "alice",
+                Description: "pushed commits",
+                CreatedAt: new DateTimeOffset(2025, 1, 2, 3, 4, 5, TimeSpan.Zero)),
+            new ActivitySummary(
+                Id: "evt_2",
+                Repo: new RepoKey("octo", "two"),
+                Type: "IssuesEvent",
+                ActorLogin: "bob",
+                Description: null,
+                CreatedAt: new DateTimeOffset(2025, 1, 2, 3, 4, 6, TimeSpan.Zero)),
+        };
+
+        var provider = new MyRecentActivityDashboardCardProvider(new FakeActivityService(items));
+        var ctx = new DashboardContext();
+
+        var cards = await provider.GetCardsAsync(ctx, RefreshMode.CacheOnly, CancellationToken.None);
+
+        cards.Should().HaveCount(2);
+        cards.Select(c => c.CardId).Should().OnlyHaveUniqueItems();
+        cards.All(c => c.Kind == DashboardCardKind.MyRecentActivity).Should().BeTrue();
+    }
+
+    [Test]
     public async Task RepoRecentActivity_ReturnsNoCards_WhenNoSelectedRepo()
     {
         var provider = new RepoRecentActivityDashboardCardProvider(new FakeActivityService([]));
@@ -31,6 +62,47 @@ public sealed class ActivityProvidersTests
         var cards = await provider.GetCardsAsync(ctx, RefreshMode.CacheOnly, CancellationToken.None);
 
         cards.Should().BeEmpty();
+    }
+
+    [Test]
+    public async Task RepoRecentActivity_ReturnsOneCardPerItem_WhenSelectedRepo()
+    {
+        var items = new[]
+        {
+            new ActivitySummary(
+                Id: "evt_3",
+                Repo: new RepoKey("octo", "repo"),
+                Type: "WatchEvent",
+                ActorLogin: "carol",
+                Description: "starred",
+                CreatedAt: new DateTimeOffset(2025, 1, 2, 3, 4, 7, TimeSpan.Zero)),
+            new ActivitySummary(
+                Id: "evt_4",
+                Repo: new RepoKey("octo", "repo"),
+                Type: "ForkEvent",
+                ActorLogin: "dave",
+                Description: null,
+                CreatedAt: new DateTimeOffset(2025, 1, 2, 3, 4, 8, TimeSpan.Zero)),
+            new ActivitySummary(
+                Id: "evt_5",
+                Repo: new RepoKey("octo", "repo"),
+                Type: "IssueCommentEvent",
+                ActorLogin: null,
+                Description: "commented",
+                CreatedAt: new DateTimeOffset(2025, 1, 2, 3, 4, 9, TimeSpan.Zero)),
+        };
+
+        var provider = new RepoRecentActivityDashboardCardProvider(new FakeActivityService(items));
+        var ctx = new DashboardContext
+        {
+            SelectedRepo = new RepoKey("octo", "repo"),
+        };
+
+        var cards = await provider.GetCardsAsync(ctx, RefreshMode.CacheOnly, CancellationToken.None);
+
+        cards.Should().HaveCount(3);
+        cards.Select(c => c.CardId).Should().OnlyHaveUniqueItems();
+        cards.All(c => c.Kind == DashboardCardKind.RepoRecentActivity).Should().BeTrue();
     }
 
     [Test]

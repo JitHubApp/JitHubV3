@@ -7,7 +7,9 @@ namespace JitHubV3.Presentation;
 
 public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCardProvider
 {
-    private const long CardId = 30_000_004;
+    private const long EmptyCardId = 30_000_004;
+    private const long CardIdBase = 30_000_004_000_000;
+    private const int CardIdModulo = 1_000_000;
 
     private readonly IGitHubActivityService _activity;
 
@@ -20,7 +22,7 @@ public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCard
 
     public int Priority => 33;
 
-    public DashboardCardProviderTier Tier => DashboardCardProviderTier.SingleCallSingleCard;
+    public DashboardCardProviderTier Tier => DashboardCardProviderTier.SingleCallMultiCard;
 
     public async Task<IReadOnlyList<DashboardCardModel>> GetCardsAsync(DashboardContext context, RefreshMode refresh, CancellationToken ct)
     {
@@ -35,7 +37,7 @@ public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCard
             return new[]
             {
                 new DashboardCardModel(
-                    CardId: CardId,
+                    CardId: EmptyCardId,
                     Kind: DashboardCardKind.MyRecentActivity,
                     Title: "Recent activity",
                     Subtitle: "No recent activity",
@@ -45,38 +47,60 @@ public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCard
             };
         }
 
-        var lines = items
-            .Take(5)
-            .Select(FormatLine)
-            .ToArray();
-
-        var summary = string.Join("\n", lines);
-
-        return new[]
+        var cards = new List<DashboardCardModel>(items.Count);
+        for (var i = 0; i < items.Count; i++)
         {
-            new DashboardCardModel(
-                CardId: CardId,
+            var item = items[i];
+            var type = string.IsNullOrWhiteSpace(item.Type) ? "Event" : item.Type;
+            var actor = string.IsNullOrWhiteSpace(item.ActorLogin) ? "someone" : item.ActorLogin;
+            var when = item.CreatedAt == DateTimeOffset.MinValue ? "unknown" : item.CreatedAt.LocalDateTime.ToString("g");
+
+            var repoText = item.Repo is null ? null : $"{item.Repo.Value.Owner}/{item.Repo.Value.Name}";
+            var title = repoText is null ? Trim(type, 52) : Trim(repoText, 52);
+            var subtitle = repoText is null ? null : Trim(type, 40);
+
+            var details = string.IsNullOrWhiteSpace(item.Description) ? null : Trim(item.Description, 120);
+            var summary = details is null
+                ? $"{Trim(actor, 24)} · {when}"
+                : $"{Trim(actor, 24)} · {when}\n{details}";
+
+            cards.Add(new DashboardCardModel(
+                CardId: ComputeCardId(item.Id),
                 Kind: DashboardCardKind.MyRecentActivity,
-                Title: "Recent activity",
-                Subtitle: $"Top {Math.Min(items.Count, 5)}",
-                Summary: string.IsNullOrWhiteSpace(summary) ? null : summary,
-                Importance: 66,
-                TintVariant: 1),
-        };
+                Title: title,
+                Subtitle: subtitle,
+                Summary: summary,
+                Importance: 66 - i,
+                TintVariant: 1));
+        }
+
+        return cards;
     }
-
-    private static string FormatLine(ActivitySummary item)
-    {
-        var repo = FormatRepo(item.Repo);
-        var type = string.IsNullOrWhiteSpace(item.Type) ? "Event" : item.Type;
-        var actor = string.IsNullOrWhiteSpace(item.ActorLogin) ? "someone" : item.ActorLogin;
-
-        return $"{Trim(repo, 28)} · {Trim(type, 22)} · {Trim(actor, 16)}";
-    }
-
-    private static string FormatRepo(RepoKey? repo)
-        => repo is null ? "—" : $"{repo.Value.Owner}/{repo.Value.Name}";
 
     private static string Trim(string value, int max)
         => value.Length <= max ? value : value.Substring(0, max - 1) + "…";
+
+    private static long ComputeCardId(string id)
+    {
+        var hash = StableHash32(id);
+        return CardIdBase + (hash % CardIdModulo);
+    }
+
+    private static long StableHash32(string value)
+    {
+        unchecked
+        {
+            const uint offsetBasis = 2166136261;
+            const uint prime = 16777619;
+
+            uint hash = offsetBasis;
+            for (var i = 0; i < value.Length; i++)
+            {
+                hash ^= value[i];
+                hash *= prime;
+            }
+
+            return (long)hash;
+        }
+    }
 }

@@ -64,7 +64,7 @@ This plan assumes the existing app-layer primitives:
 - `DashboardCardModel` (title/subtitle/summary/actions/importance)
 
 Important design note:
-- Prefer **a few “summary cards”** over dumping a full list into a single card. The dashboard is a launchpad, not a replacement for the Issues page.
+- Prefer **a few “summary cards”** for dense domains like issues/search, but **treat notifications and activity as feed-style cards** (one card per notification/event). This makes the dashboard feel alive without adding new UX surfaces.
 
 ---
 
@@ -80,6 +80,8 @@ Treat providers as belonging to one of these scheduling tiers:
 - **Tier 1 (Single-call, multi-card):** one request can generate multiple cards (or many rows summarized into few cards).
   - Example: “Pinned/recent repos” derived from `IGitHubRepositoryService` results.
   - Example: “My assigned issues” via a single Search query.
+  - Example: “Notifications (unread)” where each notification is its own card.
+  - Example: “Recent activity” where each event is its own card.
 - **Tier 2 (Single-call, single-card):** one request yields one card (still fine, but not as dense).
 - **Tier 3 (Multi-call/enrichment):** requires multiple API calls (per-repo fan-out, per-item details, comments, checks, etc.).
 
@@ -198,6 +200,7 @@ Each entry below is written as:
 - Abstractions needed: new `IGitHubNotificationService`.
 - Octokit API area: notifications (`client.Activity.Notifications.*` in Octokit.NET).
 - Refresh policy: cache-first; polling recommended (10–30s) with jitter and backoff.
+- Card shape: **one card per notification** (title = notification title, subtitle = repo, summary = type + timestamp).
 - Actions:
   - Open target (issue/PR) when resolvable.
   - Mark as read (server mutation) (only if we’re ready to add mutation support).
@@ -210,6 +213,7 @@ Each entry below is written as:
 - Abstractions needed: new `IGitHubActivityService`.
 - Octokit API area: events/activity (`client.Activity.Events.*`).
 - Refresh policy: cache-first; polling optional.
+- Card shape: **one card per event** (title/subtitle/summary derived from repo/type/actor/time).
 
 10) **Recent activity (selected repo events)**
 - User value: “what’s happening in this repo”.
@@ -217,6 +221,7 @@ Each entry below is written as:
 - Abstractions needed: `IGitHubActivityService`.
 - Octokit API area: repo events (`client.Activity.Events.*` repo endpoints).
 - Refresh policy: cache-first.
+- Card shape: **one card per event**.
 
 ### E) Repo overview cards (depends on enriching repository model)
 
