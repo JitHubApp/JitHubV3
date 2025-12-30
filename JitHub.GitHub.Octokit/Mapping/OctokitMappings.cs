@@ -91,6 +91,22 @@ public static class OctokitMappings
             UpdatedAt: item.UpdatedAt);
     }
 
+    internal static NotificationSummary ToNotificationSummary(OctokitNotificationData notification)
+    {
+        if (notification is null)
+        {
+            throw new ArgumentNullException(nameof(notification));
+        }
+
+        return new NotificationSummary(
+            Id: notification.Id ?? string.Empty,
+            Repo: notification.Repo,
+            Title: notification.Title ?? string.Empty,
+            Type: notification.Type,
+            UpdatedAt: notification.UpdatedAt,
+            Unread: notification.Unread);
+    }
+
     private static IssueState ParseIssueState(string? state)
     {
         if (string.Equals(state, "closed", StringComparison.OrdinalIgnoreCase))

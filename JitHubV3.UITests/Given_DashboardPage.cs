@@ -23,6 +23,20 @@ public sealed class Given_DashboardPage : TestBase
 
     [Test]
     [Explicit("Requires a configured UI test target platform/device.")]
+    public async Task When_Navigating_to_dashboard_test_shows_notifications_card_surface()
+    {
+        // Allow the shell + login page to load.
+        await Task.Delay(5000);
+
+        App.WaitForElement(q => q.All().Marked("DashboardTestButton"));
+        App.Tap(q => q.All().Marked("DashboardTestButton"));
+
+        App.WaitForElement(q => q.All().Marked("DashboardCard.Notifications"));
+        TakeScreenshot("Notifications card surface");
+    }
+
+    [Test]
+    [Explicit("Requires a configured UI test target platform/device.")]
     public async Task When_Narrow_can_open_sidebar()
     {
         await Task.Delay(5000);

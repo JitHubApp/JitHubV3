@@ -10,6 +10,20 @@ internal static class GitHubCacheKeys
     public static CacheKey MyRepositories()
         => CacheKey.Create("github.repos.mine");
 
+    public static CacheKey MyNotifications(bool unreadOnly, PageRequest page)
+    {
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.notifications.mine",
+            userScope: null,
+            ("unreadOnly", unreadOnly ? "1" : "0"),
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
+
     public static CacheKey Issues(RepoKey repo, IssueQuery query, PageRequest page)
     {
         var state = query.State.ToString();

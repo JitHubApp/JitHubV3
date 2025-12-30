@@ -8,4 +8,5 @@ public enum DashboardCardKind
     RepoRecentlyUpdatedIssues = 3,
     MyAssignedWork = 4,
     MyReviewRequests = 5,
+    Notifications = 6,
 }

@@ -23,6 +23,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGitHubRepositoryService, CachedGitHubRepositoryService>();
         services.AddSingleton<IGitHubIssueService, CachedGitHubIssueService>();
         services.AddSingleton<IGitHubIssueSearchService, CachedGitHubIssueSearchService>();
+        services.AddSingleton<IGitHubNotificationService, CachedGitHubNotificationService>();
+        services.AddSingleton<IGitHubNotificationPollingService, CachedGitHubNotificationPollingService>();
         services.AddSingleton<IGitHubIssueConversationService, CachedGitHubIssueConversationService>();
         services.AddSingleton<IGitHubIssuePollingService, CachedGitHubIssuePollingService>();
 

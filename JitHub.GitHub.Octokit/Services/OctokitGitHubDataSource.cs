@@ -39,6 +39,35 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<OctokitNotificationData>> GetMyNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var apiOptions = new ApiOptions
+        {
+            PageCount = 1,
+            PageSize = page.PageSize,
+            StartPage = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        var notifications = await GetNotificationsCompatAsync(client, unreadOnly, apiOptions).ConfigureAwait(false);
+
+        return notifications
+            .Select(n => new OctokitNotificationData(
+                Id: TryGetNotificationId(n),
+                Repo: new RepoKey(n.Repository?.Owner?.Login ?? string.Empty, n.Repository?.Name ?? string.Empty),
+                Title: n.Subject?.Title ?? string.Empty,
+                Type: n.Subject?.Type,
+                UpdatedAt: TryGetUpdatedAt(n),
+                Unread: n.Unread))
+            .ToArray();
+    }
+
     public async Task<IReadOnlyList<OctokitIssueData>> GetIssuesAsync(RepoKey repo, IssueQuery query, PageRequest page, CancellationToken ct)
     {
         if (page.Cursor is not null)
@@ -103,6 +132,137 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
                 CommentCount: i.Comments,
                 UpdatedAt: i.UpdatedAt))
             .ToArray();
+    }
+
+    private static async Task<IReadOnlyList<Notification>> GetNotificationsCompatAsync(IGitHubClient client, bool unreadOnly, ApiOptions apiOptions)
+    {
+        // Octokit surface differs across versions. Prefer typed request if available; otherwise fall back to reflection.
+        try
+        {
+            var request = new NotificationsRequest
+            {
+                All = !unreadOnly,
+                Participating = false,
+            };
+
+            var result = await client.Activity.Notifications.GetAllForCurrent(request, apiOptions).ConfigureAwait(false);
+            return result;
+        }
+        catch
+        {
+            // Fallback: try to invoke GetAllForCurrent(...) overloads via reflection.
+            var notificationsClient = client.Activity.Notifications;
+            var type = notificationsClient.GetType();
+
+            var methods = type.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Where(m => string.Equals(m.Name, "GetAllForCurrent", StringComparison.Ordinal))
+                .ToArray();
+
+            // Try (ApiOptions)
+            var mApiOnly = methods.FirstOrDefault(m =>
+            {
+                var p = m.GetParameters();
+                return p.Length == 1 && p[0].ParameterType == typeof(ApiOptions);
+            });
+
+            if (mApiOnly is not null)
+            {
+                var task = (Task)mApiOnly.Invoke(notificationsClient, new object?[] { apiOptions })!;
+                await task.ConfigureAwait(false);
+                return ExtractTaskResult<IReadOnlyList<Notification>>(task) ?? Array.Empty<Notification>();
+            }
+
+            // Try (object request, ApiOptions)
+            var mReqApi = methods.FirstOrDefault(m =>
+            {
+                var p = m.GetParameters();
+                return p.Length == 2 && p[1].ParameterType == typeof(ApiOptions);
+            });
+
+            if (mReqApi is not null)
+            {
+                var requestType = mReqApi.GetParameters()[0].ParameterType;
+                var req = Activator.CreateInstance(requestType);
+                if (req is not null)
+                {
+                    TrySetBoolProperty(req, "All", !unreadOnly);
+                    TrySetBoolProperty(req, "Participating", false);
+                }
+
+                var task = (Task)mReqApi.Invoke(notificationsClient, new[] { req, apiOptions })!;
+                await task.ConfigureAwait(false);
+                return ExtractTaskResult<IReadOnlyList<Notification>>(task) ?? Array.Empty<Notification>();
+            }
+
+            // Last resort: no apiOptions.
+            var mNoArgs = methods.FirstOrDefault(m => m.GetParameters().Length == 0);
+            if (mNoArgs is not null)
+            {
+                var task = (Task)mNoArgs.Invoke(notificationsClient, Array.Empty<object?>())!;
+                await task.ConfigureAwait(false);
+                var result = ExtractTaskResult<IReadOnlyList<Notification>>(task) ?? Array.Empty<Notification>();
+                return unreadOnly ? result.Where(n => n.Unread).ToArray() : result;
+            }
+
+            return Array.Empty<Notification>();
+        }
+    }
+
+    private static void TrySetBoolProperty(object target, string propertyName, bool value)
+    {
+        try
+        {
+            var prop = target.GetType().GetProperty(propertyName);
+            if (prop is not null && prop.CanWrite && prop.PropertyType == typeof(bool))
+            {
+                prop.SetValue(target, value);
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static T? ExtractTaskResult<T>(Task task) where T : class
+    {
+        try
+        {
+            var prop = task.GetType().GetProperty("Result");
+            return prop?.GetValue(task) as T;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string TryGetNotificationId(Notification n)
+    {
+        try
+        {
+            var prop = n.GetType().GetProperty("Id");
+            var value = prop?.GetValue(n);
+            return value?.ToString() ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static DateTimeOffset? TryGetUpdatedAt(Notification n)
+    {
+        try
+        {
+            var prop = n.GetType().GetProperty("UpdatedAt") ?? n.GetType().GetProperty("LastReadAt");
+            var value = prop?.GetValue(n);
+            return value as DateTimeOffset?;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<IReadOnlyList<OctokitWorkItemData>> SearchIssuesAsync(IssueSearchQuery query, PageRequest page, CancellationToken ct)

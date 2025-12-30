@@ -61,11 +61,13 @@
   <local:StringNullOrWhiteSpaceToVisibilityConverter x:Key="DashboardStringNullOrWhiteSpaceToVisibilityConverter" />
   <local:CollectionNullOrEmptyToVisibilityConverter x:Key="DashboardCollectionNullOrEmptyToVisibilityConverter" />
   <infra:CardTintVariantToBrushConverter x:Key="DashboardCardTintVariantToBrushConverter" />
+  <local:DashboardCardKindToAutomationIdConverter x:Key="DashboardCardKindToAutomationIdConverter" />
 
   <!-- Card template (Phase 6.2) -->
   <DataTemplate x:Key="DashboardCardTemplate">
     <Border Style="{StaticResource DashboardCardContainerStyle}"
             Padding="0"
+            AutomationProperties.AutomationId="{Binding Kind, Converter={StaticResource DashboardCardKindToAutomationIdConverter}}"
             AutomationProperties.Name="{Binding Title}">
       <Grid>
         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"

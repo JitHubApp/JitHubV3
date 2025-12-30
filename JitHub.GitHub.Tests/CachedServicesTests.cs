@@ -174,6 +174,58 @@ public sealed class CachedServicesTests
         cached.Items.Should().ContainSingle(i => i.Number == 42);
     }
 
+    [Test]
+    public async Task Polling_populates_same_cache_entry_as_notification_service()
+    {
+        var events = new CacheEventBus();
+        var cache = new CacheRuntime(new InMemoryCacheStore(), events);
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            NotificationsFactory = (_, _, _) =>
+                Task.FromResult<IReadOnlyList<OctokitNotificationData>>(
+                [
+                    new OctokitNotificationData(
+                        Id: "n1",
+                        Repo: new RepoKey("octo", "hello"),
+                        Title: "Build is failing",
+                        Type: "Issue",
+                        UpdatedAt: DateTimeOffset.UtcNow,
+                        Unread: true),
+                ])
+        };
+
+        var notificationService = new CachedGitHubNotificationService(cache, dataSource);
+        var pollingService = new CachedGitHubNotificationPollingService(cache, dataSource, NullLogger<CachedGitHubNotificationPollingService>.Instance);
+
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var updated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var sub = events.Subscribe(e =>
+        {
+            if (e.Kind == CacheEventKind.Updated && e.Key.Operation == "github.notifications.mine")
+            {
+                updated.TrySetResult();
+            }
+        });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var pollingTask = pollingService.StartNotificationsPollingAsync(
+            unreadOnly: true,
+            page,
+            new PollingRequest(TimeSpan.FromMilliseconds(1)),
+            cts.Token);
+
+        await updated.Task;
+        cts.Cancel();
+
+        // Polling may complete as canceled.
+        try { await pollingTask; } catch (OperationCanceledException) { }
+
+        var cached = await notificationService.GetMyNotificationsAsync(unreadOnly: true, page, RefreshMode.CacheOnly, CancellationToken.None);
+        cached.Items.Should().ContainSingle(n => n.Id == "n1");
+    }
+
     internal sealed class FakeGitHubDataSource : IGitHubDataSource
     {
         public IReadOnlyList<OctokitRepositoryData> Repositories { get; init; } = Array.Empty<OctokitRepositoryData>();
@@ -185,6 +237,8 @@ public sealed class CachedServicesTests
         public Func<RepoKey, int, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueCommentData>>>? IssueCommentsFactory { get; init; }
 
         public Func<IssueSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitWorkItemData>>>? SearchIssuesFactory { get; init; }
+
+        public Func<bool, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitNotificationData>>>? NotificationsFactory { get; init; }
 
         public int GetMyRepositoriesCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
@@ -215,6 +269,16 @@ public sealed class CachedServicesTests
             }
 
             return Task.FromResult<IReadOnlyList<OctokitWorkItemData>>(Array.Empty<OctokitWorkItemData>());
+        }
+
+        public Task<IReadOnlyList<OctokitNotificationData>> GetMyNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken ct)
+        {
+            if (NotificationsFactory is not null)
+            {
+                return NotificationsFactory(unreadOnly, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitNotificationData>>(Array.Empty<OctokitNotificationData>());
         }
 
         public Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)
