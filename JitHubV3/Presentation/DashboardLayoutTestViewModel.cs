@@ -12,9 +12,23 @@ public sealed partial class DashboardLayoutTestViewModel : ObservableObject
         _navigator = navigator;
         GoBack = new AsyncRelayCommand(DoGoBack);
 
+        var noop = new AsyncRelayCommand(Noop);
+
         Cards =
         [
-            new DashboardCardModel(1, DashboardCardKind.SelectedRepo, "Selected Repository", "octocat/Hello-World", "A compact summary to exercise wrapping.", Importance: 100, TintVariant: 1 % 5),
+            new DashboardCardModel(
+                1,
+                DashboardCardKind.SelectedRepo,
+                "Selected Repository",
+                "octocat/Hello-World",
+                "A compact summary to exercise wrapping.",
+                Importance: 100,
+                Actions:
+                [
+                    new DashboardCardActionModel("Open", noop),
+                    new DashboardCardActionModel("Refresh", noop),
+                ],
+                TintVariant: 1 % 5),
             new DashboardCardModel(2, DashboardCardKind.Unknown, "Longer card title that should wrap across multiple lines", "Subtitle that also wraps when the width is constrained", "This is a longer summary to validate multi-line text layout inside a fixed-height card surface.", TintVariant: 2 % 5),
             new DashboardCardModel(3, DashboardCardKind.Unknown, "No subtitle", null, "Summary only.", TintVariant: 3 % 5),
             new DashboardCardModel(4, DashboardCardKind.Unknown, "No summary", "Only subtitle", null, TintVariant: 4 % 5),
@@ -54,6 +68,8 @@ public sealed partial class DashboardLayoutTestViewModel : ObservableObject
     public IReadOnlyList<DashboardCardModel> Cards { get; }
 
     public ICommand GoBack { get; }
+
+    private static Task Noop(CancellationToken ct) => Task.CompletedTask;
 
     private Task DoGoBack(CancellationToken ct)
         => _navigator.NavigateBackAsync(this, cancellation: ct);

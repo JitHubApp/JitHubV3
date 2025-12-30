@@ -15,10 +15,7 @@
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
   <Page.Resources>
-    <ResourceDictionary>
-      <local:StringNullOrWhiteSpaceToVisibilityConverter x:Key="StringNullOrWhiteSpaceToVisibilityConverter" />
-      <infra:CardTintVariantToBrushConverter x:Key="CardTintVariantToBrushConverter" />
-    </ResourceDictionary>
+    <ResourceDictionary />
   </Page.Resources>
 
   <Grid RowDefinitions="Auto,Auto,*"
@@ -54,48 +51,8 @@
           DeckMaxVisibleCount="5"
           DeckOffsetY="{StaticResource DashboardSpacingM}"
           DeckAngleStepDegrees="1.25"
-          DeckScaleStep="0">
-
-          <layouts:CardDeckPresenter.ItemTemplate>
-            <DataTemplate>
-              <!--
-                   CardBackgroundFillColorDefaultBrush can be semi-transparent in some themes.
-                   When cards overlap (Deck mode), that causes “see-through stacking” artifacts.
-                   Layer an opaque theme brush under it, then add a subtle per-card tint overlay.
-              -->
-              <Border Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
-                      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                      BorderThickness="1"
-                      CornerRadius="{StaticResource DashboardRadiusM}">
-                <Grid>
-                  <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                          CornerRadius="{StaticResource DashboardRadiusM}" />
-
-                  <Border Background="{Binding TintVariant, Converter={StaticResource CardTintVariantToBrushConverter}}"
-                          CornerRadius="{StaticResource DashboardRadiusM}" />
-
-                  <Border Background="Transparent"
-                          CornerRadius="{StaticResource DashboardRadiusM}"
-                          Padding="{StaticResource DashboardEdgePadding}">
-                    <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-                      <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
-
-                      <TextBlock Text="{Binding Subtitle}"
-                                 Visibility="{Binding Subtitle, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
-                                 Opacity="0.72"
-                                 TextWrapping="Wrap" />
-
-                      <TextBlock Text="{Binding Summary}"
-                                 Visibility="{Binding Summary, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
-                                 Opacity="0.72"
-                                 TextWrapping="Wrap" />
-                    </StackPanel>
-                  </Border>
-                </Grid>
-              </Border>
-            </DataTemplate>
-          </layouts:CardDeckPresenter.ItemTemplate>
-        </layouts:CardDeckPresenter>
+          DeckScaleStep="0"
+          ItemTemplate="{StaticResource DashboardCardTemplate}" />
 
       </StackPanel>
     </ScrollViewer>

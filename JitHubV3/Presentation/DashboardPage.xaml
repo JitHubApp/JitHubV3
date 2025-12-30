@@ -96,35 +96,11 @@
           <Grid Padding="{StaticResource DashboardContentPaddingWithComposeClearance}">
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-              <muxc:ItemsRepeater ItemsSource="{Binding Cards}">
+              <muxc:ItemsRepeater ItemsSource="{Binding Cards}"
+                                 ItemTemplate="{StaticResource DashboardCardTemplate}">
                 <muxc:ItemsRepeater.Layout>
                   <muxc:StackLayout Spacing="{StaticResource DashboardSpacingL}" />
                 </muxc:ItemsRepeater.Layout>
-
-                <muxc:ItemsRepeater.ItemTemplate>
-                  <DataTemplate>
-                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="{StaticResource DashboardRadiusM}"
-                            Padding="{StaticResource DashboardEdgePadding}">
-                      <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-                        <TextBlock Text="{Binding Title}"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Text="{Binding Subtitle}"
-                                   Visibility="{Binding Subtitle, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
-                                   Opacity="0.72"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Text="{Binding Summary}"
-                                   Visibility="{Binding Summary, Converter={StaticResource StringNullOrWhiteSpaceToVisibilityConverter}}"
-                                   Opacity="0.72"
-                                   TextWrapping="Wrap" />
-                      </StackPanel>
-                    </Border>
-                  </DataTemplate>
-                </muxc:ItemsRepeater.ItemTemplate>
               </muxc:ItemsRepeater>
             </ScrollViewer>
           </Grid>

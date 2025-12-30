@@ -1,6 +1,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:JitHubV3.Presentation"
   xmlns:infra="using:JitHubV3.Presentation.Infrastructure">
 
   <!-- Dashboard design tokens (metrics only; no colors). -->
@@ -55,5 +56,72 @@
       </Setter.Value>
     </Setter>
   </Style>
+
+  <!-- Common converters for templates -->
+  <local:StringNullOrWhiteSpaceToVisibilityConverter x:Key="DashboardStringNullOrWhiteSpaceToVisibilityConverter" />
+  <local:CollectionNullOrEmptyToVisibilityConverter x:Key="DashboardCollectionNullOrEmptyToVisibilityConverter" />
+  <infra:CardTintVariantToBrushConverter x:Key="DashboardCardTintVariantToBrushConverter" />
+
+  <!-- Card template (Phase 6.2) -->
+  <DataTemplate x:Key="DashboardCardTemplate">
+    <Border Style="{StaticResource DashboardCardContainerStyle}"
+            Padding="0"
+            AutomationProperties.Name="{Binding Title}">
+      <Grid>
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="{StaticResource DashboardRadiusM}" />
+
+        <Border Background="{Binding TintVariant, Converter={StaticResource DashboardCardTintVariantToBrushConverter}}"
+                CornerRadius="{StaticResource DashboardRadiusM}" />
+
+        <Grid Padding="{StaticResource DashboardEdgePadding}"
+              RowDefinitions="Auto,*,Auto"
+              RowSpacing="{StaticResource DashboardSpacingS}">
+
+          <StackPanel Grid.Row="0" Spacing="{StaticResource DashboardSpacingXS}">
+            <TextBlock Text="{Binding Title}"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       TextWrapping="Wrap" />
+
+            <TextBlock Text="{Binding Subtitle}"
+                       Visibility="{Binding Subtitle, Converter={StaticResource DashboardStringNullOrWhiteSpaceToVisibilityConverter}}"
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+
+          <TextBlock Grid.Row="1"
+                     Text="{Binding Summary}"
+                     Visibility="{Binding Summary, Converter={StaticResource DashboardStringNullOrWhiteSpaceToVisibilityConverter}}"
+                     Style="{ThemeResource BodyTextBlockStyle}"
+                     Opacity="0.72"
+                     TextWrapping="Wrap"
+                     TextTrimming="CharacterEllipsis"
+                     MaxLines="4" />
+
+          <ItemsControl Grid.Row="2"
+                        ItemsSource="{Binding Actions}"
+                        Visibility="{Binding Actions, Converter={StaticResource DashboardCollectionNullOrEmptyToVisibilityConverter}}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal"
+                            Spacing="{StaticResource DashboardSpacingS}" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Content="{Binding Label}"
+                        Command="{Binding Command}"
+                        MinHeight="44"
+                        AutomationProperties.Name="{Binding Label}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+        </Grid>
+      </Grid>
+    </Border>
+  </DataTemplate>
 
 </ResourceDictionary>
