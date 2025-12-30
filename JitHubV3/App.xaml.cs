@@ -149,6 +149,7 @@ public partial class App : Application
                     services.AddSingleton<StatusBarViewModel>();
 
                     services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RecentRepositoriesDashboardCardProvider>();
 
                     services.AddSingleton(sp =>
                     {

@@ -11,6 +11,7 @@ namespace JitHubV3.Presentation;
 public sealed partial class DashboardViewModel : ObservableObject, IActivatableViewModel
 {
     private const string ReposCacheOperation = "github.repos.mine";
+    private const int CardProviderMaxConcurrency = 4;
 
     private readonly ILogger<DashboardViewModel> _logger;
     private readonly IDispatcher _dispatcher;
@@ -304,44 +305,120 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         try
         {
-            var combined = new List<DashboardCardModel>();
+            var plannedProviders = _cardProviders
+                .Select((provider, order) => new PlannedProvider(provider, GetTier(provider), order))
+                .ToArray();
 
-            foreach (var provider in _cardProviders)
+            var cardsByProviderId = new Dictionary<string, IReadOnlyList<DashboardCardModel>>(StringComparer.Ordinal);
+            var cardsLock = new object();
+
+            async Task PublishCardsAsync(CancellationToken publishCt)
             {
-                localCt.ThrowIfCancellationRequested();
+                List<DashboardCardModel> snapshot;
+
+                lock (cardsLock)
+                {
+                    snapshot = BuildSnapshot(plannedProviders, cardsByProviderId);
+                }
+
+                await _dispatcher.ExecuteAsync(_ =>
+                {
+                    ObservableCollectionSync.SyncById(
+                        Cards,
+                        snapshot,
+                        getId: x => x.CardId,
+                        shouldReplace: (current, next) => current != next);
+
+                    return ValueTask.CompletedTask;
+                });
+            }
+
+            async Task RunProviderAsync(PlannedProvider planned, RefreshMode providerRefresh, CancellationToken providerCt)
+            {
+                providerCt.ThrowIfCancellationRequested();
 
                 try
                 {
-                    var cards = await provider.GetCardsAsync(Context, refresh, localCt);
-                    if (cards is null || cards.Count == 0)
+                    var cards = await planned.Provider.GetCardsAsync(Context, providerRefresh, providerCt).ConfigureAwait(false);
+
+                    var normalized = Normalize(cards);
+                    lock (cardsLock)
                     {
-                        continue;
+                        if (normalized.Count == 0)
+                        {
+                            cardsByProviderId.Remove(planned.Provider.ProviderId);
+                        }
+                        else
+                        {
+                            cardsByProviderId[planned.Provider.ProviderId] = normalized;
+                        }
                     }
 
-                    combined.AddRange(cards
-                        .OrderByDescending(c => c.Importance)
-                        .ThenBy(c => c.Title, StringComparer.Ordinal));
+                    await PublishCardsAsync(providerCt).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
-                    throw;
+                    // Ignore cancellation.
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Dashboard card provider failed (ProviderId={ProviderId})", provider.ProviderId);
+                    _logger.LogError(ex, "Dashboard card provider failed (ProviderId={ProviderId})", planned.Provider.ProviderId);
                 }
             }
 
-            await _dispatcher.ExecuteAsync(_ =>
-            {
-                ObservableCollectionSync.SyncById(
-                    Cards,
-                    combined,
-                    getId: x => x.CardId,
-                    shouldReplace: (current, next) => current != next);
+            // Wave A: always run the cheapest/high-yield providers first.
+            await StagedWorkScheduler.RunAsync(
+                plannedProviders,
+                tierSelector: p => (int)p.Tier,
+                maxTierInclusive: (int)DashboardCardProviderTier.SingleCallMultiCard,
+                maxConcurrency: CardProviderMaxConcurrency,
+                workAsync: (p, token) => RunProviderAsync(p, refresh, token),
+                ct: localCt).ConfigureAwait(false);
 
-                return ValueTask.CompletedTask;
-            });
+            if (refresh == RefreshMode.CacheOnly && !localCt.IsCancellationRequested)
+            {
+                // Wave B: background refresh for everything that can hit the network.
+                var backgroundProviders = plannedProviders
+                    .Where(p => p.Tier != DashboardCardProviderTier.Local)
+                    .ToArray();
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await StagedWorkScheduler.RunAsync(
+                            backgroundProviders,
+                            tierSelector: p => (int)p.Tier,
+                            maxTierInclusive: (int)DashboardCardProviderTier.MultiCallEnrichment,
+                            maxConcurrency: CardProviderMaxConcurrency,
+                            workAsync: (p, token) => RunProviderAsync(p, RefreshMode.PreferCacheThenRefresh, token),
+                            ct: localCt).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Ignore cancellation.
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Background card refresh failed");
+                    }
+                });
+            }
+            else
+            {
+                // If the caller explicitly requested a refresh, finish the remaining tiers as part of this call.
+                var remainingProviders = plannedProviders
+                    .Where(p => p.Tier > DashboardCardProviderTier.SingleCallMultiCard)
+                    .ToArray();
+
+                await StagedWorkScheduler.RunAsync(
+                    remainingProviders,
+                    tierSelector: p => (int)p.Tier,
+                    maxTierInclusive: (int)DashboardCardProviderTier.MultiCallEnrichment,
+                    maxConcurrency: CardProviderMaxConcurrency,
+                    workAsync: (p, token) => RunProviderAsync(p, refresh, token),
+                    ct: localCt).ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -356,4 +433,44 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             });
         }
     }
+
+    private static DashboardCardProviderTier GetTier(IDashboardCardProvider provider)
+        => provider is IStagedDashboardCardProvider staged
+            ? staged.Tier
+            : DashboardCardProviderTier.SingleCallSingleCard;
+
+    private static IReadOnlyList<DashboardCardModel> Normalize(IReadOnlyList<DashboardCardModel>? cards)
+    {
+        if (cards is null || cards.Count == 0)
+        {
+            return Array.Empty<DashboardCardModel>();
+        }
+
+        return cards
+            .OrderByDescending(c => c.Importance)
+            .ThenBy(c => c.Title, StringComparer.Ordinal)
+            .ThenBy(c => c.CardId)
+            .ToArray();
+    }
+
+    private static List<DashboardCardModel> BuildSnapshot(
+        IReadOnlyList<PlannedProvider> providerOrder,
+        IReadOnlyDictionary<string, IReadOnlyList<DashboardCardModel>> cardsByProviderId)
+    {
+        var combined = new List<DashboardCardModel>();
+
+        foreach (var planned in providerOrder)
+        {
+            if (!cardsByProviderId.TryGetValue(planned.Provider.ProviderId, out var cards) || cards.Count == 0)
+            {
+                continue;
+            }
+
+            combined.AddRange(cards);
+        }
+
+        return combined;
+    }
+
+    private sealed record PlannedProvider(IDashboardCardProvider Provider, DashboardCardProviderTier Tier, int Order);
 }

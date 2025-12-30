@@ -3,11 +3,13 @@ using JitHub.GitHub.Abstractions.Refresh;
 
 namespace JitHubV3.Presentation;
 
-public sealed class SelectedRepoDashboardCardProvider : IDashboardCardProvider
+public sealed class SelectedRepoDashboardCardProvider : IStagedDashboardCardProvider
 {
     public string ProviderId => "selected-repo";
 
     public int Priority => 0;
+
+    public DashboardCardProviderTier Tier => DashboardCardProviderTier.Local;
 
     public Task<IReadOnlyList<DashboardCardModel>> GetCardsAsync(
         DashboardContext context,
