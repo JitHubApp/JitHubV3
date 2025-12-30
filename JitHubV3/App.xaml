@@ -9,9 +9,26 @@
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
         <!-- Load Uno.UI.Toolkit resources -->
         <ToolkitResources xmlns="using:Uno.Toolkit.UI" />
+
+        <!-- Shell tokens (metrics only; no colors) -->
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/Shell.xaml" />
+
+        <!-- Dashboard UI tokens (metrics only; no colors) -->
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/Dashboard.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <!-- Add resources here -->
+
+      <!--
+           Dashboard card tint palette (finite + tasteful).
+           Uses WinUI theme color resources (no hardcoded colors).
+           These are intended as subtle overlays on top of the normal card background.
+      -->
+      <SolidColorBrush x:Key="DashboardCardTintBrushNeutral" Color="{ThemeResource SystemFillColorNeutralBackground}" Opacity="0.22" />
+      <SolidColorBrush x:Key="DashboardCardTintBrushAttention" Color="{ThemeResource SystemFillColorAttentionBackground}" Opacity="0.28" />
+      <SolidColorBrush x:Key="DashboardCardTintBrushSuccess" Color="{ThemeResource SystemFillColorSuccessBackground}" Opacity="0.28" />
+      <SolidColorBrush x:Key="DashboardCardTintBrushCaution" Color="{ThemeResource SystemFillColorCautionBackground}" Opacity="0.28" />
+      <SolidColorBrush x:Key="DashboardCardTintBrushCritical" Color="{ThemeResource SystemFillColorCriticalBackground}" Opacity="0.28" />
 
     </ResourceDictionary>
   </Application.Resources>

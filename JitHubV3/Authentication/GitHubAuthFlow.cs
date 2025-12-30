@@ -36,7 +36,7 @@ internal static class GitHubAuthFlow
             ? scopeFromCreds
             : "repo";
 
-#if WINDOWS || __WINDOWS__ || __SKIA__
+#if WINDOWS || __WINDOWS__ || __SKIA__ || JITHUB_DESKTOP
         // Desktop (WinAppSDK + Skia): system browser + loopback redirect.
         // This avoids WebAuthenticationBroker (not available on Skia) and avoids protocol activation races.
         await using var listener = new LoopbackHandoffListener("/oauth2/callback");

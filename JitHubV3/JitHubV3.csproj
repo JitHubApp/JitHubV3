@@ -94,6 +94,14 @@
     <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
   </PropertyGroup>
 
+  <!--
+    Uno's net*-desktop TFM does not necessarily define a dedicated platform symbol we can rely on.
+    Define our own to ensure desktop/Skia builds use the loopback + system browser auth flow.
+  -->
+  <PropertyGroup Condition="'$(TargetFramework)'=='net10.0-desktop'">
+    <DefineConstants>$(DefineConstants);JITHUB_DESKTOP</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Octokit" />
   </ItemGroup>
@@ -102,6 +110,7 @@
     <ProjectReference Include="..\JitHub.Markdown.Uno\JitHub.Markdown.Uno.csproj" />
     <ProjectReference Include="..\JitHub.GitHub.Abstractions\JitHub.GitHub.Abstractions.csproj" />
     <ProjectReference Include="..\JitHub.GitHub.Octokit\JitHub.GitHub.Octokit.csproj" />
+    <ProjectReference Include="..\JitHub.Dashboard.Layouts\JitHub.Dashboard.Layouts.csproj" />
   </ItemGroup>
 
 </Project>

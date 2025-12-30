@@ -1,0 +1,13 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Shell layout tokens (metrics only; no colors). -->
+
+  <!-- Width below which the status bar moves to a compact top placement. -->
+  <x:Double x:Key="ShellNarrowMaxWidth">600</x:Double>
+
+  <!-- Common padding for the status bar surface. -->
+  <Thickness x:Key="ShellStatusBarPadding">16,8</Thickness>
+
+</ResourceDictionary>

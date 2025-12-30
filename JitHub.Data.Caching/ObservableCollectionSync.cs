@@ -32,9 +32,11 @@ public static class ObservableCollectionSync
 
         if (source.Count == 0)
         {
-            if (target.Count != 0)
+            // Avoid Clear(), which raises a collection Reset and can cause UI flicker.
+            // Remove items individually so virtualization can animate/retain state.
+            while (target.Count > 0)
             {
-                target.Clear();
+                target.RemoveAt(target.Count - 1);
             }
 
             return;

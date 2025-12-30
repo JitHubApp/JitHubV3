@@ -50,6 +50,15 @@
       <Deploy />
     </Project>
   </Folder>
+
+  <Folder Name="/Dashboard/">
+    <Project Path="JitHub.Dashboard.Layouts/JitHub.Dashboard.Layouts.csproj">
+      <Deploy />
+    </Project>
+    <Project Path="JitHub.Dashboard.Layouts.Tests/JitHub.Dashboard.Layouts.Tests.csproj">
+      <Deploy />
+    </Project>
+  </Folder>
   <Project Path="JitHubV3.Server/JitHubV3.Server.csproj">
     <Deploy />
   </Project>

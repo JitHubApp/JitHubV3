@@ -148,6 +148,17 @@ public partial class App : Application
 
                     services.AddSingleton<StatusBarViewModel>();
 
+                    services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RecentRepositoriesDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RepoIssuesSummaryDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RepoSnapshotDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RepoRecentlyUpdatedIssuesDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RepoRecentActivityDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, MyAssignedWorkDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, MyReviewRequestsDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, NotificationsDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, MyRecentActivityDashboardCardProvider>();
+
                     services.AddSingleton(sp =>
                     {
                         var baseUrl = context.Configuration["GitHub:ApiBaseUrl"];
@@ -197,7 +208,7 @@ public partial class App : Application
                 var authenticated = await auth.RefreshAsync();
                 if (authenticated)
                 {
-                    await navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.Nested);
+                    await navigator.NavigateViewModelAsync<DashboardViewModel>(this, qualifier: Qualifiers.Nested);
                 }
                 else
                 {
@@ -266,10 +277,12 @@ public partial class App : Application
         views.Register(
             new ViewMap(ViewModel: typeof(ShellViewModel)),
             new ViewMap<LoginPage, LoginViewModel>(),
+            new ViewMap<DashboardPage, DashboardViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
             new DataViewMap<IssuesPage, IssuesViewModel, RepoRouteData>(),
             new DataViewMap<IssueConversationPage, IssueConversationViewModel, IssueConversationRouteData>(),
             new ViewMap<MarkdownTestPage, MarkdownTestViewModel>(),
+            new ViewMap<DashboardLayoutTestPage, DashboardLayoutTestViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>()
         );
 
@@ -278,10 +291,12 @@ public partial class App : Application
                 Nested:
                 [
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
-                    new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("Dashboard", View: views.FindByViewModel<DashboardViewModel>(), IsDefault:true),
+                    new ("Main", View: views.FindByViewModel<MainViewModel>()),
                     new ("Issues", View: views.FindByViewModel<IssuesViewModel>()),
                     new ("IssueConversation", View: views.FindByViewModel<IssueConversationViewModel>()),
                     new ("MarkdownTest", View: views.FindByViewModel<MarkdownTestViewModel>()),
+                    new ("DashboardLayoutTest", View: views.FindByViewModel<DashboardLayoutTestViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                 ]
             )

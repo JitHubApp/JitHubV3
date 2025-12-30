@@ -27,6 +27,16 @@
           Command="{Binding Login}"
           HorizontalAlignment="Stretch" />
 
+      <Button Content="Dashboard Layout Test"
+        AutomationProperties.AutomationId="DashboardLayoutTestButton"
+        Command="{Binding GoToDashboardLayoutTest}"
+        HorizontalAlignment="Stretch" />
+
+      <Button Content="Dashboard (Test)"
+        AutomationProperties.AutomationId="DashboardTestButton"
+        Command="{Binding GoToDashboardTest}"
+        HorizontalAlignment="Stretch" />
+
       <Button Content="Markdown Test"
           AutomationProperties.AutomationId="MarkdownTestButton"
           Command="{Binding GoToMarkdownTest}"

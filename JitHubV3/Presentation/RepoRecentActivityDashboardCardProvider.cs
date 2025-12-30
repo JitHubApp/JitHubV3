@@ -1,0 +1,78 @@
+using JitHub.GitHub.Abstractions.Models;
+using JitHub.GitHub.Abstractions.Paging;
+using JitHub.GitHub.Abstractions.Refresh;
+using JitHub.GitHub.Abstractions.Services;
+
+namespace JitHubV3.Presentation;
+
+public sealed class RepoRecentActivityDashboardCardProvider : IStagedDashboardCardProvider
+{
+    private readonly IGitHubActivityService _activity;
+
+    public RepoRecentActivityDashboardCardProvider(IGitHubActivityService activity)
+    {
+        _activity = activity ?? throw new ArgumentNullException(nameof(activity));
+    }
+
+    public string ProviderId => "repo-activity";
+
+    public int Priority => 22;
+
+    public DashboardCardProviderTier Tier => DashboardCardProviderTier.SingleCallMultiCard;
+
+    public async Task<IReadOnlyList<DashboardCardModel>> GetCardsAsync(DashboardContext context, RefreshMode refresh, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var repo = context.SelectedRepo;
+        if (repo is null)
+        {
+            return Array.Empty<DashboardCardModel>();
+        }
+
+        var page = PageRequest.FirstPage(pageSize: 10);
+        var result = await _activity.GetRepoActivityAsync(repo.Value, page, refresh, ct).ConfigureAwait(false);
+        var items = result.Items;
+
+        if (items.Count == 0)
+        {
+            return new[]
+            {
+                new DashboardCardModel(
+                    CardId: DashboardCardId.RepoRecentActivityEmpty,
+                    Kind: DashboardCardKind.RepoRecentActivity,
+                    Title: "Repo activity",
+                    Subtitle: "No recent activity",
+                    Summary: null,
+                    Importance: 64,
+                    TintVariant: 1),
+            };
+        }
+
+        var cards = new List<DashboardCardModel>(items.Count);
+        for (var i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            var type = string.IsNullOrWhiteSpace(item.Type) ? "Event" : item.Type;
+            var actor = string.IsNullOrWhiteSpace(item.ActorLogin) ? "someone" : item.ActorLogin;
+            var when = item.CreatedAt == DateTimeOffset.MinValue ? "unknown" : item.CreatedAt.LocalDateTime.ToString("g");
+
+            var details = string.IsNullOrWhiteSpace(item.Description) ? null : Trim(item.Description, 140);
+            var summary = details is null ? when : $"{when}\n{details}";
+
+            cards.Add(new DashboardCardModel(
+                CardId: DashboardCardId.RepoRecentActivityItem(item.Id),
+                Kind: DashboardCardKind.RepoRecentActivity,
+                Title: Trim(type, 56),
+                Subtitle: Trim(actor, 32),
+                Summary: summary,
+                Importance: 64 - i,
+                TintVariant: 1));
+        }
+
+        return cards;
+    }
+
+    private static string Trim(string value, int max)
+        => value.Length <= max ? value : value.Substring(0, max - 1) + "…";
+}

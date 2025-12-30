@@ -18,17 +18,25 @@ public partial class LoginViewModel : ObservableObject
         _authentication = authentication;
         Login = new AsyncRelayCommand(DoLogin);
         GoToMarkdownTest = new AsyncRelayCommand(DoGoToMarkdownTest);
+        GoToDashboardLayoutTest = new AsyncRelayCommand(DoGoToDashboardLayoutTest);
+        GoToDashboardTest = new AsyncRelayCommand(DoGoToDashboardTest);
     }
 
     private Task DoGoToMarkdownTest()
         => _navigator.NavigateViewModelAsync<MarkdownTestViewModel>(this);
+
+    private Task DoGoToDashboardLayoutTest()
+        => _navigator.NavigateViewModelAsync<DashboardLayoutTestViewModel>(this);
+
+    private Task DoGoToDashboardTest()
+        => _navigator.NavigateViewModelAsync<DashboardViewModel>(this);
 
     private async Task DoLogin()
     {
         var success = await _authentication.LoginAsync(_dispatcher);
         if (success)
         {
-            await _navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.ClearBackStack);
+            await _navigator.NavigateViewModelAsync<DashboardViewModel>(this, qualifier: Qualifiers.ClearBackStack);
         }
     }
 
@@ -37,4 +45,8 @@ public partial class LoginViewModel : ObservableObject
     public ICommand Login { get; }
 
     public ICommand GoToMarkdownTest { get; }
+
+    public ICommand GoToDashboardLayoutTest { get; }
+
+    public ICommand GoToDashboardTest { get; }
 }

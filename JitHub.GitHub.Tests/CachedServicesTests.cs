@@ -174,9 +174,159 @@ public sealed class CachedServicesTests
         cached.Items.Should().ContainSingle(i => i.Number == 42);
     }
 
+    [Test]
+    public async Task Polling_populates_same_cache_entry_as_notification_service()
+    {
+        var events = new CacheEventBus();
+        var cache = new CacheRuntime(new InMemoryCacheStore(), events);
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            NotificationsFactory = (_, _, _) =>
+                Task.FromResult<IReadOnlyList<OctokitNotificationData>>(
+                [
+                    new OctokitNotificationData(
+                        Id: "n1",
+                        Repo: new RepoKey("octo", "hello"),
+                        Title: "Build is failing",
+                        Type: "Issue",
+                        UpdatedAt: DateTimeOffset.UtcNow,
+                        Unread: true),
+                ])
+        };
+
+        var notificationService = new CachedGitHubNotificationService(cache, dataSource);
+        var pollingService = new CachedGitHubNotificationPollingService(cache, dataSource, NullLogger<CachedGitHubNotificationPollingService>.Instance);
+
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var updated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var sub = events.Subscribe(e =>
+        {
+            if (e.Kind == CacheEventKind.Updated && e.Key.Operation == "github.notifications.mine")
+            {
+                updated.TrySetResult();
+            }
+        });
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var pollingTask = pollingService.StartNotificationsPollingAsync(
+            unreadOnly: true,
+            page,
+            new PollingRequest(TimeSpan.FromMilliseconds(1)),
+            cts.Token);
+
+        await updated.Task;
+        cts.Cancel();
+
+        // Polling may complete as canceled.
+        try { await pollingTask; } catch (OperationCanceledException) { }
+
+        var cached = await notificationService.GetMyNotificationsAsync(unreadOnly: true, page, RefreshMode.CacheOnly, CancellationToken.None);
+        cached.Items.Should().ContainSingle(n => n.Id == "n1");
+    }
+
+    [Test]
+    public async Task ActivityService_cache_only_returns_cached_value()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var now = DateTimeOffset.UtcNow;
+        var dataSource = new FakeGitHubDataSource
+        {
+            MyActivityFactory = (page, _) =>
+                Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(
+                [
+                    new OctokitActivityEventData("e1", new RepoKey("octo", "hello"), "PushEvent", "me", null, now),
+                ])
+        };
+
+        var sut = new CachedGitHubActivityService(cache, dataSource);
+
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var first = await sut.GetMyActivityAsync(page, RefreshMode.ForceRefresh, CancellationToken.None);
+        first.Items.Should().HaveCount(1);
+        dataSource.GetMyActivityCallCount.Should().Be(1);
+
+        var cached = await sut.GetMyActivityAsync(page, RefreshMode.CacheOnly, CancellationToken.None);
+        cached.Items.Should().HaveCount(1);
+        dataSource.GetMyActivityCallCount.Should().Be(1);
+    }
+
+    [Test]
+    public async Task ActivityService_cache_key_varies_by_repo()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            RepoActivityFactory = (repo, page, _) =>
+            {
+                var id = $"{repo.Owner}/{repo.Name}:{page.PageNumber}";
+                return Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(
+                [
+                    new OctokitActivityEventData(id, repo, "WatchEvent", "me", null, DateTimeOffset.UtcNow),
+                ]);
+            }
+        };
+
+        var sut = new CachedGitHubActivityService(cache, dataSource);
+        var page = PageRequest.FromPageNumber(1, pageSize: 5);
+
+        var repo1 = new RepoKey("octo", "hello");
+        var repo2 = new RepoKey("octo", "world");
+
+        var r1 = await sut.GetRepoActivityAsync(repo1, page, RefreshMode.ForceRefresh, CancellationToken.None);
+        var r2 = await sut.GetRepoActivityAsync(repo2, page, RefreshMode.ForceRefresh, CancellationToken.None);
+
+        dataSource.GetRepoActivityCallCount.Should().Be(2);
+        r1.Items.Single().Id.Should().NotBe(r2.Items.Single().Id);
+
+        _ = await sut.GetRepoActivityAsync(repo1, page, RefreshMode.CacheOnly, CancellationToken.None);
+        dataSource.GetRepoActivityCallCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task RepoDetailsService_cache_only_returns_cached_value()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var now = DateTimeOffset.UtcNow;
+        var dataSource = new FakeGitHubDataSource
+        {
+            RepoDetailsFactory = (repo, _) =>
+                Task.FromResult<OctokitRepositoryDetailData?>(
+                    new OctokitRepositoryDetailData(
+                        Repo: repo,
+                        IsPrivate: false,
+                        DefaultBranch: "main",
+                        Description: "Demo",
+                        UpdatedAt: now,
+                        StargazersCount: 12,
+                        ForksCount: 3,
+                        WatchersCount: 4))
+        };
+
+        var sut = new CachedGitHubRepositoryDetailsService(cache, dataSource);
+        var repo = new RepoKey("octo", "hello");
+
+        var first = await sut.GetRepositoryAsync(repo, RefreshMode.ForceRefresh, CancellationToken.None);
+        first.Should().NotBeNull();
+        dataSource.GetRepoDetailsCallCount.Should().Be(1);
+
+        var cached = await sut.GetRepositoryAsync(repo, RefreshMode.CacheOnly, CancellationToken.None);
+        cached.Should().NotBeNull();
+        dataSource.GetRepoDetailsCallCount.Should().Be(1);
+    }
+
     internal sealed class FakeGitHubDataSource : IGitHubDataSource
     {
         public IReadOnlyList<OctokitRepositoryData> Repositories { get; init; } = Array.Empty<OctokitRepositoryData>();
+
+        public Func<PageRequest, CancellationToken, Task<IReadOnlyList<OctokitActivityEventData>>>? MyActivityFactory { get; init; }
+
+        public Func<RepoKey, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitActivityEventData>>>? RepoActivityFactory { get; init; }
 
         public Func<RepoKey, IssueQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueData>>>? IssuesFactory { get; init; }
 
@@ -184,13 +334,46 @@ public sealed class CachedServicesTests
 
         public Func<RepoKey, int, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueCommentData>>>? IssueCommentsFactory { get; init; }
 
+        public Func<IssueSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitWorkItemData>>>? SearchIssuesFactory { get; init; }
+
+        public Func<bool, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitNotificationData>>>? NotificationsFactory { get; init; }
+
+        public Func<RepoKey, CancellationToken, Task<OctokitRepositoryDetailData?>>? RepoDetailsFactory { get; init; }
+
         public int GetMyRepositoriesCallCount { get; private set; }
+        public int GetMyActivityCallCount { get; private set; }
+        public int GetRepoActivityCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
+        public int GetRepoDetailsCallCount { get; private set; }
 
         public Task<IReadOnlyList<OctokitRepositoryData>> GetMyRepositoriesAsync(CancellationToken ct)
         {
             GetMyRepositoriesCallCount++;
             return Task.FromResult(Repositories);
+        }
+
+        public Task<IReadOnlyList<OctokitActivityEventData>> GetMyActivityAsync(PageRequest page, CancellationToken ct)
+        {
+            GetMyActivityCallCount++;
+
+            if (MyActivityFactory is not null)
+            {
+                return MyActivityFactory(page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(Array.Empty<OctokitActivityEventData>());
+        }
+
+        public Task<IReadOnlyList<OctokitActivityEventData>> GetRepoActivityAsync(RepoKey repo, PageRequest page, CancellationToken ct)
+        {
+            GetRepoActivityCallCount++;
+
+            if (RepoActivityFactory is not null)
+            {
+                return RepoActivityFactory(repo, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(Array.Empty<OctokitActivityEventData>());
         }
 
         public Task<IReadOnlyList<OctokitIssueData>> GetIssuesAsync(RepoKey repo, IssueQuery query, PageRequest page, CancellationToken ct)
@@ -203,6 +386,38 @@ public sealed class CachedServicesTests
             }
 
             return Task.FromResult<IReadOnlyList<OctokitIssueData>>(Array.Empty<OctokitIssueData>());
+        }
+
+        public Task<IReadOnlyList<OctokitWorkItemData>> SearchIssuesAsync(IssueSearchQuery query, PageRequest page, CancellationToken ct)
+        {
+            if (SearchIssuesFactory is not null)
+            {
+                return SearchIssuesFactory(query, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitWorkItemData>>(Array.Empty<OctokitWorkItemData>());
+        }
+
+        public Task<IReadOnlyList<OctokitNotificationData>> GetMyNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken ct)
+        {
+            if (NotificationsFactory is not null)
+            {
+                return NotificationsFactory(unreadOnly, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitNotificationData>>(Array.Empty<OctokitNotificationData>());
+        }
+
+        public Task<OctokitRepositoryDetailData?> GetRepositoryAsync(RepoKey repo, CancellationToken ct)
+        {
+            GetRepoDetailsCallCount++;
+
+            if (RepoDetailsFactory is not null)
+            {
+                return RepoDetailsFactory(repo, ct);
+            }
+
+            return Task.FromResult<OctokitRepositoryDetailData?>(null);
         }
 
         public Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)

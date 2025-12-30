@@ -1,0 +1,64 @@
+﻿<Page x:Class="JitHubV3.Presentation.DashboardLayoutTestPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+      xmlns:layouts="using:JitHub.Dashboard.Layouts"
+      xmlns:local="using:JitHubV3.Presentation"
+      xmlns:infra="using:JitHubV3.Presentation.Infrastructure"
+      mc:Ignorable="d"
+      IsTabStop="False"
+      NavigationCacheMode="Required"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+  <Page.Resources>
+    <ResourceDictionary />
+  </Page.Resources>
+
+  <Grid RowDefinitions="Auto,Auto,*"
+        Padding="{StaticResource DashboardEdgePadding}"
+        RowSpacing="{StaticResource DashboardSpacingM}">
+
+    <utu:NavigationBar Content="{Binding Title}" />
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="{StaticResource DashboardSpacingM}">
+      <Button Content="Back"
+              Command="{Binding GoBack}"
+              HorizontalAlignment="Left" />
+
+      <ComboBox Header="Layout Mode"
+                MinWidth="220"
+                ItemsSource="{Binding Modes}"
+                SelectedItem="{Binding SelectedMode, Mode=TwoWay}" />
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="{StaticResource DashboardSpacingL}" MaxWidth="1200">
+
+        <TextBlock Text="Resize the window (Auto) or switch mode to exercise CardDeckLayout." Opacity="0.72" TextWrapping="Wrap" />
+
+        <layouts:CardDeckPresenter
+          x:Name="CardPresenter"
+          ItemsSource="{Binding Cards}"
+          Mode="{Binding SelectedMode}"
+          ModeWidthThreshold="{StaticResource DashboardGridToDeckMinWidth}"
+          CardMinWidth="320"
+          CardHeight="180"
+          Spacing="{StaticResource DashboardSpacingL}"
+          MaxColumns="3"
+          DeckMaxVisibleCount="5"
+          DeckOffsetY="{StaticResource DashboardSpacingM}"
+          DeckAngleStepDegrees="1.25"
+          DeckScaleStep="0.05"
+          DeckBaseZ="{StaticResource DashboardElevationFloating}"
+          DeckZStep="24"
+          ItemTemplate="{StaticResource DashboardCardTemplate}" />
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</Page>
