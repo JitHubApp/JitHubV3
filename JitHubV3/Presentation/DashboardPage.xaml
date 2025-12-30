@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="using:JitHubV3.Presentation"
   xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+  xmlns:layouts="using:JitHub.Dashboard.Layouts"
       xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -98,13 +99,21 @@
           <Grid Padding="{StaticResource DashboardContentPaddingWithComposeClearance}">
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-              <muxc:ItemsRepeater ItemsSource="{Binding Cards}"
-                                 AutomationProperties.AutomationId="DashboardCardList"
-                                 ItemTemplate="{StaticResource DashboardCardTemplate}">
-                <muxc:ItemsRepeater.Layout>
-                  <muxc:StackLayout Spacing="{StaticResource DashboardSpacingL}" />
-                </muxc:ItemsRepeater.Layout>
-              </muxc:ItemsRepeater>
+              <layouts:CardDeckPresenter
+                ItemsSource="{Binding Cards}"
+                AutomationProperties.AutomationId="DashboardCardList"
+                ModeWidthThreshold="{StaticResource DashboardGridToDeckMinWidth}"
+                CardMinWidth="320"
+                CardHeight="180"
+                Spacing="{StaticResource DashboardSpacingL}"
+                MaxColumns="3"
+                DeckMaxVisibleCount="5"
+                DeckOffsetY="{StaticResource DashboardSpacingM}"
+                DeckAngleStepDegrees="1.25"
+                DeckScaleStep="0.05"
+                DeckBaseZ="{StaticResource DashboardElevationFloating}"
+                DeckZStep="24"
+                ItemTemplate="{StaticResource DashboardCardTemplate}" />
             </ScrollViewer>
           </Grid>
         </NavigationView.Content>
