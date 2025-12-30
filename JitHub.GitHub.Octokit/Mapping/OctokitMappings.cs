@@ -107,6 +107,22 @@ public static class OctokitMappings
             Unread: notification.Unread);
     }
 
+    internal static ActivitySummary ToActivitySummary(OctokitActivityEventData activity)
+    {
+        if (activity is null)
+        {
+            throw new ArgumentNullException(nameof(activity));
+        }
+
+        return new ActivitySummary(
+            Id: activity.Id ?? string.Empty,
+            Repo: activity.Repo,
+            Type: activity.Type ?? string.Empty,
+            ActorLogin: activity.ActorLogin,
+            Description: activity.Description,
+            CreatedAt: activity.CreatedAt);
+    }
+
     private static IssueState ParseIssueState(string? state)
     {
         if (string.Equals(state, "closed", StringComparison.OrdinalIgnoreCase))

@@ -39,6 +39,54 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<OctokitActivityEventData>> GetMyActivityAsync(PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var apiOptions = new ApiOptions
+        {
+            PageCount = 1,
+            PageSize = page.PageSize,
+            StartPage = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        // Events API needs a username.
+        var me = await client.User.Current().ConfigureAwait(false);
+        var login = me.Login;
+
+        var eventsClient = client.Activity.Events;
+        var raw = await InvokeToObjectListAsync(eventsClient, "GetAllUserPerformed", login, apiOptions).ConfigureAwait(false);
+
+        return raw.Select(MapActivityEvent).ToArray();
+    }
+
+    public async Task<IReadOnlyList<OctokitActivityEventData>> GetRepoActivityAsync(RepoKey repo, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var apiOptions = new ApiOptions
+        {
+            PageCount = 1,
+            PageSize = page.PageSize,
+            StartPage = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        var eventsClient = client.Activity.Events;
+        var raw = await InvokeToObjectListAsync(eventsClient, "GetAllForRepository", repo.Owner, repo.Name, apiOptions).ConfigureAwait(false);
+
+        return raw.Select(MapActivityEvent).ToArray();
+    }
+
     public async Task<IReadOnlyList<OctokitNotificationData>> GetMyNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken ct)
     {
         if (page.Cursor is not null)
@@ -258,6 +306,174 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             var prop = n.GetType().GetProperty("UpdatedAt") ?? n.GetType().GetProperty("LastReadAt");
             var value = prop?.GetValue(n);
             return value as DateTimeOffset?;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task<IReadOnlyList<object>> InvokeToObjectListAsync(object target, string methodName, params object[] args)
+    {
+        try
+        {
+            var methods = target.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Where(m => string.Equals(m.Name, methodName, StringComparison.Ordinal))
+                .ToArray();
+
+            var match = methods.FirstOrDefault(m => ParametersMatch(m.GetParameters(), args));
+            if (match is null)
+            {
+                return Array.Empty<object>();
+            }
+
+            var invoked = match.Invoke(target, args);
+            if (invoked is not Task task)
+            {
+                return Array.Empty<object>();
+            }
+
+            await task.ConfigureAwait(false);
+
+            var result = ExtractTaskResult<object>(task);
+            if (result is System.Collections.IEnumerable enumerable)
+            {
+                var list = new List<object>();
+                foreach (var item in enumerable)
+                {
+                    if (item is not null)
+                    {
+                        list.Add(item);
+                    }
+                }
+                return list;
+            }
+
+            return Array.Empty<object>();
+        }
+        catch
+        {
+            return Array.Empty<object>();
+        }
+    }
+
+    private static bool ParametersMatch(System.Reflection.ParameterInfo[] parameters, object[] args)
+    {
+        if (parameters.Length != args.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            var arg = args[i];
+            if (arg is null)
+            {
+                return false;
+            }
+
+            var pType = parameters[i].ParameterType;
+            if (!pType.IsInstanceOfType(arg))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static OctokitActivityEventData MapActivityEvent(object e)
+    {
+        var id = TryGetStringProperty(e, "Id");
+        var type = TryGetStringProperty(e, "Type");
+        var createdAt = TryGetDateTimeOffsetProperty(e, "CreatedAt") ?? DateTimeOffset.MinValue;
+
+        var actorLogin = TryGetNestedStringProperty(e, "Actor", "Login")
+            ?? TryGetNestedStringProperty(e, "Actor", "Name");
+
+        var repoFullName = TryGetNestedStringProperty(e, "Repo", "Name")
+            ?? TryGetNestedStringProperty(e, "Repository", "FullName")
+            ?? TryGetNestedStringProperty(e, "Repository", "Name");
+
+        var repo = TryParseRepoKey(repoFullName);
+
+        // Avoid exposing raw payloads; keep this field for future UI-friendly summaries.
+        var description = (string?)null;
+
+        return new OctokitActivityEventData(
+            Id: id,
+            Repo: repo,
+            Type: type,
+            ActorLogin: actorLogin,
+            Description: description,
+            CreatedAt: createdAt);
+    }
+
+    private static string? TryGetStringProperty(object target, string propertyName)
+    {
+        try
+        {
+            var prop = target.GetType().GetProperty(propertyName);
+            var value = prop?.GetValue(target);
+            return value?.ToString();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static DateTimeOffset? TryGetDateTimeOffsetProperty(object target, string propertyName)
+    {
+        try
+        {
+            var prop = target.GetType().GetProperty(propertyName);
+            var value = prop?.GetValue(target);
+            return value as DateTimeOffset?;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? TryGetNestedStringProperty(object target, string objectPropertyName, string nestedPropertyName)
+    {
+        try
+        {
+            var objProp = target.GetType().GetProperty(objectPropertyName);
+            var obj = objProp?.GetValue(target);
+            if (obj is null)
+            {
+                return null;
+            }
+
+            var nestedProp = obj.GetType().GetProperty(nestedPropertyName);
+            var value = nestedProp?.GetValue(obj);
+            return value?.ToString();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static RepoKey? TryParseRepoKey(string? fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return null;
+        }
+
+        var parts = fullName.Trim().Split('/');
+        if (parts.Length != 2)
+        {
+            return null;
+        }
+
+        try
+        {
+            return new RepoKey(parts[0], parts[1]);
         }
         catch
         {

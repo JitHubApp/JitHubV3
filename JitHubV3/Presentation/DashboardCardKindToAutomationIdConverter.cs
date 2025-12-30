@@ -16,6 +16,8 @@ public sealed class DashboardCardKindToAutomationIdConverter : IValueConverter
                 DashboardCardKind.MyAssignedWork => "DashboardCard.MyAssignedWork",
                 DashboardCardKind.MyReviewRequests => "DashboardCard.MyReviewRequests",
                 DashboardCardKind.Notifications => "DashboardCard.Notifications",
+                DashboardCardKind.MyRecentActivity => "DashboardCard.MyRecentActivity",
+                DashboardCardKind.RepoRecentActivity => "DashboardCard.RepoRecentActivity",
                 _ => "DashboardCard.Unknown",
             };
         }

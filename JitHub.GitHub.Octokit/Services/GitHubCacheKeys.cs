@@ -10,6 +10,34 @@ internal static class GitHubCacheKeys
     public static CacheKey MyRepositories()
         => CacheKey.Create("github.repos.mine");
 
+    public static CacheKey MyActivity(PageRequest page)
+    {
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.activity.mine",
+            userScope: null,
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
+
+    public static CacheKey RepoActivity(RepoKey repo, PageRequest page)
+    {
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.activity.repo",
+            userScope: null,
+            ("owner", repo.Owner),
+            ("repo", repo.Name),
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
+
     public static CacheKey MyNotifications(bool unreadOnly, PageRequest page)
     {
         var pageNumber = page.PageNumber?.ToString() ?? string.Empty;

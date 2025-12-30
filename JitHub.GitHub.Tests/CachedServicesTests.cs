@@ -226,9 +226,74 @@ public sealed class CachedServicesTests
         cached.Items.Should().ContainSingle(n => n.Id == "n1");
     }
 
+    [Test]
+    public async Task ActivityService_cache_only_returns_cached_value()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var now = DateTimeOffset.UtcNow;
+        var dataSource = new FakeGitHubDataSource
+        {
+            MyActivityFactory = (page, _) =>
+                Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(
+                [
+                    new OctokitActivityEventData("e1", new RepoKey("octo", "hello"), "PushEvent", "me", null, now),
+                ])
+        };
+
+        var sut = new CachedGitHubActivityService(cache, dataSource);
+
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var first = await sut.GetMyActivityAsync(page, RefreshMode.ForceRefresh, CancellationToken.None);
+        first.Items.Should().HaveCount(1);
+        dataSource.GetMyActivityCallCount.Should().Be(1);
+
+        var cached = await sut.GetMyActivityAsync(page, RefreshMode.CacheOnly, CancellationToken.None);
+        cached.Items.Should().HaveCount(1);
+        dataSource.GetMyActivityCallCount.Should().Be(1);
+    }
+
+    [Test]
+    public async Task ActivityService_cache_key_varies_by_repo()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            RepoActivityFactory = (repo, page, _) =>
+            {
+                var id = $"{repo.Owner}/{repo.Name}:{page.PageNumber}";
+                return Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(
+                [
+                    new OctokitActivityEventData(id, repo, "WatchEvent", "me", null, DateTimeOffset.UtcNow),
+                ]);
+            }
+        };
+
+        var sut = new CachedGitHubActivityService(cache, dataSource);
+        var page = PageRequest.FromPageNumber(1, pageSize: 5);
+
+        var repo1 = new RepoKey("octo", "hello");
+        var repo2 = new RepoKey("octo", "world");
+
+        var r1 = await sut.GetRepoActivityAsync(repo1, page, RefreshMode.ForceRefresh, CancellationToken.None);
+        var r2 = await sut.GetRepoActivityAsync(repo2, page, RefreshMode.ForceRefresh, CancellationToken.None);
+
+        dataSource.GetRepoActivityCallCount.Should().Be(2);
+        r1.Items.Single().Id.Should().NotBe(r2.Items.Single().Id);
+
+        _ = await sut.GetRepoActivityAsync(repo1, page, RefreshMode.CacheOnly, CancellationToken.None);
+        dataSource.GetRepoActivityCallCount.Should().Be(2);
+    }
+
     internal sealed class FakeGitHubDataSource : IGitHubDataSource
     {
         public IReadOnlyList<OctokitRepositoryData> Repositories { get; init; } = Array.Empty<OctokitRepositoryData>();
+
+        public Func<PageRequest, CancellationToken, Task<IReadOnlyList<OctokitActivityEventData>>>? MyActivityFactory { get; init; }
+
+        public Func<RepoKey, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitActivityEventData>>>? RepoActivityFactory { get; init; }
 
         public Func<RepoKey, IssueQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueData>>>? IssuesFactory { get; init; }
 
@@ -241,12 +306,38 @@ public sealed class CachedServicesTests
         public Func<bool, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitNotificationData>>>? NotificationsFactory { get; init; }
 
         public int GetMyRepositoriesCallCount { get; private set; }
+        public int GetMyActivityCallCount { get; private set; }
+        public int GetRepoActivityCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
 
         public Task<IReadOnlyList<OctokitRepositoryData>> GetMyRepositoriesAsync(CancellationToken ct)
         {
             GetMyRepositoriesCallCount++;
             return Task.FromResult(Repositories);
+        }
+
+        public Task<IReadOnlyList<OctokitActivityEventData>> GetMyActivityAsync(PageRequest page, CancellationToken ct)
+        {
+            GetMyActivityCallCount++;
+
+            if (MyActivityFactory is not null)
+            {
+                return MyActivityFactory(page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(Array.Empty<OctokitActivityEventData>());
+        }
+
+        public Task<IReadOnlyList<OctokitActivityEventData>> GetRepoActivityAsync(RepoKey repo, PageRequest page, CancellationToken ct)
+        {
+            GetRepoActivityCallCount++;
+
+            if (RepoActivityFactory is not null)
+            {
+                return RepoActivityFactory(repo, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitActivityEventData>>(Array.Empty<OctokitActivityEventData>());
         }
 
         public Task<IReadOnlyList<OctokitIssueData>> GetIssuesAsync(RepoKey repo, IssueQuery query, PageRequest page, CancellationToken ct)
