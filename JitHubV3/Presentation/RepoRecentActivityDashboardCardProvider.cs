@@ -7,10 +7,6 @@ namespace JitHubV3.Presentation;
 
 public sealed class RepoRecentActivityDashboardCardProvider : IStagedDashboardCardProvider
 {
-    private const long EmptyCardId = 20_000_004;
-    private const long CardIdBase = 20_000_004_000_000;
-    private const int CardIdModulo = 1_000_000;
-
     private readonly IGitHubActivityService _activity;
 
     public RepoRecentActivityDashboardCardProvider(IGitHubActivityService activity)
@@ -43,7 +39,7 @@ public sealed class RepoRecentActivityDashboardCardProvider : IStagedDashboardCa
             return new[]
             {
                 new DashboardCardModel(
-                    CardId: EmptyCardId,
+                    CardId: DashboardCardId.RepoRecentActivityEmpty,
                     Kind: DashboardCardKind.RepoRecentActivity,
                     Title: "Repo activity",
                     Subtitle: "No recent activity",
@@ -65,7 +61,7 @@ public sealed class RepoRecentActivityDashboardCardProvider : IStagedDashboardCa
             var summary = details is null ? when : $"{when}\n{details}";
 
             cards.Add(new DashboardCardModel(
-                CardId: ComputeCardId(item.Id),
+                CardId: DashboardCardId.RepoRecentActivityItem(item.Id),
                 Kind: DashboardCardKind.RepoRecentActivity,
                 Title: Trim(type, 56),
                 Subtitle: Trim(actor, 32),
@@ -79,28 +75,4 @@ public sealed class RepoRecentActivityDashboardCardProvider : IStagedDashboardCa
 
     private static string Trim(string value, int max)
         => value.Length <= max ? value : value.Substring(0, max - 1) + "…";
-
-    private static long ComputeCardId(string id)
-    {
-        var hash = StableHash32(id);
-        return CardIdBase + (hash % CardIdModulo);
-    }
-
-    private static long StableHash32(string value)
-    {
-        unchecked
-        {
-            const uint offsetBasis = 2166136261;
-            const uint prime = 16777619;
-
-            uint hash = offsetBasis;
-            for (var i = 0; i < value.Length; i++)
-            {
-                hash ^= value[i];
-                hash *= prime;
-            }
-
-            return (long)hash;
-        }
-    }
 }

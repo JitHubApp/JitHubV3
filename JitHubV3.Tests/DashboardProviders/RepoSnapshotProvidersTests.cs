@@ -39,7 +39,7 @@ public sealed class RepoSnapshotProvidersTests
         var cards2 = await provider.GetCardsAsync(ctx, RefreshMode.CacheOnly, CancellationToken.None);
 
         cards1.Should().HaveCount(1);
-        cards1[0].CardId.Should().Be(20_000_003);
+        cards1[0].CardId.Should().Be(20_000_005);
         cards1[0].Kind.Should().Be(DashboardCardKind.RepoSnapshot);
 
         cards1.Should().Equal(cards2);

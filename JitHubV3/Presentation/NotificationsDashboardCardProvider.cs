@@ -6,10 +6,6 @@ namespace JitHubV3.Presentation;
 
 public sealed class NotificationsDashboardCardProvider : IStagedDashboardCardProvider
 {
-    private const long EmptyCardId = 30_000_003;
-    private const long CardIdBase = 30_000_003_000_000;
-    private const int CardIdModulo = 1_000_000;
-
     private readonly IGitHubNotificationService _notifications;
 
     public NotificationsDashboardCardProvider(IGitHubNotificationService notifications)
@@ -36,7 +32,7 @@ public sealed class NotificationsDashboardCardProvider : IStagedDashboardCardPro
             return new[]
             {
                 new DashboardCardModel(
-                    CardId: EmptyCardId,
+                    CardId: DashboardCardId.NotificationsEmpty,
                     Kind: DashboardCardKind.Notifications,
                     Title: "Notifications",
                     Subtitle: "0 unread",
@@ -58,7 +54,7 @@ public sealed class NotificationsDashboardCardProvider : IStagedDashboardCardPro
             var type = string.IsNullOrWhiteSpace(n.Type) ? "Notification" : n.Type;
 
             cards.Add(new DashboardCardModel(
-                CardId: ComputeCardId(n.Id),
+                CardId: DashboardCardId.NotificationsItem(n.Id),
                 Kind: DashboardCardKind.Notifications,
                 Title: Trim(n.Title, 64),
                 Subtitle: Trim(FormatRepo(n.Repo), 48),
@@ -75,31 +71,4 @@ public sealed class NotificationsDashboardCardProvider : IStagedDashboardCardPro
 
     private static string Trim(string value, int max)
         => value.Length <= max ? value : value.Substring(0, max - 1) + "…";
-
-    private static long ComputeCardId(string id)
-    {
-        // Must be stable across processes; do NOT use string.GetHashCode().
-        // We keep a dedicated ID range per provider to avoid collisions with other cards.
-        var hash = StableHash32(id);
-        return CardIdBase + (hash % CardIdModulo);
-    }
-
-    private static long StableHash32(string value)
-    {
-        // FNV-1a 32-bit
-        unchecked
-        {
-            const uint offsetBasis = 2166136261;
-            const uint prime = 16777619;
-
-            uint hash = offsetBasis;
-            for (var i = 0; i < value.Length; i++)
-            {
-                hash ^= value[i];
-                hash *= prime;
-            }
-
-            return (long)hash;
-        }
-    }
 }

@@ -7,10 +7,6 @@ namespace JitHubV3.Presentation;
 
 public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCardProvider
 {
-    private const long EmptyCardId = 30_000_004;
-    private const long CardIdBase = 30_000_004_000_000;
-    private const int CardIdModulo = 1_000_000;
-
     private readonly IGitHubActivityService _activity;
 
     public MyRecentActivityDashboardCardProvider(IGitHubActivityService activity)
@@ -37,7 +33,7 @@ public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCard
             return new[]
             {
                 new DashboardCardModel(
-                    CardId: EmptyCardId,
+                    CardId: DashboardCardId.MyRecentActivityEmpty,
                     Kind: DashboardCardKind.MyRecentActivity,
                     Title: "Recent activity",
                     Subtitle: "No recent activity",
@@ -65,7 +61,7 @@ public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCard
                 : $"{Trim(actor, 24)} · {when}\n{details}";
 
             cards.Add(new DashboardCardModel(
-                CardId: ComputeCardId(item.Id),
+                CardId: DashboardCardId.MyRecentActivityItem(item.Id),
                 Kind: DashboardCardKind.MyRecentActivity,
                 Title: title,
                 Subtitle: subtitle,
@@ -79,28 +75,4 @@ public sealed class MyRecentActivityDashboardCardProvider : IStagedDashboardCard
 
     private static string Trim(string value, int max)
         => value.Length <= max ? value : value.Substring(0, max - 1) + "…";
-
-    private static long ComputeCardId(string id)
-    {
-        var hash = StableHash32(id);
-        return CardIdBase + (hash % CardIdModulo);
-    }
-
-    private static long StableHash32(string value)
-    {
-        unchecked
-        {
-            const uint offsetBasis = 2166136261;
-            const uint prime = 16777619;
-
-            uint hash = offsetBasis;
-            for (var i = 0; i < value.Length; i++)
-            {
-                hash ^= value[i];
-                hash *= prime;
-            }
-
-            return (long)hash;
-        }
-    }
 }

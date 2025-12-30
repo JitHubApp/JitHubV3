@@ -26,6 +26,7 @@
   <ItemGroup>
     <Compile Include="..\JitHubV3\Presentation\DashboardCardActionModel.cs" Link="DashboardCards\DashboardCardActionModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardKind.cs" Link="DashboardCards\DashboardCardKind.cs" />
+    <Compile Include="..\JitHubV3\Presentation\DashboardCardId.cs" Link="DashboardCards\DashboardCardId.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardModel.cs" Link="DashboardCards\DashboardCardModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardProviderTier.cs" Link="DashboardCards\DashboardCardProviderTier.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardContext.cs" Link="DashboardCards\DashboardContext.cs" />

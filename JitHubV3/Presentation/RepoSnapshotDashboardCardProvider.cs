@@ -6,8 +6,6 @@ namespace JitHubV3.Presentation;
 
 public sealed class RepoSnapshotDashboardCardProvider : IStagedDashboardCardProvider
 {
-    private const long CardId = 20_000_003;
-
     private readonly IGitHubRepositoryDetailsService _details;
 
     public RepoSnapshotDashboardCardProvider(IGitHubRepositoryDetailsService details)
@@ -42,7 +40,7 @@ public sealed class RepoSnapshotDashboardCardProvider : IStagedDashboardCardProv
             return new[]
             {
                 new DashboardCardModel(
-                    CardId: CardId,
+                    CardId: DashboardCardId.RepoSnapshot,
                     Kind: DashboardCardKind.RepoSnapshot,
                     Title: "Repository snapshot",
                     Subtitle: FormatRepo(repo.Value),
@@ -57,7 +55,7 @@ public sealed class RepoSnapshotDashboardCardProvider : IStagedDashboardCardProv
         return new[]
         {
             new DashboardCardModel(
-                CardId: CardId,
+                CardId: DashboardCardId.RepoSnapshot,
                 Kind: DashboardCardKind.RepoSnapshot,
                 Title: "Repository snapshot",
                 Subtitle: FormatSubtitle(snapshot),
