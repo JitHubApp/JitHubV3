@@ -10,9 +10,18 @@ public sealed class ObservableCollectionSyncTests
     private sealed record Item(long Id, int Revision);
 
     [Test]
-    public void SyncById_clears_when_source_empty()
+    public void SyncById_removes_items_when_source_empty_without_reset()
     {
         var target = new ObservableCollection<Item> { new(1, 0) };
+
+        var sawReset = false;
+        target.CollectionChanged += (_, e) =>
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+            {
+                sawReset = true;
+            }
+        };
 
         ObservableCollectionSync.SyncById(
             target,
@@ -21,6 +30,7 @@ public sealed class ObservableCollectionSyncTests
             shouldReplace: (_, _) => true);
 
         target.Should().BeEmpty();
+        sawReset.Should().BeFalse();
     }
 
     [Test]

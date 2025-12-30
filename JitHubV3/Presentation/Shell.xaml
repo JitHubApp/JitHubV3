@@ -21,6 +21,7 @@
       <!-- Narrow: top compact status bar -->
       <Border x:Name="TopStatusBar"
               Grid.Row="0"
+              AutomationProperties.AutomationId="ShellTopStatusBar"
               Padding="{StaticResource ShellStatusBarPadding}"
               Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               Visibility="Collapsed">
@@ -57,6 +58,7 @@
       <!-- Wide: bottom status bar -->
       <Border x:Name="BottomStatusBar"
               Grid.Row="2"
+              AutomationProperties.AutomationId="ShellBottomStatusBar"
               Padding="{StaticResource ShellStatusBarPadding}"
               Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               Visibility="Collapsed">

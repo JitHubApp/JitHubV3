@@ -45,6 +45,7 @@
           HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
       <NavigationView x:Name="NavView"
+                      AutomationProperties.AutomationId="DashboardNavView"
                       IsBackButtonVisible="Collapsed"
                       IsSettingsVisible="False"
                       PaneDisplayMode="LeftMinimal"
@@ -58,6 +59,7 @@
         <NavigationView.PaneCustomContent>
           <Grid>
             <ListView ItemsSource="{Binding Repositories}"
+                      AutomationProperties.AutomationId="DashboardRepoList"
                       ItemContainerStyle="{StaticResource DashboardRepoListItemStyle}"
                       SelectedValuePath="Id"
                       SelectedValue="{Binding SelectedRepositoryId, Mode=TwoWay}"
@@ -97,6 +99,7 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
               <muxc:ItemsRepeater ItemsSource="{Binding Cards}"
+                                 AutomationProperties.AutomationId="DashboardCardList"
                                  ItemTemplate="{StaticResource DashboardCardTemplate}">
                 <muxc:ItemsRepeater.Layout>
                   <muxc:StackLayout Spacing="{StaticResource DashboardSpacingL}" />
@@ -109,6 +112,7 @@
 
       <!-- Compose box (ChatGPT-like; no-op for now). -->
       <Border x:Name="ComposeBox"
+              AutomationProperties.AutomationId="DashboardComposeBox"
               VerticalAlignment="Bottom"
               HorizontalAlignment="Stretch"
               Margin="{StaticResource DashboardComposeMargin}"
@@ -129,6 +133,7 @@
           </Grid.ColumnDefinitions>
 
           <TextBox x:Name="ComposeInput"
+                   AutomationProperties.AutomationId="DashboardComposeInput"
                    Grid.Column="0"
                    AcceptsReturn="True"
                    TextWrapping="Wrap"
