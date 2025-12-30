@@ -24,4 +24,4 @@ public readonly record struct LayoutTransform(double TranslateX, double Translat
         double.IsFinite(Scale);
 }
 
-public sealed record CardDeckLayoutItem(LayoutRect Rect, LayoutTransform Transform);
+public sealed record CardDeckLayoutItem(LayoutRect Rect, LayoutTransform Transform, double Z);

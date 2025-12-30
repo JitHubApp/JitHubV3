@@ -1,3 +1,4 @@
+using System.Linq;
 using FluentAssertions;
 using JitHub.Dashboard.Layouts;
 
@@ -42,13 +43,19 @@ public sealed class CardDeckLayoutMathTests
         var items = CardDeckLayoutMath.Compute(new LayoutSize(899, 800), itemCount: 6, settings);
 
         items.Should().HaveCount(6);
-        items[0].Transform.TranslateY.Should().Be(0);
-        items[1].Transform.TranslateY.Should().Be(10);
-        items[2].Transform.TranslateY.Should().Be(20);
-        items[3].Transform.TranslateY.Should().Be(30);
-        // clamped
-        items[4].Transform.TranslateY.Should().Be(30);
-        items[5].Transform.TranslateY.Should().Be(30);
+
+        // IMPORTANT: last item is the “front/top” card.
+        items[5].Transform.TranslateY.Should().Be(0);
+
+        // The deck has a small, stable per-item Y jitter.
+        // Validate the expected “10/20/30” spacing envelope with generous bounds.
+        items[4].Transform.TranslateY.Should().BeInRange(8.5, 11.5);
+        items[3].Transform.TranslateY.Should().BeInRange(17.0, 23.0);
+        items[2].Transform.TranslateY.Should().BeInRange(26.0, 34.0);
+
+        // clamped (further back than max visible) – still around the deepest offset.
+        items[1].Transform.TranslateY.Should().BeInRange(26.0, 34.0);
+        items[0].Transform.TranslateY.Should().BeInRange(26.0, 34.0);
     }
 
     [Test]

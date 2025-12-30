@@ -1,12 +1,22 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using Windows.Foundation;
 
 namespace JitHub.Dashboard.Layouts;
 
 public sealed class CardDeckLayout : VirtualizingLayout
 {
+    private sealed class BaseZState
+    {
+        public BaseZState(float value) => Value = value;
+        public float Value { get; }
+    }
+
+    private readonly ConditionalWeakTable<UIElement, BaseZState> _baseZBeforeDeck = new();
+
     public CardDeckLayoutMode Mode
     {
         get => (CardDeckLayoutMode)GetValue(ModeProperty);
@@ -135,7 +145,33 @@ public sealed class CardDeckLayout : VirtualizingLayout
             nameof(DeckScaleStep),
             typeof(double),
             typeof(CardDeckLayout),
-            new PropertyMetadata(0d, OnLayoutPropertyChanged));
+            new PropertyMetadata(0.02d, OnLayoutPropertyChanged));
+
+    public double DeckBaseZ
+    {
+        get => (double)GetValue(DeckBaseZProperty);
+        set => SetValue(DeckBaseZProperty, value);
+    }
+
+    public static readonly DependencyProperty DeckBaseZProperty =
+        DependencyProperty.Register(
+            nameof(DeckBaseZ),
+            typeof(double),
+            typeof(CardDeckLayout),
+            new PropertyMetadata(8d, OnLayoutPropertyChanged));
+
+    public double DeckZStep
+    {
+        get => (double)GetValue(DeckZStepProperty);
+        set => SetValue(DeckZStepProperty, value);
+    }
+
+    public static readonly DependencyProperty DeckZStepProperty =
+        DependencyProperty.Register(
+            nameof(DeckZStep),
+            typeof(double),
+            typeof(CardDeckLayout),
+            new PropertyMetadata(6d, OnLayoutPropertyChanged));
 
     protected override Size MeasureOverride(VirtualizingLayoutContext context, Size availableSize)
     {
@@ -176,6 +212,7 @@ public sealed class CardDeckLayout : VirtualizingLayout
 
     protected override Size ArrangeOverride(VirtualizingLayoutContext context, Size finalSize)
     {
+        var mode = ResolveMode(finalSize.Width);
         var items = CardDeckLayoutMath.Compute(
             new LayoutSize(finalSize.Width, finalSize.Height),
             context.ItemCount,
@@ -188,6 +225,26 @@ public sealed class CardDeckLayout : VirtualizingLayout
             element.Arrange(new Rect(item.Rect.X, item.Rect.Y, item.Rect.Width, item.Rect.Height));
 
             ApplyTransform(element, item.Transform);
+
+            if (mode == CardDeckLayoutMode.Deck && double.IsFinite(item.Z))
+            {
+                if (!_baseZBeforeDeck.TryGetValue(element, out _))
+                {
+                    _baseZBeforeDeck.Add(element, new BaseZState(element.Translation.Z));
+                }
+
+                CardDeckElevation.SetBaseZ(element, item.Z);
+            }
+            else if (_baseZBeforeDeck.TryGetValue(element, out var baseState))
+            {
+                var t = element.Translation;
+                element.Translation = new Vector3(t.X, t.Y, baseState.Value);
+
+                CardDeckElevation.ClearBaseZ(element);
+                CardDeckElevation.SetAnimationOffsetZ(element, 0);
+                CardDeckElevation.ClearAnimationOffsetZ(element);
+                _baseZBeforeDeck.Remove(element);
+            }
         }
 
         return finalSize;
@@ -203,7 +260,9 @@ public sealed class CardDeckLayout : VirtualizingLayout
         DeckMaxVisibleCount: DeckMaxVisibleCount,
         DeckOffsetY: DeckOffsetY,
         DeckAngleStepDegrees: DeckAngleStepDegrees,
-        DeckScaleStep: DeckScaleStep);
+        DeckScaleStep: DeckScaleStep,
+        DeckBaseZ: DeckBaseZ,
+        DeckZStep: DeckZStep);
 
     private CardDeckLayoutMode ResolveMode(double width)
     {

@@ -41,6 +41,7 @@
         <TextBlock Text="Resize the window (Auto) or switch mode to exercise CardDeckLayout." Opacity="0.72" TextWrapping="Wrap" />
 
         <layouts:CardDeckPresenter
+          x:Name="CardPresenter"
           ItemsSource="{Binding Cards}"
           Mode="{Binding SelectedMode}"
           ModeWidthThreshold="{StaticResource DashboardGridToDeckMinWidth}"
@@ -51,7 +52,9 @@
           DeckMaxVisibleCount="5"
           DeckOffsetY="{StaticResource DashboardSpacingM}"
           DeckAngleStepDegrees="1.25"
-          DeckScaleStep="0"
+          DeckScaleStep="0.05"
+          DeckBaseZ="{StaticResource DashboardElevationFloating}"
+          DeckZStep="24"
           ItemTemplate="{StaticResource DashboardCardTemplate}" />
 
       </StackPanel>

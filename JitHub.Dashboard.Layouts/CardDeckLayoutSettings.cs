@@ -10,7 +10,9 @@ public sealed record CardDeckLayoutSettings(
     int DeckMaxVisibleCount,
     double DeckOffsetY,
     double DeckAngleStepDegrees,
-    double DeckScaleStep)
+    double DeckScaleStep,
+    double DeckBaseZ,
+    double DeckZStep)
 {
     public static CardDeckLayoutSettings Default => new(
         Mode: CardDeckLayoutMode.Auto,
@@ -22,5 +24,7 @@ public sealed record CardDeckLayoutSettings(
         DeckMaxVisibleCount: 5,
         DeckOffsetY: 8,
         DeckAngleStepDegrees: 1.25,
-        DeckScaleStep: 0);
+        DeckScaleStep: 0.02,
+        DeckBaseZ: 8,
+        DeckZStep: 6);
 }

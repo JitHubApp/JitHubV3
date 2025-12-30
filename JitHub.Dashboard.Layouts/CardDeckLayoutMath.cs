@@ -48,7 +48,9 @@ public static class CardDeckLayoutMath
                 deckMaxVisible: Math.Max(1, settings.DeckMaxVisibleCount),
                 deckOffsetY: SanitizeSize(settings.DeckOffsetY),
                 deckAngleStepDegrees: SanitizeSize(settings.DeckAngleStepDegrees),
-                deckScaleStep: SanitizeSize(settings.DeckScaleStep)),
+                deckScaleStep: SanitizeSize(settings.DeckScaleStep),
+                deckBaseZ: SanitizeSize(settings.DeckBaseZ),
+                deckZStep: SanitizeSize(settings.DeckZStep)),
 
             _ => ComputeDeck(
                 width: safeWidth,
@@ -59,7 +61,9 @@ public static class CardDeckLayoutMath
                 deckMaxVisible: Math.Max(1, settings.DeckMaxVisibleCount),
                 deckOffsetY: SanitizeSize(settings.DeckOffsetY),
                 deckAngleStepDegrees: SanitizeSize(settings.DeckAngleStepDegrees),
-                deckScaleStep: SanitizeSize(settings.DeckScaleStep)),
+                deckScaleStep: SanitizeSize(settings.DeckScaleStep),
+                deckBaseZ: SanitizeSize(settings.DeckBaseZ),
+                deckZStep: SanitizeSize(settings.DeckZStep)),
         };
     }
 
@@ -87,7 +91,8 @@ public static class CardDeckLayoutMath
 
             list[i] = new CardDeckLayoutItem(
                 Rect: new LayoutRect(x, y, cardWidth, cardHeight),
-                Transform: new LayoutTransform(0, 0, 0, 1));
+                Transform: new LayoutTransform(0, 0, 0, 1),
+                Z: double.NaN);
         }
 
         return list;
@@ -102,15 +107,23 @@ public static class CardDeckLayoutMath
         int deckMaxVisible,
         double deckOffsetY,
         double deckAngleStepDegrees,
-        double deckScaleStep)
+        double deckScaleStep,
+        double deckBaseZ,
+        double deckZStep)
     {
         var x = Math.Max(0, (width - cardWidth) / 2.0);
         var baseRect = new LayoutRect(x, 0, cardWidth, cardHeight);
 
+        var visibleDepth = Math.Min(itemCount, deckMaxVisible);
+
         var list = new CardDeckLayoutItem[itemCount];
         for (var i = 0; i < itemCount; i++)
         {
-            var depth = Math.Min(i, deckMaxVisible - 1);
+            // IMPORTANT: ItemsRepeater renders later indices on top.
+            // Treat the last item as the “front/top” card (depth=0), so removing it
+            // causes the remaining cards to advance (depth decreases).
+            var visualIndexFromFront = (itemCount - 1) - i;
+            var depth = Math.Min(Math.Max(0, visualIndexFromFront), deckMaxVisible - 1);
 
             // The previous alternating pattern (0, -a, +2a, -3a, …) looks overly regular.
             // Use a stable per-item scatter factor to get a more natural “deck” feel,
@@ -126,9 +139,18 @@ public static class CardDeckLayoutMath
                 scale = 0.01;
             }
 
+            var z = deckBaseZ;
+            if (deckZStep > 0 && visibleDepth > 1)
+            {
+                // Depth 0 (top card) should be visually closest (largest Z).
+                // As cards move forward after a dismissal, their depth decreases, so Z increases.
+                z = deckBaseZ + (visibleDepth - 1 - depth) * deckZStep;
+            }
+
             list[i] = new CardDeckLayoutItem(
                 Rect: baseRect,
-                Transform: new LayoutTransform(translateX, translateY, rotation, scale));
+                Transform: new LayoutTransform(translateX, translateY, rotation, scale),
+                Z: z);
         }
 
         return list;

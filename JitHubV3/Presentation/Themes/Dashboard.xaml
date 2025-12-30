@@ -75,32 +75,12 @@
                 CornerRadius="{StaticResource DashboardRadiusM}" />
 
         <Grid Padding="{StaticResource DashboardEdgePadding}"
-              RowDefinitions="Auto,*,Auto"
+              RowDefinitions="Auto,Auto,*"
               RowSpacing="{StaticResource DashboardSpacingS}">
 
-          <StackPanel Grid.Row="0" Spacing="{StaticResource DashboardSpacingXS}">
-            <TextBlock Text="{Binding Title}"
-                       Style="{ThemeResource TitleTextBlockStyle}"
-                       TextWrapping="Wrap" />
-
-            <TextBlock Text="{Binding Subtitle}"
-                       Visibility="{Binding Subtitle, Converter={StaticResource DashboardStringNullOrWhiteSpaceToVisibilityConverter}}"
-                       Style="{ThemeResource BodyTextBlockStyle}"
-                       Opacity="0.72"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-
-          <TextBlock Grid.Row="1"
-                     Text="{Binding Summary}"
-                     Visibility="{Binding Summary, Converter={StaticResource DashboardStringNullOrWhiteSpaceToVisibilityConverter}}"
-                     Style="{ThemeResource BodyTextBlockStyle}"
-                     Opacity="0.72"
-                     TextWrapping="Wrap"
-                     TextTrimming="CharacterEllipsis"
-                     MaxLines="4" />
-
-          <ItemsControl Grid.Row="2"
+          <ItemsControl Grid.Row="0"
                         ItemsSource="{Binding Actions}"
+                        HorizontalAlignment="Right"
                         Visibility="{Binding Actions, Converter={StaticResource DashboardCollectionNullOrEmptyToVisibilityConverter}}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -118,6 +98,27 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+
+          <StackPanel Grid.Row="1" Spacing="{StaticResource DashboardSpacingXS}">
+            <TextBlock Text="{Binding Title}"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       TextWrapping="Wrap" />
+
+            <TextBlock Text="{Binding Subtitle}"
+                       Visibility="{Binding Subtitle, Converter={StaticResource DashboardStringNullOrWhiteSpaceToVisibilityConverter}}"
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+
+          <TextBlock Grid.Row="2"
+                     Text="{Binding Summary}"
+                     Visibility="{Binding Summary, Converter={StaticResource DashboardStringNullOrWhiteSpaceToVisibilityConverter}}"
+                     Style="{ThemeResource BodyTextBlockStyle}"
+                     Opacity="0.72"
+                     TextWrapping="Wrap"
+                     TextTrimming="CharacterEllipsis"
+                     MaxLines="4" />
 
         </Grid>
       </Grid>
