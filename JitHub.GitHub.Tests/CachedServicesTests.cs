@@ -184,6 +184,8 @@ public sealed class CachedServicesTests
 
         public Func<RepoKey, int, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitIssueCommentData>>>? IssueCommentsFactory { get; init; }
 
+        public Func<IssueSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitWorkItemData>>>? SearchIssuesFactory { get; init; }
+
         public int GetMyRepositoriesCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
 
@@ -203,6 +205,16 @@ public sealed class CachedServicesTests
             }
 
             return Task.FromResult<IReadOnlyList<OctokitIssueData>>(Array.Empty<OctokitIssueData>());
+        }
+
+        public Task<IReadOnlyList<OctokitWorkItemData>> SearchIssuesAsync(IssueSearchQuery query, PageRequest page, CancellationToken ct)
+        {
+            if (SearchIssuesFactory is not null)
+            {
+                return SearchIssuesFactory(query, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitWorkItemData>>(Array.Empty<OctokitWorkItemData>());
         }
 
         public Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)

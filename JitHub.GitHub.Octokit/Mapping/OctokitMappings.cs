@@ -72,6 +72,25 @@ public static class OctokitMappings
             UpdatedAt: comment.UpdatedAt);
     }
 
+    internal static WorkItemSummary ToWorkItemSummary(OctokitWorkItemData item)
+    {
+        if (item is null)
+        {
+            throw new ArgumentNullException(nameof(item));
+        }
+
+        return new WorkItemSummary(
+            Id: item.Id,
+            Repo: item.Repo,
+            Number: item.Number,
+            Title: item.Title ?? string.Empty,
+            IsPullRequest: item.IsPullRequest,
+            State: item.State,
+            AuthorLogin: item.AuthorLogin,
+            CommentCount: item.CommentCount,
+            UpdatedAt: item.UpdatedAt);
+    }
+
     private static IssueState ParseIssueState(string? state)
     {
         if (string.Equals(state, "closed", StringComparison.OrdinalIgnoreCase))

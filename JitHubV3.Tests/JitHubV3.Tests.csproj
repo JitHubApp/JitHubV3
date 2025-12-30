@@ -35,5 +35,7 @@
     <Compile Include="..\JitHubV3\Presentation\RecentRepositoriesDashboardCardProvider.cs" Link="DashboardCards\RecentRepositoriesDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\RepoIssuesSummaryDashboardCardProvider.cs" Link="DashboardCards\RepoIssuesSummaryDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\RepoRecentlyUpdatedIssuesDashboardCardProvider.cs" Link="DashboardCards\RepoRecentlyUpdatedIssuesDashboardCardProvider.cs" />
+    <Compile Include="..\JitHubV3\Presentation\MyAssignedWorkDashboardCardProvider.cs" Link="DashboardCards\MyAssignedWorkDashboardCardProvider.cs" />
+    <Compile Include="..\JitHubV3\Presentation\MyReviewRequestsDashboardCardProvider.cs" Link="DashboardCards\MyReviewRequestsDashboardCardProvider.cs" />
   </ItemGroup>
 </Project>

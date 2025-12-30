@@ -105,6 +105,50 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<OctokitWorkItemData>> SearchIssuesAsync(IssueSearchQuery query, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        if (string.IsNullOrWhiteSpace(query.Query))
+        {
+            return Array.Empty<OctokitWorkItemData>();
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var request = new SearchIssuesRequest(query.Query.Trim())
+        {
+            PerPage = page.PageSize,
+            Page = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        ApplySearchSorting(request, query.Sort, query.Direction);
+
+        var result = await client.Search.SearchIssues(request).ConfigureAwait(false);
+
+        return result.Items
+            .Select(i =>
+            {
+                var repo = TryParseRepoKeyFromSearchItem(i) ?? new RepoKey(string.Empty, string.Empty);
+                var isPullRequest = TryGetIsPullRequest(i);
+
+                return new OctokitWorkItemData(
+                    Id: i.Id,
+                    Repo: repo,
+                    Number: i.Number,
+                    Title: i.Title,
+                    IsPullRequest: isPullRequest,
+                    State: i.State.ToString(),
+                    AuthorLogin: i.User?.Login,
+                    CommentCount: i.Comments,
+                    UpdatedAt: i.UpdatedAt);
+            })
+            .ToArray();
+    }
+
     public async Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)
     {
         var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
@@ -177,19 +221,24 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
 
     private static void ApplySearchSorting(SearchIssuesRequest request, IssueQuery query)
     {
-        if (query.Sort is null && query.Direction is null)
+        ApplySearchSorting(request, query.Sort, query.Direction);
+    }
+
+    private static void ApplySearchSorting(SearchIssuesRequest request, IssueSortField? sort, IssueSortDirection? direction)
+    {
+        if (sort is null && direction is null)
         {
             return;
         }
 
         var requestType = request.GetType();
 
-        if (query.Sort is not null)
+        if (sort is not null)
         {
             var sortProperty = requestType.GetProperty("SortField") ?? requestType.GetProperty("Sort");
             if (sortProperty is not null && sortProperty.CanWrite)
             {
-                var sortValueName = query.Sort.Value switch
+                var sortValueName = sort.Value switch
                 {
                     IssueSortField.Created => "Created",
                     IssueSortField.Updated => "Updated",
@@ -201,12 +250,12 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             }
         }
 
-        if (query.Direction is not null)
+        if (direction is not null)
         {
             var orderProperty = requestType.GetProperty("Order") ?? requestType.GetProperty("Direction");
             if (orderProperty is not null && orderProperty.CanWrite)
             {
-                var orderValueName = query.Direction.Value switch
+                var orderValueName = direction.Value switch
                 {
                     IssueSortDirection.Asc => "Ascending",
                     IssueSortDirection.Desc => "Descending",
@@ -216,10 +265,90 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
                 if (!TrySetEnumValue(request, orderProperty, orderValueName))
                 {
                     // Some Octokit versions use Asc/Desc.
-                    var alt = query.Direction.Value == IssueSortDirection.Asc ? "Asc" : "Desc";
+                    var alt = direction.Value == IssueSortDirection.Asc ? "Asc" : "Desc";
                     _ = TrySetEnumValue(request, orderProperty, alt);
                 }
             }
+        }
+    }
+
+    private static RepoKey? TryParseRepoKeyFromSearchItem(object item)
+    {
+        Uri? repoUri = TryGetUriProperty(item, "RepositoryUrl")
+            ?? TryGetUriProperty(item, "Repository")
+            ?? TryGetUriProperty(item, "Url")
+            ?? TryGetUriProperty(item, "HtmlUrl");
+
+        if (repoUri is null)
+        {
+            return null;
+        }
+
+        // Prefer parsing from API-style URLs: /repos/{owner}/{name}/...
+        var segments = repoUri.AbsolutePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        for (var i = 0; i < segments.Length - 2; i++)
+        {
+            if (string.Equals(segments[i], "repos", StringComparison.OrdinalIgnoreCase))
+            {
+                return new RepoKey(segments[i + 1], segments[i + 2]);
+            }
+        }
+
+        // Fallback for github.com/{owner}/{name}/...
+        if (segments.Length >= 2 && string.Equals(repoUri.Host, "github.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return new RepoKey(segments[0], segments[1]);
+        }
+
+        return null;
+    }
+
+    private static Uri? TryGetUriProperty(object item, string propertyName)
+    {
+        try
+        {
+            var prop = item.GetType().GetProperty(propertyName);
+            if (prop is null)
+            {
+                return null;
+            }
+
+            var value = prop.GetValue(item);
+            if (value is Uri uri)
+            {
+                return uri;
+            }
+
+            if (value is string s && Uri.TryCreate(s, UriKind.Absolute, out var parsed))
+            {
+                return parsed;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return null;
+    }
+
+    private static bool TryGetIsPullRequest(object item)
+    {
+        try
+        {
+            var prop = item.GetType().GetProperty("PullRequest");
+            if (prop is null)
+            {
+                return false;
+            }
+
+            return prop.GetValue(item) is not null;
+        }
+        catch
+        {
+            return false;
         }
     }
 
