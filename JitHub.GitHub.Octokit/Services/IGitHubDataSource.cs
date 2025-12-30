@@ -9,6 +9,8 @@ internal interface IGitHubDataSource
 {
     Task<IReadOnlyList<OctokitRepositoryData>> GetMyRepositoriesAsync(CancellationToken ct);
 
+    Task<OctokitRepositoryDetailData?> GetRepositoryAsync(RepoKey repo, CancellationToken ct);
+
     Task<IReadOnlyList<OctokitActivityEventData>> GetMyActivityAsync(PageRequest page, CancellationToken ct);
 
     Task<IReadOnlyList<OctokitActivityEventData>> GetRepoActivityAsync(RepoKey repo, PageRequest page, CancellationToken ct);

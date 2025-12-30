@@ -123,6 +123,24 @@ public static class OctokitMappings
             CreatedAt: activity.CreatedAt);
     }
 
+    internal static RepositorySnapshot ToRepositorySnapshot(OctokitRepositoryDetailData repo)
+    {
+        if (repo is null)
+        {
+            throw new ArgumentNullException(nameof(repo));
+        }
+
+        return new RepositorySnapshot(
+            Repo: repo.Repo,
+            IsPrivate: repo.IsPrivate,
+            DefaultBranch: repo.DefaultBranch,
+            Description: repo.Description,
+            UpdatedAt: repo.UpdatedAt,
+            StargazersCount: repo.StargazersCount,
+            ForksCount: repo.ForksCount,
+            WatchersCount: repo.WatchersCount);
+    }
+
     private static IssueState ParseIssueState(string? state)
     {
         if (string.Equals(state, "closed", StringComparison.OrdinalIgnoreCase))

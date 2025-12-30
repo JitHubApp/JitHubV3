@@ -10,6 +10,13 @@ internal static class GitHubCacheKeys
     public static CacheKey MyRepositories()
         => CacheKey.Create("github.repos.mine");
 
+    public static CacheKey Repository(RepoKey repo)
+        => CacheKey.Create(
+            "github.repo.get",
+            userScope: null,
+            ("owner", repo.Owner),
+            ("repo", repo.Name));
+
     public static CacheKey MyActivity(PageRequest page)
     {
         var pageNumber = page.PageNumber?.ToString() ?? string.Empty;

@@ -287,6 +287,39 @@ public sealed class CachedServicesTests
         dataSource.GetRepoActivityCallCount.Should().Be(2);
     }
 
+    [Test]
+    public async Task RepoDetailsService_cache_only_returns_cached_value()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var now = DateTimeOffset.UtcNow;
+        var dataSource = new FakeGitHubDataSource
+        {
+            RepoDetailsFactory = (repo, _) =>
+                Task.FromResult<OctokitRepositoryDetailData?>(
+                    new OctokitRepositoryDetailData(
+                        Repo: repo,
+                        IsPrivate: false,
+                        DefaultBranch: "main",
+                        Description: "Demo",
+                        UpdatedAt: now,
+                        StargazersCount: 12,
+                        ForksCount: 3,
+                        WatchersCount: 4))
+        };
+
+        var sut = new CachedGitHubRepositoryDetailsService(cache, dataSource);
+        var repo = new RepoKey("octo", "hello");
+
+        var first = await sut.GetRepositoryAsync(repo, RefreshMode.ForceRefresh, CancellationToken.None);
+        first.Should().NotBeNull();
+        dataSource.GetRepoDetailsCallCount.Should().Be(1);
+
+        var cached = await sut.GetRepositoryAsync(repo, RefreshMode.CacheOnly, CancellationToken.None);
+        cached.Should().NotBeNull();
+        dataSource.GetRepoDetailsCallCount.Should().Be(1);
+    }
+
     internal sealed class FakeGitHubDataSource : IGitHubDataSource
     {
         public IReadOnlyList<OctokitRepositoryData> Repositories { get; init; } = Array.Empty<OctokitRepositoryData>();
@@ -305,10 +338,13 @@ public sealed class CachedServicesTests
 
         public Func<bool, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitNotificationData>>>? NotificationsFactory { get; init; }
 
+        public Func<RepoKey, CancellationToken, Task<OctokitRepositoryDetailData?>>? RepoDetailsFactory { get; init; }
+
         public int GetMyRepositoriesCallCount { get; private set; }
         public int GetMyActivityCallCount { get; private set; }
         public int GetRepoActivityCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
+        public int GetRepoDetailsCallCount { get; private set; }
 
         public Task<IReadOnlyList<OctokitRepositoryData>> GetMyRepositoriesAsync(CancellationToken ct)
         {
@@ -370,6 +406,18 @@ public sealed class CachedServicesTests
             }
 
             return Task.FromResult<IReadOnlyList<OctokitNotificationData>>(Array.Empty<OctokitNotificationData>());
+        }
+
+        public Task<OctokitRepositoryDetailData?> GetRepositoryAsync(RepoKey repo, CancellationToken ct)
+        {
+            GetRepoDetailsCallCount++;
+
+            if (RepoDetailsFactory is not null)
+            {
+                return RepoDetailsFactory(repo, ct);
+            }
+
+            return Task.FromResult<OctokitRepositoryDetailData?>(null);
         }
 
         public Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)

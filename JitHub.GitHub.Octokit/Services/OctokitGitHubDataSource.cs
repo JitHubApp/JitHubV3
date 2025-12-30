@@ -39,6 +39,23 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             .ToArray();
     }
 
+    public async Task<OctokitRepositoryDetailData?> GetRepositoryAsync(RepoKey repo, CancellationToken ct)
+    {
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var r = await client.Repository.Get(repo.Owner, repo.Name).ConfigureAwait(false);
+
+        return new OctokitRepositoryDetailData(
+            Repo: repo,
+            IsPrivate: r.Private,
+            DefaultBranch: r.DefaultBranch,
+            Description: r.Description,
+            UpdatedAt: r.UpdatedAt,
+            StargazersCount: r.StargazersCount,
+            ForksCount: r.ForksCount,
+            WatchersCount: r.SubscribersCount);
+    }
+
     public async Task<IReadOnlyList<OctokitActivityEventData>> GetMyActivityAsync(PageRequest page, CancellationToken ct)
     {
         if (page.Cursor is not null)

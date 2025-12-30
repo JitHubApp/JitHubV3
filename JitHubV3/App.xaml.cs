@@ -151,6 +151,7 @@ public partial class App : Application
                     services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RecentRepositoriesDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RepoIssuesSummaryDashboardCardProvider>();
+                    services.AddSingleton<IDashboardCardProvider, RepoSnapshotDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RepoRecentlyUpdatedIssuesDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RepoRecentActivityDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, MyAssignedWorkDashboardCardProvider>();

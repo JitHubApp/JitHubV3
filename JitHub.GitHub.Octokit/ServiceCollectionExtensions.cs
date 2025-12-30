@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGitHubDataSource, OctokitGitHubDataSource>();
 
         services.AddSingleton<IGitHubRepositoryService, CachedGitHubRepositoryService>();
+        services.AddSingleton<IGitHubRepositoryDetailsService, CachedGitHubRepositoryDetailsService>();
         services.AddSingleton<IGitHubActivityService, CachedGitHubActivityService>();
         services.AddSingleton<IGitHubIssueService, CachedGitHubIssueService>();
         services.AddSingleton<IGitHubIssueSearchService, CachedGitHubIssueSearchService>();

@@ -11,4 +11,5 @@ public enum DashboardCardKind
     Notifications = 6,
     MyRecentActivity = 7,
     RepoRecentActivity = 8,
+    RepoSnapshot = 9,
 }
