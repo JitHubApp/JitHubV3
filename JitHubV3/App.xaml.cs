@@ -157,6 +157,8 @@ public partial class App : Application
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
                         new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
 
+                    services.AddSingleton<IAiModelPickerOptionsProvider, AiModelPickerOptionsProvider>();
+
                     services.AddSingleton(sp => OpenAiRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AnthropicRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AzureAiFoundryRuntimeConfig.FromConfiguration(context.Configuration));

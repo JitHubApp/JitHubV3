@@ -74,5 +74,7 @@
     <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloads.cs" Link="Ai\AiModelDownloads.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiModelDownloadQueue.cs" Link="Ai\IAiModelDownloadQueue.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloadQueue.cs" Link="Ai\AiModelDownloadQueue.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\AiModelPickerOptionsProvider.cs" Link="Ai\AiModelPickerOptionsProvider.cs" />
   </ItemGroup>
 </Project>

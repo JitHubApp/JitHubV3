@@ -135,7 +135,13 @@
           <ThemeShadow />
         </Border.Shadow>
 
-        <Grid ColumnSpacing="{StaticResource DashboardSpacingS}">
+        <Grid ColumnSpacing="{StaticResource DashboardSpacingS}"
+              RowSpacing="{StaticResource DashboardSpacingS}">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
@@ -143,7 +149,9 @@
 
           <TextBox x:Name="ComposeInput"
                    AutomationProperties.AutomationId="DashboardComposeInput"
+                   Grid.Row="0"
                    Grid.Column="0"
+                   Grid.ColumnSpan="2"
                    AcceptsReturn="True"
                    Text="{Binding ComposeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                    TextWrapping="Wrap"
@@ -152,7 +160,16 @@
                    VerticalAlignment="Stretch"
                    AutomationProperties.Name="Dashboard composer" />
 
-          <Button Grid.Column="1"
+          <ComboBox Grid.Row="1"
+                    Grid.Column="0"
+                    ItemsSource="{Binding AiModelOptions}"
+                    SelectedItem="{Binding SelectedAiModel, Mode=TwoWay}"
+                    DisplayMemberPath="DisplayName"
+                    AutomationProperties.AutomationId="DashboardComposeModelPicker"
+                    AutomationProperties.Name="AI model" />
+
+          <Button Grid.Row="1"
+                  Grid.Column="1"
                   VerticalAlignment="Bottom"
                   MinWidth="44"
                   MinHeight="44"

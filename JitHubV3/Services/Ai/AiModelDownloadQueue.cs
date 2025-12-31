@@ -238,7 +238,7 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
 
             received += read;
 
-            var progress = totalBytes is null || totalBytes <= 0
+            double? progress = totalBytes is null || totalBytes <= 0
                 ? null
                 : Math.Clamp(received / (double)totalBytes.Value, 0.0, 1.0);
 

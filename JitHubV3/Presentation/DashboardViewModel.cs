@@ -5,6 +5,7 @@ using JitHub.Data.Caching;
 using JitHub.GitHub.Abstractions.Models;
 using JitHub.GitHub.Abstractions.Refresh;
 using JitHub.GitHub.Abstractions.Services;
+using JitHubV3.Services.Ai;
 
 namespace JitHubV3.Presentation;
 
@@ -22,6 +23,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     private readonly StatusBarViewModel _statusBar;
     private readonly IReadOnlyList<IDashboardCardProvider> _cardProviders;
 
+    private readonly IAiModelPickerOptionsProvider _aiModelOptions;
+    private readonly IAiModelStore _aiModelStore;
+
     private CancellationTokenSource? _activeCts;
     private CancellationTokenSource? _cardsCts;
     private CancellationTokenSource? _composeCts;
@@ -33,6 +37,23 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     public ObservableCollection<RepositorySummary> Repositories { get; } = new();
 
     public ObservableCollection<DashboardCardModel> Cards { get; } = new();
+
+    public ObservableCollection<AiModelPickerOption> AiModelOptions { get; } = new();
+
+    private AiModelPickerOption? _selectedAiModel;
+    public AiModelPickerOption? SelectedAiModel
+    {
+        get => _selectedAiModel;
+        set
+        {
+            if (!SetProperty(ref _selectedAiModel, value))
+            {
+                return;
+            }
+
+            _ = PersistAiSelectionAsync(value);
+        }
+    }
 
     private bool _isLoadingCards;
     public bool IsLoadingCards
@@ -112,7 +133,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         ComposeSearch.IComposeSearchStateStore composeState,
         ICacheEventBus events,
         StatusBarViewModel statusBar,
-        IEnumerable<IDashboardCardProvider> cardProviders)
+        IEnumerable<IDashboardCardProvider> cardProviders,
+        IAiModelPickerOptionsProvider aiModelOptions,
+        IAiModelStore aiModelStore)
     {
         _logger = logger;
         _dispatcher = dispatcher;
@@ -125,6 +148,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             .OrderBy(p => p.Priority)
             .ThenBy(p => p.ProviderId, StringComparer.Ordinal)
             .ToArray();
+
+        _aiModelOptions = aiModelOptions;
+        _aiModelStore = aiModelStore;
 
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
         SubmitComposeCommand = new AsyncRelayCommand(SubmitComposeAsync, CanSubmitCompose);
@@ -148,7 +174,62 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         _ = RefreshCardsAsync(RefreshMode.CacheOnly, _activeCts.Token);
 
+        _ = LoadAiModelOptionsAsync(_activeCts.Token);
+
         await LoadReposAsync(_activeCts.Token);
+    }
+
+    private async Task LoadAiModelOptionsAsync(CancellationToken ct)
+    {
+        try
+        {
+            var options = await _aiModelOptions.GetOptionsAsync(ct).ConfigureAwait(false);
+            var selection = await _aiModelStore.GetSelectionAsync(ct).ConfigureAwait(false);
+
+            await _dispatcher.ExecuteAsync(() =>
+            {
+                AiModelOptions.Clear();
+                foreach (var opt in options)
+                {
+                    AiModelOptions.Add(opt);
+                }
+
+                if (selection is not null)
+                {
+                    SelectedAiModel = options.FirstOrDefault(o =>
+                        string.Equals(o.RuntimeId, selection.RuntimeId, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(o.ModelId, selection.ModelId, StringComparison.OrdinalIgnoreCase));
+                }
+
+                SelectedAiModel ??= AiModelOptions.FirstOrDefault();
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // ignore
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load AI model picker options");
+        }
+    }
+
+    private async Task PersistAiSelectionAsync(AiModelPickerOption? option)
+    {
+        if (option is null)
+        {
+            return;
+        }
+
+        try
+        {
+            // Persist selection; runtimes/orchestrator resolve from store.
+            await _aiModelStore.SetSelectionAsync(new AiModelSelection(option.RuntimeId, option.ModelId), CancellationToken.None);
+        }
+        catch
+        {
+            // ignore
+        }
     }
 
     public void Deactivate()
