@@ -22,6 +22,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
     private CancellationTokenSource? _activeCts;
     private CancellationTokenSource? _cardsCts;
+    private CancellationTokenSource? _composeCts;
     private IDisposable? _subscription;
     private int _loadGate;
 
@@ -43,6 +44,36 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     {
         get => _isLoadingRepos;
         set => SetProperty(ref _isLoadingRepos, value);
+    }
+
+    private string? _composeText;
+    public string? ComposeText
+    {
+        get => _composeText;
+        set
+        {
+            if (!SetProperty(ref _composeText, value))
+            {
+                return;
+            }
+
+            SubmitComposeCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private bool _isSubmittingCompose;
+    public bool IsSubmittingCompose
+    {
+        get => _isSubmittingCompose;
+        set
+        {
+            if (!SetProperty(ref _isSubmittingCompose, value))
+            {
+                return;
+            }
+
+            SubmitComposeCommand.NotifyCanExecuteChanged();
+        }
     }
 
     private int _repositoryCount;
@@ -69,6 +100,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
     public IRelayCommand<RepositorySummary?> SelectRepoCommand { get; }
 
+    public IAsyncRelayCommand SubmitComposeCommand { get; }
+
     public DashboardViewModel(
         ILogger<DashboardViewModel> logger,
         IDispatcher dispatcher,
@@ -88,6 +121,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             .ToArray();
 
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
+        SubmitComposeCommand = new AsyncRelayCommand(SubmitComposeAsync, CanSubmitCompose);
     }
 
     public string Title { get; } = "Dashboard";
@@ -123,12 +157,37 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _cardsCts?.Dispose();
         _cardsCts = null;
 
+        _composeCts?.Cancel();
+        _composeCts?.Dispose();
+        _composeCts = null;
+
         _subscription?.Dispose();
         _subscription = null;
 
         Interlocked.Exchange(ref _loadGate, 0);
         IsLoadingRepos = false;
         IsLoadingCards = false;
+        IsSubmittingCompose = false;
+    }
+
+    private bool CanSubmitCompose()
+        => !IsSubmittingCompose && !string.IsNullOrWhiteSpace(ComposeText);
+
+    private Task SubmitComposeAsync()
+    {
+        var text = (ComposeText ?? string.Empty).Trim();
+        if (text.Length == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        _composeCts?.Cancel();
+        _composeCts?.Dispose();
+        _composeCts = CancellationTokenSource.CreateLinkedTokenSource(_activeCts?.Token ?? CancellationToken.None);
+
+        // Phase 0.1: wiring only. Phase 0.2 will route this into the search orchestrator.
+        _logger.LogInformation("Compose submitted (Phase 0.1 wiring only): {Length} chars", text.Length);
+        return Task.CompletedTask;
     }
 
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)

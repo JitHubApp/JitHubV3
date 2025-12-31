@@ -145,6 +145,7 @@
                    AutomationProperties.AutomationId="DashboardComposeInput"
                    Grid.Column="0"
                    AcceptsReturn="True"
+                   Text="{Binding ComposeText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                    TextWrapping="Wrap"
                    PlaceholderText="Ask anything…"
                    HorizontalAlignment="Stretch"
@@ -152,11 +153,11 @@
                    AutomationProperties.Name="Dashboard composer" />
 
           <Button Grid.Column="1"
-                  IsEnabled="False"
                   VerticalAlignment="Bottom"
                   MinWidth="44"
                   MinHeight="44"
-                  AutomationProperties.Name="Send (disabled)">
+                  Command="{Binding SubmitComposeCommand}"
+                  AutomationProperties.Name="Send">
             <SymbolIcon Symbol="Send" />
           </Button>
         </Grid>
