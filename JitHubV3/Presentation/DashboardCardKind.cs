@@ -13,4 +13,7 @@ public enum DashboardCardKind
     RepoRecentActivity = 8,
     RepoSnapshot = 9,
     ComposeSearchIssues = 10,
+    ComposeSearchRepositories = 11,
+    ComposeSearchUsers = 12,
+    ComposeSearchCode = 13,
 }
