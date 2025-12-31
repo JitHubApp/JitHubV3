@@ -64,5 +64,11 @@
     <Compile Include="..\JitHubV3\Services\Ai\AnthropicRuntime.cs" Link="Ai\AnthropicRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AzureAiFoundryRuntime.cs" Link="Ai\AzureAiFoundryRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ConfiguredAiRuntimeCatalog.cs" Link="Ai\ConfiguredAiRuntimeCatalog.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\AiLocalModels.cs" Link="Ai\AiLocalModels.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelInventoryStore.cs" Link="Ai\IAiLocalModelInventoryStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiLocalModelInventoryStore.cs" Link="Ai\JsonFileAiLocalModelInventoryStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelCatalog.cs" Link="Ai\IAiLocalModelCatalog.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\LocalAiModelCatalog.cs" Link="Ai\LocalAiModelCatalog.cs" />
   </ItemGroup>
 </Project>
