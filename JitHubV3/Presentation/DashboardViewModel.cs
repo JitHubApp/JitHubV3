@@ -17,6 +17,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     private readonly IDispatcher _dispatcher;
     private readonly IGitHubRepositoryService _repositoryService;
     private readonly ComposeSearch.IComposeSearchOrchestrator _composeSearch;
+    private readonly ComposeSearch.IComposeSearchStateStore _composeState;
     private readonly ICacheEventBus _events;
     private readonly StatusBarViewModel _statusBar;
     private readonly IReadOnlyList<IDashboardCardProvider> _cardProviders;
@@ -108,6 +109,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         IDispatcher dispatcher,
         IGitHubRepositoryService repositoryService,
         ComposeSearch.IComposeSearchOrchestrator composeSearch,
+        ComposeSearch.IComposeSearchStateStore composeState,
         ICacheEventBus events,
         StatusBarViewModel statusBar,
         IEnumerable<IDashboardCardProvider> cardProviders)
@@ -116,6 +118,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _dispatcher = dispatcher;
         _repositoryService = repositoryService;
         _composeSearch = composeSearch;
+        _composeState = composeState;
         _events = events;
         _statusBar = statusBar;
         _cardProviders = (cardProviders ?? Enumerable.Empty<IDashboardCardProvider>())
@@ -201,20 +204,34 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         try
         {
             // Phase 0.2: issues-only search. Phase 0.3 will map results into dashboard cards.
-            _ = await _composeSearch.SearchAsync(
+            var response = await _composeSearch.SearchAsync(
                 new ComposeSearch.ComposeSearchRequest(text, PageSize: 20),
                 RefreshMode.CacheOnly,
                 ct).ConfigureAwait(false);
+
+            _composeState.SetLatest(response);
+            var activeCt = _activeCts?.Token;
+            if (activeCt is not null)
+            {
+                _ = RefreshCardsAsync(RefreshMode.CacheOnly, activeCt.Value);
+            }
 
             // Background refresh for fresher results.
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await _composeSearch.SearchAsync(
+                    var refreshed = await _composeSearch.SearchAsync(
                         new ComposeSearch.ComposeSearchRequest(text, PageSize: 20),
                         RefreshMode.PreferCacheThenRefresh,
                         ct).ConfigureAwait(false);
+
+                    _composeState.SetLatest(refreshed);
+                    var activeCt = _activeCts?.Token;
+                    if (activeCt is not null)
+                    {
+                        _ = RefreshCardsAsync(RefreshMode.CacheOnly, activeCt.Value);
+                    }
                 }
                 catch (OperationCanceledException)
                 {

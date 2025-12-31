@@ -149,7 +149,11 @@ public partial class App : Application
 
                     services.AddSingleton<StatusBarViewModel>();
 
+                    services.AddSingleton<IComposeSearchStateStore, ComposeSearchStateStore>();
+                    services.AddSingleton<IComposeSearchCardFactory, ComposeSearchCardFactory>();
                     services.AddSingleton<IComposeSearchOrchestrator, ComposeSearchOrchestrator>();
+
+                    services.AddSingleton<IDashboardCardProvider, ComposeSearchDashboardCardProvider>();
 
                     services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RecentRepositoriesDashboardCardProvider>();

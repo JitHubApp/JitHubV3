@@ -25,6 +25,9 @@
 
   <ItemGroup>
     <Compile Include="..\JitHubV3\Presentation\ComposeSearch\ComposeSearchOrchestrator.cs" Link="ComposeSearch\ComposeSearchOrchestrator.cs" />
+    <Compile Include="..\JitHubV3\Presentation\ComposeSearch\ComposeSearchStateStore.cs" Link="ComposeSearch\ComposeSearchStateStore.cs" />
+    <Compile Include="..\JitHubV3\Presentation\ComposeSearch\ComposeSearchCardFactory.cs" Link="ComposeSearch\ComposeSearchCardFactory.cs" />
+    <Compile Include="..\JitHubV3\Presentation\ComposeSearch\ComposeSearchDashboardCardProvider.cs" Link="ComposeSearch\ComposeSearchDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardActionModel.cs" Link="DashboardCards\DashboardCardActionModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardKind.cs" Link="DashboardCards\DashboardCardKind.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardId.cs" Link="DashboardCards\DashboardCardId.cs" />

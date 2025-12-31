@@ -19,6 +19,7 @@ public sealed class DashboardCardKindToAutomationIdConverter : IValueConverter
                 DashboardCardKind.MyRecentActivity => "DashboardCard.MyRecentActivity",
                 DashboardCardKind.RepoRecentActivity => "DashboardCard.RepoRecentActivity",
                 DashboardCardKind.RepoSnapshot => "DashboardCard.RepoSnapshot",
+                DashboardCardKind.ComposeSearchIssues => "DashboardCard.ComposeSearchIssues",
                 _ => "DashboardCard.Unknown",
             };
         }

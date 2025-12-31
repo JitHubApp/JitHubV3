@@ -4,6 +4,8 @@ internal static class DashboardCardId
 {
     // NOTE: DashboardViewModel syncs cards by CardId; these must be globally unique.
 
+    public const long ComposeSearchIssues = 40_000_001;
+
     public const long RepoRecentlyUpdatedIssues = 20_000_003;
     public const long RepoSnapshot = 20_000_005;
 
