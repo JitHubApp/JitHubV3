@@ -148,8 +148,33 @@ public partial class App : Application
                     services.AddSingleton<IGitHubTokenProvider, UnoTokenCacheGitHubTokenProvider>();
                     services.AddSingleton<ISecretStore, PlatformSecretStore>();
 
-                    services.AddSingleton<IAiRuntimeCatalog, EmptyAiRuntimeCatalog>();
+                    services.AddSingleton<IAiRuntimeCatalog, ConfiguredAiRuntimeCatalog>();
                     services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
+
+                    services.AddSingleton(sp => OpenAiRuntimeConfig.FromConfiguration(context.Configuration));
+                    services.AddSingleton(sp => AnthropicRuntimeConfig.FromConfiguration(context.Configuration));
+                    services.AddSingleton(sp => AzureAiFoundryRuntimeConfig.FromConfiguration(context.Configuration));
+
+                    services.AddSingleton(sp =>
+                    {
+                        var cfg = sp.GetRequiredService<OpenAiRuntimeConfig>();
+                        var http = new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
+                        return new OpenAiRuntime(http, sp.GetRequiredService<ISecretStore>(), cfg);
+                    });
+
+                    services.AddSingleton(sp =>
+                    {
+                        var cfg = sp.GetRequiredService<AnthropicRuntimeConfig>();
+                        var http = new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
+                        return new AnthropicRuntime(http, sp.GetRequiredService<ISecretStore>(), cfg);
+                    });
+
+                    services.AddSingleton(sp =>
+                    {
+                        var cfg = sp.GetRequiredService<AzureAiFoundryRuntimeConfig>();
+                        var http = string.IsNullOrWhiteSpace(cfg.Endpoint) ? new HttpClient() : new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
+                        return new AzureAiFoundryRuntime(http, sp.GetRequiredService<ISecretStore>(), cfg);
+                    });
 
                     services.AddSingleton<StatusBarViewModel>();
 

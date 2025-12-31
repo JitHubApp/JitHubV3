@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
@@ -54,5 +55,12 @@
     <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiModelStore.cs" Link="Ai\JsonFileAiModelStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiGitHubQueryPlanValidator.cs" Link="Ai\AiGitHubQueryPlanValidator.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiSecretKeys.cs" Link="Ai\AiSecretKeys.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiRuntimeConfiguration.cs" Link="Ai\AiRuntimeConfiguration.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiPromptBuilder.cs" Link="Ai\AiPromptBuilder.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiJsonUtilities.cs" Link="Ai\AiJsonUtilities.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\OpenAiRuntime.cs" Link="Ai\OpenAiRuntime.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AnthropicRuntime.cs" Link="Ai\AnthropicRuntime.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AzureAiFoundryRuntime.cs" Link="Ai\AzureAiFoundryRuntime.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ConfiguredAiRuntimeCatalog.cs" Link="Ai\ConfiguredAiRuntimeCatalog.cs" />
   </ItemGroup>
 </Project>
