@@ -46,5 +46,13 @@
     <Compile Include="..\JitHubV3\Presentation\MyReviewRequestsDashboardCardProvider.cs" Link="DashboardCards\MyReviewRequestsDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\NotificationsDashboardCardProvider.cs" Link="DashboardCards\NotificationsDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\MyRecentActivityDashboardCardProvider.cs" Link="DashboardCards\MyRecentActivityDashboardCardProvider.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\AiModels.cs" Link="Ai\AiModels.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiRuntime.cs" Link="Ai\IAiRuntime.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiRuntimeCatalog.cs" Link="Ai\IAiRuntimeCatalog.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiModelStore.cs" Link="Ai\IAiModelStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiModelStore.cs" Link="Ai\JsonFileAiModelStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiGitHubQueryPlanValidator.cs" Link="Ai\AiGitHubQueryPlanValidator.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiSecretKeys.cs" Link="Ai\AiSecretKeys.cs" />
   </ItemGroup>
 </Project>

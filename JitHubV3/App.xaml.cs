@@ -7,6 +7,7 @@ using JitHub.GitHub.Abstractions.Models;
 using JitHub.GitHub.Abstractions.Polling;
 using JitHub.GitHub.Octokit;
 using JitHubV3.Presentation.ComposeSearch;
+using JitHubV3.Services.Ai;
 
 namespace JitHubV3;
 
@@ -146,6 +147,9 @@ public partial class App : Application
 
                     services.AddSingleton<IGitHubTokenProvider, UnoTokenCacheGitHubTokenProvider>();
                     services.AddSingleton<ISecretStore, PlatformSecretStore>();
+
+                    services.AddSingleton<IAiRuntimeCatalog, EmptyAiRuntimeCatalog>();
+                    services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
 
                     services.AddSingleton<StatusBarViewModel>();
 
