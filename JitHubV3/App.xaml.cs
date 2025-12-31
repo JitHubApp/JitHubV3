@@ -6,6 +6,7 @@ using JitHub.GitHub.Abstractions.Services;
 using JitHub.GitHub.Abstractions.Models;
 using JitHub.GitHub.Abstractions.Polling;
 using JitHub.GitHub.Octokit;
+using JitHubV3.Presentation.ComposeSearch;
 
 namespace JitHubV3;
 
@@ -147,6 +148,8 @@ public partial class App : Application
                     services.AddSingleton<ISecretStore, PlatformSecretStore>();
 
                     services.AddSingleton<StatusBarViewModel>();
+
+                    services.AddSingleton<IComposeSearchOrchestrator, ComposeSearchOrchestrator>();
 
                     services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RecentRepositoriesDashboardCardProvider>();

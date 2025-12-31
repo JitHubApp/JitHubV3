@@ -16,6 +16,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     private readonly ILogger<DashboardViewModel> _logger;
     private readonly IDispatcher _dispatcher;
     private readonly IGitHubRepositoryService _repositoryService;
+    private readonly ComposeSearch.IComposeSearchOrchestrator _composeSearch;
     private readonly ICacheEventBus _events;
     private readonly StatusBarViewModel _statusBar;
     private readonly IReadOnlyList<IDashboardCardProvider> _cardProviders;
@@ -106,6 +107,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         ILogger<DashboardViewModel> logger,
         IDispatcher dispatcher,
         IGitHubRepositoryService repositoryService,
+        ComposeSearch.IComposeSearchOrchestrator composeSearch,
         ICacheEventBus events,
         StatusBarViewModel statusBar,
         IEnumerable<IDashboardCardProvider> cardProviders)
@@ -113,6 +115,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _logger = logger;
         _dispatcher = dispatcher;
         _repositoryService = repositoryService;
+        _composeSearch = composeSearch;
         _events = events;
         _statusBar = statusBar;
         _cardProviders = (cardProviders ?? Enumerable.Empty<IDashboardCardProvider>())
@@ -185,9 +188,58 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _composeCts?.Dispose();
         _composeCts = CancellationTokenSource.CreateLinkedTokenSource(_activeCts?.Token ?? CancellationToken.None);
 
-        // Phase 0.1: wiring only. Phase 0.2 will route this into the search orchestrator.
-        _logger.LogInformation("Compose submitted (Phase 0.1 wiring only): {Length} chars", text.Length);
-        return Task.CompletedTask;
+        return SubmitComposeInternalAsync(text, _composeCts.Token);
+    }
+
+    private async Task SubmitComposeInternalAsync(string text, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        IsSubmittingCompose = true;
+        _statusBar.Set(message: "Searching…", isBusy: true, isRefreshing: false);
+
+        try
+        {
+            // Phase 0.2: issues-only search. Phase 0.3 will map results into dashboard cards.
+            _ = await _composeSearch.SearchAsync(
+                new ComposeSearch.ComposeSearchRequest(text, PageSize: 20),
+                RefreshMode.CacheOnly,
+                ct).ConfigureAwait(false);
+
+            // Background refresh for fresher results.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _composeSearch.SearchAsync(
+                        new ComposeSearch.ComposeSearchRequest(text, PageSize: 20),
+                        RefreshMode.PreferCacheThenRefresh,
+                        ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignore cancellation.
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Compose background search refresh failed");
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore cancellation.
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Compose search failed");
+            _statusBar.Set(message: "Search failed", isBusy: false, isRefreshing: false);
+        }
+        finally
+        {
+            IsSubmittingCompose = false;
+            _statusBar.Set(isBusy: false, isRefreshing: false);
+        }
     }
 
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)

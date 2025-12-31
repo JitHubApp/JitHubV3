@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\JitHubV3\Presentation\ComposeSearch\ComposeSearchOrchestrator.cs" Link="ComposeSearch\ComposeSearchOrchestrator.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardActionModel.cs" Link="DashboardCards\DashboardCardActionModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardKind.cs" Link="DashboardCards\DashboardCardKind.cs" />
     <Compile Include="..\JitHubV3\Presentation\DashboardCardId.cs" Link="DashboardCards\DashboardCardId.cs" />
