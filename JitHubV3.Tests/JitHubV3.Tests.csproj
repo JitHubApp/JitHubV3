@@ -70,5 +70,9 @@
     <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiLocalModelInventoryStore.cs" Link="Ai\JsonFileAiLocalModelInventoryStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelCatalog.cs" Link="Ai\IAiLocalModelCatalog.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\LocalAiModelCatalog.cs" Link="Ai\LocalAiModelCatalog.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloads.cs" Link="Ai\AiModelDownloads.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiModelDownloadQueue.cs" Link="Ai\IAiModelDownloadQueue.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloadQueue.cs" Link="Ai\AiModelDownloadQueue.cs" />
   </ItemGroup>
 </Project>

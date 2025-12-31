@@ -4,7 +4,10 @@ public sealed record AiLocalModelDefinition(
     string ModelId,
     string? DisplayName,
     string RuntimeId,
-    string? DefaultInstallFolderName = null);
+    string? DefaultInstallFolderName = null,
+    string? DownloadUri = null,
+    string? ArtifactFileName = null,
+    long? ExpectedBytes = null);
 
 public sealed record AiLocalModelInventoryEntry(
     string ModelId,
