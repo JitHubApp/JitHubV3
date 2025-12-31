@@ -542,6 +542,114 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<OctokitRepositoryData>> SearchRepositoriesAsync(RepoSearchQuery query, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        if (string.IsNullOrWhiteSpace(query.Query))
+        {
+            return Array.Empty<OctokitRepositoryData>();
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var request = new SearchRepositoriesRequest(query.Query.Trim())
+        {
+            PerPage = page.PageSize,
+            Page = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        ApplySearchSorting(request, query.Sort, query.Direction);
+
+        // Octokit surface differs across versions (SearchRepo vs SearchRepositories). Try both.
+        var items = await InvokeSearchItemsAsync<Repository>(client.Search, request, new[] { "SearchRepositories", "SearchRepo" }).ConfigureAwait(false);
+
+        return items
+            .Select(r => new OctokitRepositoryData(
+                Id: r.Id,
+                Name: r.Name,
+                OwnerLogin: r.Owner?.Login,
+                IsPrivate: r.Private,
+                DefaultBranch: r.DefaultBranch,
+                Description: r.Description,
+                UpdatedAt: r.UpdatedAt))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<OctokitUserData>> SearchUsersAsync(UserSearchQuery query, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        if (string.IsNullOrWhiteSpace(query.Query))
+        {
+            return Array.Empty<OctokitUserData>();
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var request = new SearchUsersRequest(query.Query.Trim())
+        {
+            PerPage = page.PageSize,
+            Page = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        ApplySearchSorting(request, query.Sort, query.Direction);
+
+        var items = await InvokeSearchItemsAsync<User>(client.Search, request, new[] { "SearchUsers", "SearchUser" }).ConfigureAwait(false);
+
+        return items
+            .Select(u => new OctokitUserData(
+                Id: u.Id,
+                Login: u.Login,
+                Name: null,
+                Bio: null,
+                Url: u.HtmlUrl))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<OctokitCodeSearchItemData>> SearchCodeAsync(CodeSearchQuery query, PageRequest page, CancellationToken ct)
+    {
+        if (page.Cursor is not null)
+        {
+            throw new NotSupportedException("Cursor-based pagination is not supported by the Octokit provider.");
+        }
+
+        if (string.IsNullOrWhiteSpace(query.Query))
+        {
+            return Array.Empty<OctokitCodeSearchItemData>();
+        }
+
+        var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
+
+        var request = new SearchCodeRequest(query.Query.Trim())
+        {
+            PerPage = page.PageSize,
+            Page = page.PageNumber.GetValueOrDefault(1),
+        };
+
+        ApplySearchSorting(request, query.Sort, query.Direction);
+
+        var items = await InvokeSearchItemsAsync<SearchCode>(client.Search, request, new[] { "SearchCode" }).ConfigureAwait(false);
+
+        return items
+            .Select(i =>
+            {
+                var repoKey = TryParseRepoKey(i.Repository?.FullName) ?? new RepoKey(string.Empty, string.Empty);
+                return new OctokitCodeSearchItemData(
+                    Path: i.Path ?? string.Empty,
+                    Repo: repoKey,
+                    Sha: i.Sha,
+                    Url: i.HtmlUrl);
+            })
+            .ToArray();
+    }
+
     public async Task<OctokitIssueDetailData?> GetIssueAsync(RepoKey repo, int issueNumber, CancellationToken ct)
     {
         var client = await _clientFactory.CreateAsync(ct).ConfigureAwait(false);
@@ -663,6 +771,186 @@ internal sealed class OctokitGitHubDataSource : IGitHubDataSource
                 }
             }
         }
+    }
+
+    private static void ApplySearchSorting(SearchRepositoriesRequest request, RepoSortField? sort, RepoSortDirection? direction)
+    {
+        if (sort is null && direction is null)
+        {
+            return;
+        }
+
+        var requestType = request.GetType();
+
+        if (sort is not null)
+        {
+            var sortProperty = requestType.GetProperty("SortField") ?? requestType.GetProperty("Sort");
+            if (sortProperty is not null && sortProperty.CanWrite)
+            {
+                var sortValueName = sort.Value switch
+                {
+                    RepoSortField.Stars => "Stars",
+                    RepoSortField.Forks => "Forks",
+                    RepoSortField.Updated => "Updated",
+                    _ => "BestMatch",
+                };
+
+                TrySetEnumPropertyValue(sortProperty, request, sortValueName);
+            }
+        }
+
+        if (direction is not null)
+        {
+            var orderProperty = requestType.GetProperty("Order") ?? requestType.GetProperty("SortDirection") ?? requestType.GetProperty("Direction");
+            if (orderProperty is not null && orderProperty.CanWrite)
+            {
+                var orderValueName = direction.Value == RepoSortDirection.Asc ? "Ascending" : "Descending";
+                TrySetEnumPropertyValue(orderProperty, request, orderValueName);
+            }
+        }
+    }
+
+    private static void ApplySearchSorting(SearchUsersRequest request, UserSortField? sort, UserSortDirection? direction)
+    {
+        if (sort is null && direction is null)
+        {
+            return;
+        }
+
+        var requestType = request.GetType();
+
+        if (sort is not null)
+        {
+            var sortProperty = requestType.GetProperty("SortField") ?? requestType.GetProperty("Sort");
+            if (sortProperty is not null && sortProperty.CanWrite)
+            {
+                var sortValueName = sort.Value switch
+                {
+                    UserSortField.Followers => "Followers",
+                    UserSortField.Repositories => "Repositories",
+                    UserSortField.Joined => "Joined",
+                    _ => "BestMatch",
+                };
+
+                TrySetEnumPropertyValue(sortProperty, request, sortValueName);
+            }
+        }
+
+        if (direction is not null)
+        {
+            var orderProperty = requestType.GetProperty("Order") ?? requestType.GetProperty("SortDirection") ?? requestType.GetProperty("Direction");
+            if (orderProperty is not null && orderProperty.CanWrite)
+            {
+                var orderValueName = direction.Value == UserSortDirection.Asc ? "Ascending" : "Descending";
+                TrySetEnumPropertyValue(orderProperty, request, orderValueName);
+            }
+        }
+    }
+
+    private static void ApplySearchSorting(SearchCodeRequest request, CodeSortField? sort, CodeSortDirection? direction)
+    {
+        if (sort is null && direction is null)
+        {
+            return;
+        }
+
+        var requestType = request.GetType();
+
+        if (sort is not null)
+        {
+            var sortProperty = requestType.GetProperty("SortField") ?? requestType.GetProperty("Sort");
+            if (sortProperty is not null && sortProperty.CanWrite)
+            {
+                var sortValueName = sort.Value switch
+                {
+                    CodeSortField.Indexed => "Indexed",
+                    _ => "BestMatch",
+                };
+
+                TrySetEnumPropertyValue(sortProperty, request, sortValueName);
+            }
+        }
+
+        if (direction is not null)
+        {
+            var orderProperty = requestType.GetProperty("Order") ?? requestType.GetProperty("SortDirection") ?? requestType.GetProperty("Direction");
+            if (orderProperty is not null && orderProperty.CanWrite)
+            {
+                var orderValueName = direction.Value == CodeSortDirection.Asc ? "Ascending" : "Descending";
+                TrySetEnumPropertyValue(orderProperty, request, orderValueName);
+            }
+        }
+    }
+
+    private static void TrySetEnumPropertyValue(System.Reflection.PropertyInfo property, object target, string enumValueName)
+    {
+        try
+        {
+            var enumValue = Enum.Parse(property.PropertyType, enumValueName, ignoreCase: true);
+            property.SetValue(target, enumValue);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private static async Task<IReadOnlyList<TItem>> InvokeSearchItemsAsync<TItem>(object searchClient, object request, IReadOnlyList<string> methodNames)
+        where TItem : class
+    {
+        foreach (var methodName in methodNames)
+        {
+            try
+            {
+                var methods = searchClient.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    .Where(m => string.Equals(m.Name, methodName, StringComparison.Ordinal))
+                    .ToArray();
+
+                var match = methods.FirstOrDefault(m => ParametersMatch(m.GetParameters(), new[] { request }));
+                if (match is null)
+                {
+                    continue;
+                }
+
+                var invoked = match.Invoke(searchClient, new[] { request });
+                if (invoked is not Task task)
+                {
+                    continue;
+                }
+
+                await task.ConfigureAwait(false);
+
+                var result = ExtractTaskResult<object>(task);
+                if (result is null)
+                {
+                    continue;
+                }
+
+                var itemsProp = result.GetType().GetProperty("Items");
+                var itemsObj = itemsProp?.GetValue(result);
+                if (itemsObj is not System.Collections.IEnumerable enumerable)
+                {
+                    continue;
+                }
+
+                var list = new List<TItem>();
+                foreach (var item in enumerable)
+                {
+                    if (item is TItem typed)
+                    {
+                        list.Add(typed);
+                    }
+                }
+
+                return list;
+            }
+            catch
+            {
+                // ignore and try next method name
+            }
+        }
+
+        return Array.Empty<TItem>();
     }
 
     private static RepoKey? TryParseRepoKeyFromSearchItem(object item)

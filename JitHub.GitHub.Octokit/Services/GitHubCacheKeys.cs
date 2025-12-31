@@ -126,4 +126,64 @@ internal static class GitHubCacheKeys
             ("pageNumber", pageNumber),
             ("cursor", cursor));
     }
+
+    public static CacheKey SearchRepos(RepoSearchQuery query, PageRequest page)
+    {
+        var q = string.IsNullOrWhiteSpace(query.Query) ? string.Empty : query.Query.Trim();
+        var sort = query.Sort?.ToString() ?? string.Empty;
+        var direction = query.Direction?.ToString() ?? string.Empty;
+
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.repos.search",
+            userScope: null,
+            ("q", q),
+            ("sort", sort),
+            ("direction", direction),
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
+
+    public static CacheKey SearchUsers(UserSearchQuery query, PageRequest page)
+    {
+        var q = string.IsNullOrWhiteSpace(query.Query) ? string.Empty : query.Query.Trim();
+        var sort = query.Sort?.ToString() ?? string.Empty;
+        var direction = query.Direction?.ToString() ?? string.Empty;
+
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.users.search",
+            userScope: null,
+            ("q", q),
+            ("sort", sort),
+            ("direction", direction),
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
+
+    public static CacheKey SearchCode(CodeSearchQuery query, PageRequest page)
+    {
+        var q = string.IsNullOrWhiteSpace(query.Query) ? string.Empty : query.Query.Trim();
+        var sort = query.Sort?.ToString() ?? string.Empty;
+        var direction = query.Direction?.ToString() ?? string.Empty;
+
+        var pageNumber = page.PageNumber?.ToString() ?? string.Empty;
+        var cursor = page.Cursor ?? string.Empty;
+
+        return CacheKey.Create(
+            "github.code.search",
+            userScope: null,
+            ("q", q),
+            ("sort", sort),
+            ("direction", direction),
+            ("pageSize", page.PageSize.ToString()),
+            ("pageNumber", pageNumber),
+            ("cursor", cursor));
+    }
 }

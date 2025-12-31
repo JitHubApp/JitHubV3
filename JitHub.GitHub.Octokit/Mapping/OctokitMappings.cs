@@ -141,6 +141,35 @@ public static class OctokitMappings
             WatchersCount: repo.WatchersCount);
     }
 
+    internal static UserSummary ToUserSummary(OctokitUserData user)
+    {
+        if (user is null)
+        {
+            throw new ArgumentNullException(nameof(user));
+        }
+
+        return new UserSummary(
+            Id: user.Id,
+            Login: user.Login ?? string.Empty,
+            Name: user.Name,
+            Bio: user.Bio,
+            Url: user.Url);
+    }
+
+    internal static CodeSearchItemSummary ToCodeSearchItemSummary(OctokitCodeSearchItemData item)
+    {
+        if (item is null)
+        {
+            throw new ArgumentNullException(nameof(item));
+        }
+
+        return new CodeSearchItemSummary(
+            Path: item.Path ?? string.Empty,
+            Repo: item.Repo,
+            Sha: item.Sha,
+            Url: item.Url);
+    }
+
     private static IssueState ParseIssueState(string? state)
     {
         if (string.Equals(state, "closed", StringComparison.OrdinalIgnoreCase))

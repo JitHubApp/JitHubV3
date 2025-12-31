@@ -320,6 +320,109 @@ public sealed class CachedServicesTests
         dataSource.GetRepoDetailsCallCount.Should().Be(1);
     }
 
+    [Test]
+    public async Task RepoSearchService_cache_key_varies_by_query()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            SearchReposFactory = (q, _, _) =>
+                Task.FromResult<IReadOnlyList<OctokitRepositoryData>>(
+                [
+                    new OctokitRepositoryData(
+                        Id: q.Query.GetHashCode(),
+                        Name: q.Query,
+                        OwnerLogin: "me",
+                        IsPrivate: false,
+                        DefaultBranch: "main",
+                        Description: null,
+                        UpdatedAt: DateTimeOffset.UtcNow),
+                ])
+        };
+
+        var sut = new CachedGitHubRepoSearchService(cache, dataSource);
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var q1 = new RepoSearchQuery("uno platform");
+        var q2 = new RepoSearchQuery("octokit");
+
+        _ = await sut.SearchAsync(q1, page, RefreshMode.ForceRefresh, CancellationToken.None);
+        _ = await sut.SearchAsync(q2, page, RefreshMode.ForceRefresh, CancellationToken.None);
+
+        dataSource.SearchReposCallCount.Should().Be(2);
+
+        _ = await sut.SearchAsync(q1, page, RefreshMode.CacheOnly, CancellationToken.None);
+        dataSource.SearchReposCallCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task UserSearchService_cache_key_varies_by_query()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            SearchUsersFactory = (q, _, _) =>
+                Task.FromResult<IReadOnlyList<OctokitUserData>>(
+                [
+                    new OctokitUserData(
+                        Id: q.Query.GetHashCode(),
+                        Login: q.Query,
+                        Name: null,
+                        Bio: null,
+                        Url: "https://example.invalid"),
+                ])
+        };
+
+        var sut = new CachedGitHubUserSearchService(cache, dataSource);
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var q1 = new UserSearchQuery("octocat");
+        var q2 = new UserSearchQuery("hubot");
+
+        _ = await sut.SearchAsync(q1, page, RefreshMode.ForceRefresh, CancellationToken.None);
+        _ = await sut.SearchAsync(q2, page, RefreshMode.ForceRefresh, CancellationToken.None);
+
+        dataSource.SearchUsersCallCount.Should().Be(2);
+
+        _ = await sut.SearchAsync(q1, page, RefreshMode.CacheOnly, CancellationToken.None);
+        dataSource.SearchUsersCallCount.Should().Be(2);
+    }
+
+    [Test]
+    public async Task CodeSearchService_cache_key_varies_by_query()
+    {
+        var cache = new CacheRuntime(new InMemoryCacheStore(), new CacheEventBus());
+
+        var dataSource = new FakeGitHubDataSource
+        {
+            SearchCodeFactory = (q, _, _) =>
+                Task.FromResult<IReadOnlyList<OctokitCodeSearchItemData>>(
+                [
+                    new OctokitCodeSearchItemData(
+                        Path: q.Query,
+                        Repo: new RepoKey("octo", "hello"),
+                        Sha: "deadbeef",
+                        Url: "https://example.invalid"),
+                ])
+        };
+
+        var sut = new CachedGitHubCodeSearchService(cache, dataSource);
+        var page = PageRequest.FirstPage(pageSize: 5);
+
+        var q1 = new CodeSearchQuery("language:csharp HttpClient");
+        var q2 = new CodeSearchQuery("language:csharp CancellationToken");
+
+        _ = await sut.SearchAsync(q1, page, RefreshMode.ForceRefresh, CancellationToken.None);
+        _ = await sut.SearchAsync(q2, page, RefreshMode.ForceRefresh, CancellationToken.None);
+
+        dataSource.SearchCodeCallCount.Should().Be(2);
+
+        _ = await sut.SearchAsync(q1, page, RefreshMode.CacheOnly, CancellationToken.None);
+        dataSource.SearchCodeCallCount.Should().Be(2);
+    }
+
     internal sealed class FakeGitHubDataSource : IGitHubDataSource
     {
         public IReadOnlyList<OctokitRepositoryData> Repositories { get; init; } = Array.Empty<OctokitRepositoryData>();
@@ -336,6 +439,12 @@ public sealed class CachedServicesTests
 
         public Func<IssueSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitWorkItemData>>>? SearchIssuesFactory { get; init; }
 
+        public Func<RepoSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitRepositoryData>>>? SearchReposFactory { get; init; }
+
+        public Func<UserSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitUserData>>>? SearchUsersFactory { get; init; }
+
+        public Func<CodeSearchQuery, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitCodeSearchItemData>>>? SearchCodeFactory { get; init; }
+
         public Func<bool, PageRequest, CancellationToken, Task<IReadOnlyList<OctokitNotificationData>>>? NotificationsFactory { get; init; }
 
         public Func<RepoKey, CancellationToken, Task<OctokitRepositoryDetailData?>>? RepoDetailsFactory { get; init; }
@@ -345,6 +454,10 @@ public sealed class CachedServicesTests
         public int GetRepoActivityCallCount { get; private set; }
         public int GetIssuesCallCount { get; private set; }
         public int GetRepoDetailsCallCount { get; private set; }
+
+        public int SearchReposCallCount { get; private set; }
+        public int SearchUsersCallCount { get; private set; }
+        public int SearchCodeCallCount { get; private set; }
 
         public Task<IReadOnlyList<OctokitRepositoryData>> GetMyRepositoriesAsync(CancellationToken ct)
         {
@@ -396,6 +509,42 @@ public sealed class CachedServicesTests
             }
 
             return Task.FromResult<IReadOnlyList<OctokitWorkItemData>>(Array.Empty<OctokitWorkItemData>());
+        }
+
+        public Task<IReadOnlyList<OctokitRepositoryData>> SearchRepositoriesAsync(RepoSearchQuery query, PageRequest page, CancellationToken ct)
+        {
+            SearchReposCallCount++;
+
+            if (SearchReposFactory is not null)
+            {
+                return SearchReposFactory(query, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitRepositoryData>>(Array.Empty<OctokitRepositoryData>());
+        }
+
+        public Task<IReadOnlyList<OctokitUserData>> SearchUsersAsync(UserSearchQuery query, PageRequest page, CancellationToken ct)
+        {
+            SearchUsersCallCount++;
+
+            if (SearchUsersFactory is not null)
+            {
+                return SearchUsersFactory(query, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitUserData>>(Array.Empty<OctokitUserData>());
+        }
+
+        public Task<IReadOnlyList<OctokitCodeSearchItemData>> SearchCodeAsync(CodeSearchQuery query, PageRequest page, CancellationToken ct)
+        {
+            SearchCodeCallCount++;
+
+            if (SearchCodeFactory is not null)
+            {
+                return SearchCodeFactory(query, page, ct);
+            }
+
+            return Task.FromResult<IReadOnlyList<OctokitCodeSearchItemData>>(Array.Empty<OctokitCodeSearchItemData>());
         }
 
         public Task<IReadOnlyList<OctokitNotificationData>> GetMyNotificationsAsync(bool unreadOnly, PageRequest page, CancellationToken ct)
