@@ -140,6 +140,7 @@
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
           <Grid.ColumnDefinitions>
@@ -160,16 +161,38 @@
                    VerticalAlignment="Stretch"
                    AutomationProperties.Name="Dashboard composer" />
 
-          <ComboBox Grid.Row="1"
-                    Grid.Column="0"
-                    ItemsSource="{Binding AiModelOptions}"
-                    SelectedItem="{Binding SelectedAiModel, Mode=TwoWay}"
-                    DisplayMemberPath="DisplayName"
-                    AutomationProperties.AutomationId="DashboardComposeModelPicker"
-                    AutomationProperties.Name="AI model" />
+            <Grid Grid.Row="1"
+            Grid.Column="0"
+            ColumnSpacing="{StaticResource DashboardSpacingS}">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
 
-          <Button Grid.Row="1"
-                  Grid.Column="1"
+              <ComboBox Grid.Column="0"
+                  ItemsSource="{Binding AiModelOptions}"
+                  SelectedItem="{Binding SelectedAiModel, Mode=TwoWay}"
+                  DisplayMemberPath="DisplayName"
+                  AutomationProperties.AutomationId="DashboardComposeModelPicker"
+                  AutomationProperties.Name="AI model" />
+
+              <Button Grid.Column="1"
+                Content="Download"
+                MinHeight="44"
+                Command="{Binding DownloadSelectedAiModelCommand}"
+                    Visibility="{Binding CanDownloadSelectedAiModel}" />
+
+              <Button Grid.Column="2"
+                Content="Cancel"
+                MinHeight="44"
+                Command="{Binding CancelAiModelDownloadCommand}"
+                    Visibility="{Binding CanCancelAiModelDownload}" />
+            </Grid>
+
+            <Button Grid.Row="1"
+              Grid.RowSpan="2"
+              Grid.Column="1"
                   VerticalAlignment="Bottom"
                   MinWidth="44"
                   MinHeight="44"
@@ -177,6 +200,19 @@
                   AutomationProperties.Name="Send">
             <SymbolIcon Symbol="Send" />
           </Button>
+
+            <StackPanel Grid.Row="2"
+                  Grid.Column="0"
+                  Spacing="{StaticResource DashboardSpacingXS}"
+                  Visibility="{Binding IsAiModelDownloadVisible}">
+              <ProgressBar IsIndeterminate="{Binding IsAiModelDownloadIndeterminate}"
+               Value="{Binding AiModelDownloadProgressPercent}"
+               Maximum="100" />
+
+              <TextBlock Text="{Binding AiModelDownloadStatusText}"
+                   Opacity="0.72"
+                   TextWrapping="Wrap" />
+            </StackPanel>
         </Grid>
       </Border>
     </Grid>

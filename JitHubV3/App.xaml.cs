@@ -154,6 +154,11 @@ public partial class App : Application
                     services.AddSingleton<IAiRuntimeResolver, AiRuntimeResolver>();
 
                     services.AddSingleton<IAiLocalModelInventoryStore>(sp => new JsonFileAiLocalModelInventoryStore());
+                    services.AddSingleton(sp => AiLocalModelDefinitionsConfiguration.FromConfiguration(context.Configuration));
+                    services.AddSingleton<IAiLocalModelCatalog>(sp =>
+                        new LocalAiModelCatalog(
+                            sp.GetRequiredService<IReadOnlyList<AiLocalModelDefinition>>(),
+                            sp.GetRequiredService<IAiLocalModelInventoryStore>()));
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
                         new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
 

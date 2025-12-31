@@ -5,7 +5,11 @@ public sealed record AiModelPickerOption(
     string ModelId,
     string DisplayName,
     bool IsLocal,
-    string? InstallPath = null);
+    bool IsDownloaded,
+    string? InstallPath = null,
+    Uri? DownloadUri = null,
+    string? ArtifactFileName = null,
+    long? ExpectedBytes = null);
 
 public interface IAiModelPickerOptionsProvider
 {
@@ -16,22 +20,25 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
 {
     private readonly IAiRuntimeCatalog _runtimeCatalog;
     private readonly IAiModelStore _modelStore;
-    private readonly IAiLocalModelInventoryStore _localInventory;
+    private readonly IAiLocalModelCatalog _localCatalog;
     private readonly OpenAiRuntimeConfig _openAi;
     private readonly AnthropicRuntimeConfig _anthropic;
     private readonly AzureAiFoundryRuntimeConfig _foundry;
+    private readonly IReadOnlyList<AiLocalModelDefinition> _localDefinitions;
 
     public AiModelPickerOptionsProvider(
         IAiRuntimeCatalog runtimeCatalog,
         IAiModelStore modelStore,
-        IAiLocalModelInventoryStore localInventory,
+        IAiLocalModelCatalog localCatalog,
+        IReadOnlyList<AiLocalModelDefinition> localDefinitions,
         OpenAiRuntimeConfig openAi,
         AnthropicRuntimeConfig anthropic,
         AzureAiFoundryRuntimeConfig foundry)
     {
         _runtimeCatalog = runtimeCatalog;
         _modelStore = modelStore;
-        _localInventory = localInventory;
+        _localCatalog = localCatalog;
+        _localDefinitions = localDefinitions ?? Array.Empty<AiLocalModelDefinition>();
         _openAi = openAi;
         _anthropic = anthropic;
         _foundry = foundry;
@@ -58,18 +65,35 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
                 RuntimeId: r.RuntimeId,
                 ModelId: modelId,
                 DisplayName: $"API · {r.DisplayName} · {modelId}",
-                IsLocal: false));
+                IsLocal: false,
+                IsDownloaded: true));
         }
 
-        var local = await _localInventory.GetInventoryAsync(ct);
-        foreach (var entry in local)
+        var catalog = await _localCatalog.GetCatalogAsync(ct);
+        foreach (var item in catalog)
         {
+            var def = _localDefinitions.FirstOrDefault(d =>
+                string.Equals(d.ModelId, item.ModelId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(d.RuntimeId, item.RuntimeId, StringComparison.OrdinalIgnoreCase));
+
+            Uri? downloadUri = null;
+            if (def?.DownloadUri is not null && Uri.TryCreate(def.DownloadUri, UriKind.Absolute, out var parsed))
+            {
+                downloadUri = parsed;
+            }
+
             options.Add(new AiModelPickerOption(
-                RuntimeId: entry.RuntimeId,
-                ModelId: entry.ModelId,
-                DisplayName: $"Local · {entry.ModelId}",
+                RuntimeId: item.RuntimeId,
+                ModelId: item.ModelId,
+                DisplayName: item.IsDownloaded
+                    ? $"Local · {item.DisplayName ?? item.ModelId}"
+                    : $"Local · {item.DisplayName ?? item.ModelId} (not downloaded)",
                 IsLocal: true,
-                InstallPath: entry.InstallPath));
+                IsDownloaded: item.IsDownloaded,
+                InstallPath: item.InstallPath,
+                DownloadUri: downloadUri,
+                ArtifactFileName: def?.ArtifactFileName,
+                ExpectedBytes: def?.ExpectedBytes));
         }
 
         return options
