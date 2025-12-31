@@ -9,14 +9,16 @@ public sealed class OpenAiRuntime : IAiRuntime
 {
     private readonly HttpClient _http;
     private readonly ISecretStore _secrets;
+    private readonly IAiModelStore _modelStore;
     private readonly OpenAiRuntimeConfig _config;
 
     public string RuntimeId => "openai";
 
-    public OpenAiRuntime(HttpClient http, ISecretStore secrets, OpenAiRuntimeConfig config)
+    public OpenAiRuntime(HttpClient http, ISecretStore secrets, IAiModelStore modelStore, OpenAiRuntimeConfig config)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _secrets = secrets ?? throw new ArgumentNullException(nameof(secrets));
+        _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
         _config = config ?? throw new ArgumentNullException(nameof(config));
     }
 
@@ -29,7 +31,8 @@ public sealed class OpenAiRuntime : IAiRuntime
 
         ct.ThrowIfCancellationRequested();
 
-        if (string.IsNullOrWhiteSpace(_config.ModelId))
+        var modelId = await TryGetSelectedModelIdAsync(ct).ConfigureAwait(false) ?? _config.ModelId;
+        if (string.IsNullOrWhiteSpace(modelId))
         {
             return null;
         }
@@ -44,7 +47,7 @@ public sealed class OpenAiRuntime : IAiRuntime
 
         var payload = new Dictionary<string, object?>
         {
-            ["model"] = _config.ModelId,
+            ["model"] = modelId,
             ["messages"] = new object[]
             {
                 new { role = "system", content = system },
@@ -81,6 +84,19 @@ public sealed class OpenAiRuntime : IAiRuntime
         }
 
         return AiGitHubQueryPlanValidator.Validate(candidate);
+    }
+
+    private async ValueTask<string?> TryGetSelectedModelIdAsync(CancellationToken ct)
+    {
+        var selection = await _modelStore.GetSelectionAsync(ct).ConfigureAwait(false);
+        if (selection is null)
+        {
+            return null;
+        }
+
+        return string.Equals(selection.RuntimeId, RuntimeId, StringComparison.OrdinalIgnoreCase)
+            ? selection.ModelId
+            : null;
     }
 
     private static string? TryExtractOpenAiMessageContent(string? json)

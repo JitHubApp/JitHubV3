@@ -5,6 +5,7 @@ using JitHub.GitHub.Abstractions.Paging;
 using JitHub.GitHub.Abstractions.Queries;
 using JitHub.GitHub.Abstractions.Refresh;
 using JitHub.GitHub.Abstractions.Services;
+using JitHubV3.Services.Ai;
 
 public interface IComposeSearchOrchestrator
 {
@@ -64,16 +65,24 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
     private readonly IGitHubUserSearchService _users;
     private readonly IGitHubCodeSearchService _code;
 
+    private readonly AiSettings? _aiSettings;
+    private readonly IAiRuntimeResolver? _aiRuntimeResolver;
+
     public ComposeSearchOrchestrator(
         IGitHubIssueSearchService issues,
         IGitHubRepoSearchService repos,
         IGitHubUserSearchService users,
-        IGitHubCodeSearchService code)
+        IGitHubCodeSearchService code,
+        AiSettings? aiSettings = null,
+        IAiRuntimeResolver? aiRuntimeResolver = null)
     {
         _issues = issues ?? throw new ArgumentNullException(nameof(issues));
         _repos = repos ?? throw new ArgumentNullException(nameof(repos));
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _code = code ?? throw new ArgumentNullException(nameof(code));
+
+        _aiSettings = aiSettings;
+        _aiRuntimeResolver = aiRuntimeResolver;
     }
 
     public async Task<ComposeSearchResponse> SearchAsync(ComposeSearchRequest request, RefreshMode refresh, CancellationToken ct)
@@ -86,13 +95,31 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
             return new ComposeSearchResponse(request.Input ?? string.Empty, Query: string.Empty, Groups: Array.Empty<ComposeSearchResultGroup>());
         }
 
-        var query = IsStructuredQuery(input) ? input : input;
+        var isStructured = IsStructuredQuery(input);
+        var query = input;
+        IReadOnlyList<ComposeSearchDomain>? requestedDomains = null;
+
+        if (!isStructured)
+        {
+            var plan = await TryBuildAiPlanAsync(input, ct).ConfigureAwait(false);
+            if (plan is not null)
+            {
+                query = plan.Query;
+                requestedDomains = plan.Domains;
+            }
+        }
+
         var page = PageRequest.FirstPage(pageSize: request.PageSize);
 
-        var issuesTask = SearchIssuesBestEffortAsync(query, page, refresh, ct);
-        var reposTask = SearchReposBestEffortAsync(query, page, refresh, ct);
-        var usersTask = SearchUsersBestEffortAsync(query, page, refresh, ct);
-        var codeTask = SearchCodeBestEffortAsync(query, page, refresh, ct);
+        var includeIssues = requestedDomains is null || requestedDomains.Contains(ComposeSearchDomain.IssuesAndPullRequests);
+        var includeRepos = requestedDomains is null || requestedDomains.Contains(ComposeSearchDomain.Repositories);
+        var includeUsers = requestedDomains is null || requestedDomains.Contains(ComposeSearchDomain.Users);
+        var includeCode = requestedDomains is null || requestedDomains.Contains(ComposeSearchDomain.Code);
+
+        var issuesTask = includeIssues ? SearchIssuesBestEffortAsync(query, page, refresh, ct) : Task.FromResult<IReadOnlyList<ComposeSearchItem>>(Array.Empty<ComposeSearchItem>());
+        var reposTask = includeRepos ? SearchReposBestEffortAsync(query, page, refresh, ct) : Task.FromResult<IReadOnlyList<ComposeSearchItem>>(Array.Empty<ComposeSearchItem>());
+        var usersTask = includeUsers ? SearchUsersBestEffortAsync(query, page, refresh, ct) : Task.FromResult<IReadOnlyList<ComposeSearchItem>>(Array.Empty<ComposeSearchItem>());
+        var codeTask = includeCode ? SearchCodeBestEffortAsync(query, page, refresh, ct) : Task.FromResult<IReadOnlyList<ComposeSearchItem>>(Array.Empty<ComposeSearchItem>());
 
         await Task.WhenAll(issuesTask, reposTask, usersTask, codeTask).ConfigureAwait(false);
 
@@ -105,6 +132,38 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
         };
 
         return new ComposeSearchResponse(input, query, groups);
+    }
+
+    private async Task<AiGitHubQueryPlan?> TryBuildAiPlanAsync(string input, CancellationToken ct)
+    {
+        if (_aiSettings?.Enabled != true)
+        {
+            return null;
+        }
+
+        if (_aiRuntimeResolver is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var runtime = await _aiRuntimeResolver.ResolveSelectedRuntimeAsync(ct).ConfigureAwait(false);
+            if (runtime is null)
+            {
+                return null;
+            }
+
+            return await runtime.BuildGitHubQueryPlanAsync(new AiGitHubQueryBuildRequest(input), ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private async Task<IReadOnlyList<ComposeSearchItem>> SearchIssuesBestEffortAsync(

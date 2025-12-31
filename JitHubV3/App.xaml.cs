@@ -150,30 +150,32 @@ public partial class App : Application
 
                     services.AddSingleton<IAiRuntimeCatalog, ConfiguredAiRuntimeCatalog>();
                     services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
+                    services.AddSingleton(sp => AiSettings.FromConfiguration(context.Configuration));
+                    services.AddSingleton<IAiRuntimeResolver, AiRuntimeResolver>();
 
                     services.AddSingleton(sp => OpenAiRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AnthropicRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AzureAiFoundryRuntimeConfig.FromConfiguration(context.Configuration));
 
-                    services.AddSingleton(sp =>
+                    services.AddSingleton<IAiRuntime>(sp =>
                     {
                         var cfg = sp.GetRequiredService<OpenAiRuntimeConfig>();
                         var http = new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
-                        return new OpenAiRuntime(http, sp.GetRequiredService<ISecretStore>(), cfg);
+                        return new OpenAiRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
                     });
 
-                    services.AddSingleton(sp =>
+                    services.AddSingleton<IAiRuntime>(sp =>
                     {
                         var cfg = sp.GetRequiredService<AnthropicRuntimeConfig>();
                         var http = new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
-                        return new AnthropicRuntime(http, sp.GetRequiredService<ISecretStore>(), cfg);
+                        return new AnthropicRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
                     });
 
-                    services.AddSingleton(sp =>
+                    services.AddSingleton<IAiRuntime>(sp =>
                     {
                         var cfg = sp.GetRequiredService<AzureAiFoundryRuntimeConfig>();
                         var http = string.IsNullOrWhiteSpace(cfg.Endpoint) ? new HttpClient() : new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
-                        return new AzureAiFoundryRuntime(http, sp.GetRequiredService<ISecretStore>(), cfg);
+                        return new AzureAiFoundryRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
                     });
 
                     services.AddSingleton<StatusBarViewModel>();

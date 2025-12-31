@@ -15,6 +15,11 @@ public sealed class AzureAiFoundryRuntimeTests
         var secrets = new TestSecretStore();
         await secrets.SetAsync(AiSecretKeys.AzureAiFoundryApiKey, "foundry-key", CancellationToken.None);
 
+      var modelStore = new TestAiModelStore
+      {
+        Selection = new AiModelSelection(RuntimeId: "azure-ai-foundry", ModelId: "model-test")
+      };
+
         var handler = new RecordingHttpMessageHandler(req =>
         {
             req.Headers.Contains("api-key").Should().BeTrue();
@@ -35,8 +40,8 @@ public sealed class AzureAiFoundryRuntimeTests
         });
 
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://example.ai.azure.com") };
-        var cfg = new AzureAiFoundryRuntimeConfig { Endpoint = "https://example.ai.azure.com", ModelId = "model-test" };
-        var runtime = new AzureAiFoundryRuntime(http, secrets, cfg);
+        var cfg = new AzureAiFoundryRuntimeConfig { Endpoint = "https://example.ai.azure.com", ModelId = null };
+        var runtime = new AzureAiFoundryRuntime(http, secrets, modelStore, cfg);
 
         var plan = await runtime.BuildGitHubQueryPlanAsync(new AiGitHubQueryBuildRequest("find bug PRs"), CancellationToken.None);
         plan.Should().NotBeNull();

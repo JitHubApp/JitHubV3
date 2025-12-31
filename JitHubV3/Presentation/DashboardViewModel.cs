@@ -203,11 +203,18 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         try
         {
-            // Phase 0.2: issues-only search. Phase 0.3 will map results into dashboard cards.
             var response = await _composeSearch.SearchAsync(
                 new ComposeSearch.ComposeSearchRequest(text, PageSize: 20),
                 RefreshMode.CacheOnly,
                 ct).ConfigureAwait(false);
+
+            // If AI produced a structured query, show it to the user for editing.
+            // Also use it for any follow-up refresh to avoid re-invoking AI and changing queries.
+            var effectiveText = string.IsNullOrWhiteSpace(response.Query) ? text : response.Query;
+            if (!string.Equals(ComposeText, effectiveText, StringComparison.Ordinal))
+            {
+                ComposeText = effectiveText;
+            }
 
             _composeState.SetLatest(response);
             var activeCt = _activeCts?.Token;
@@ -222,7 +229,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
                 try
                 {
                     var refreshed = await _composeSearch.SearchAsync(
-                        new ComposeSearch.ComposeSearchRequest(text, PageSize: 20),
+                        new ComposeSearch.ComposeSearchRequest(effectiveText, PageSize: 20),
                         RefreshMode.PreferCacheThenRefresh,
                         ct).ConfigureAwait(false);
 

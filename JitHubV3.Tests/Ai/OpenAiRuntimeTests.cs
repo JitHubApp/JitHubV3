@@ -16,6 +16,11 @@ public sealed class OpenAiRuntimeTests
         var secrets = new TestSecretStore();
         await secrets.SetAsync(AiSecretKeys.OpenAiApiKey, "test-key", CancellationToken.None);
 
+        var modelStore = new TestAiModelStore
+        {
+            Selection = new AiModelSelection(RuntimeId: "openai", ModelId: "gpt-test")
+        };
+
         var handler = new RecordingHttpMessageHandler(req =>
         {
             req.Headers.Authorization!.Scheme.Should().Be("Bearer");
@@ -36,8 +41,8 @@ public sealed class OpenAiRuntimeTests
         });
 
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.com") };
-        var cfg = new OpenAiRuntimeConfig { ModelId = "gpt-test" };
-        var runtime = new OpenAiRuntime(http, secrets, cfg);
+        var cfg = new OpenAiRuntimeConfig { ModelId = null };
+        var runtime = new OpenAiRuntime(http, secrets, modelStore, cfg);
 
         var plan = await runtime.BuildGitHubQueryPlanAsync(
             new AiGitHubQueryBuildRequest("find uno bugs", AllowedDomains: new[] { ComposeSearchDomain.IssuesAndPullRequests }),
@@ -52,13 +57,19 @@ public sealed class OpenAiRuntimeTests
     public async Task BuildGitHubQueryPlanAsync_ReturnsNull_WhenMissingApiKey()
     {
         var secrets = new TestSecretStore();
+
+        var modelStore = new TestAiModelStore
+        {
+            Selection = new AiModelSelection(RuntimeId: "openai", ModelId: "gpt-test")
+        };
+
         var http = new HttpClient(new RecordingHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)))
         {
             BaseAddress = new Uri("https://api.openai.com")
         };
 
-        var cfg = new OpenAiRuntimeConfig { ModelId = "gpt-test" };
-        var runtime = new OpenAiRuntime(http, secrets, cfg);
+        var cfg = new OpenAiRuntimeConfig { ModelId = null };
+        var runtime = new OpenAiRuntime(http, secrets, modelStore, cfg);
 
         var plan = await runtime.BuildGitHubQueryPlanAsync(new AiGitHubQueryBuildRequest("x"), CancellationToken.None);
         plan.Should().BeNull();

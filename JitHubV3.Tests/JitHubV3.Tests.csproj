@@ -58,6 +58,8 @@
     <Compile Include="..\JitHubV3\Services\Ai\AiRuntimeConfiguration.cs" Link="Ai\AiRuntimeConfiguration.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiPromptBuilder.cs" Link="Ai\AiPromptBuilder.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiJsonUtilities.cs" Link="Ai\AiJsonUtilities.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiSettings.cs" Link="Ai\AiSettings.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiRuntimeResolver.cs" Link="Ai\AiRuntimeResolver.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\OpenAiRuntime.cs" Link="Ai\OpenAiRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AnthropicRuntime.cs" Link="Ai\AnthropicRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AzureAiFoundryRuntime.cs" Link="Ai\AzureAiFoundryRuntime.cs" />
