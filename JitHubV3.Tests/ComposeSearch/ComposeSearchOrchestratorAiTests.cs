@@ -32,6 +32,7 @@ public sealed class ComposeSearchOrchestratorAiTests
                 Domains: new[] { ComposeSearchDomain.IssuesAndPullRequests }));
 
         var resolver = new AiRuntimeResolver(modelStore, new[] { aiRuntime });
+        var enablement = new TestAiEnablementStore { IsEnabled = true };
 
         var orchestrator = new ComposeSearchOrchestrator(
             issues,
@@ -39,6 +40,7 @@ public sealed class ComposeSearchOrchestratorAiTests
             users,
             code,
             aiSettings: new AiSettings { Enabled = true },
+            aiEnablementStore: enablement,
             aiRuntimeResolver: resolver);
 
         var response = await orchestrator.SearchAsync(
@@ -51,6 +53,51 @@ public sealed class ComposeSearchOrchestratorAiTests
         repos.CallCount.Should().Be(0);
         users.CallCount.Should().Be(0);
         code.CallCount.Should().Be(0);
+    }
+
+    [Test]
+    public async Task SearchAsync_DoesNotInvokeAi_WhenEnablementStoreDisabled()
+    {
+        var issues = new CountingIssueSearchService();
+        var repos = new CountingRepoSearchService();
+        var users = new CountingUserSearchService();
+        var code = new CountingCodeSearchService();
+
+        var modelStore = new TestAiModelStore
+        {
+            Selection = new AiModelSelection(RuntimeId: "test", ModelId: "m")
+        };
+
+        var aiRuntime = new FakeAiRuntime(
+            runtimeId: "test",
+            plan: new AiGitHubQueryPlan(
+                Query: "THIS SHOULD NOT BE USED",
+                Domains: new[] { ComposeSearchDomain.Code }));
+
+        var resolver = new AiRuntimeResolver(modelStore, new[] { aiRuntime });
+        var enablement = new TestAiEnablementStore { IsEnabled = false };
+
+        var orchestrator = new ComposeSearchOrchestrator(
+            issues,
+            repos,
+            users,
+            code,
+            aiSettings: new AiSettings { Enabled = true },
+            aiEnablementStore: enablement,
+            aiRuntimeResolver: resolver);
+
+        var response = await orchestrator.SearchAsync(
+            new ComposeSearchRequest("find uno bugs", PageSize: 10),
+            RefreshMode.CacheOnly,
+            CancellationToken.None);
+
+        response.Query.Should().Be("find uno bugs");
+        aiRuntime.CallCount.Should().Be(0);
+
+        issues.CallCount.Should().Be(1);
+        repos.CallCount.Should().Be(1);
+        users.CallCount.Should().Be(1);
+        code.CallCount.Should().Be(1);
     }
 
     [Test]
@@ -73,6 +120,7 @@ public sealed class ComposeSearchOrchestratorAiTests
                 Domains: new[] { ComposeSearchDomain.Code }));
 
         var resolver = new AiRuntimeResolver(modelStore, new[] { aiRuntime });
+        var enablement = new TestAiEnablementStore { IsEnabled = true };
 
         var orchestrator = new ComposeSearchOrchestrator(
             issues,
@@ -80,6 +128,7 @@ public sealed class ComposeSearchOrchestratorAiTests
             users,
             code,
             aiSettings: new AiSettings { Enabled = true },
+            aiEnablementStore: enablement,
             aiRuntimeResolver: resolver);
 
         var structured = "repo:octocat/Hello-World is:issue";

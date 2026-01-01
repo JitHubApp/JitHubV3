@@ -150,6 +150,7 @@ public partial class App : Application
 
                     services.AddSingleton<IAiRuntimeCatalog, ConfiguredAiRuntimeCatalog>();
                     services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
+                    services.AddSingleton<IAiEnablementStore>(sp => new JsonFileAiEnablementStore());
                     services.AddSingleton(sp => AiSettings.FromConfiguration(context.Configuration));
                     services.AddSingleton<IAiRuntimeResolver, AiRuntimeResolver>();
 

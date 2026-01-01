@@ -25,6 +25,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
     private readonly IAiModelPickerOptionsProvider _aiModelOptions;
     private readonly IAiModelStore _aiModelStore;
+    private readonly IAiEnablementStore _aiEnablementStore;
     private readonly IAiModelDownloadQueue _aiModelDownloads;
 
     private CancellationTokenSource? _activeCts;
@@ -40,6 +41,28 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     public ObservableCollection<DashboardCardModel> Cards { get; } = new();
 
     public ObservableCollection<AiModelPickerOption> AiModelOptions { get; } = new();
+
+    private bool _isAiEnabled = true;
+    public bool IsAiEnabled
+    {
+        get => _isAiEnabled;
+        set
+        {
+            if (!SetProperty(ref _isAiEnabled, value))
+            {
+                return;
+            }
+
+            _ = PersistAiEnablementAsync(value);
+        }
+    }
+
+    private bool _isAiModelPickerOpen;
+    public bool IsAiModelPickerOpen
+    {
+        get => _isAiModelPickerOpen;
+        set => SetProperty(ref _isAiModelPickerOpen, value);
+    }
 
     private AiModelPickerOption? _selectedAiModel;
     public AiModelPickerOption? SelectedAiModel
@@ -104,6 +127,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
     public IAsyncRelayCommand DownloadSelectedAiModelCommand { get; }
     public IRelayCommand CancelAiModelDownloadCommand { get; }
+
+    public IRelayCommand OpenAiModelPickerCommand { get; }
+    public IRelayCommand CloseAiModelPickerCommand { get; }
 
     private bool _isLoadingCards;
     public bool IsLoadingCards
@@ -186,6 +212,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         IEnumerable<IDashboardCardProvider> cardProviders,
         IAiModelPickerOptionsProvider aiModelOptions,
         IAiModelStore aiModelStore,
+        IAiEnablementStore aiEnablementStore,
         IAiModelDownloadQueue aiModelDownloads)
     {
         _logger = logger;
@@ -202,6 +229,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         _aiModelOptions = aiModelOptions;
         _aiModelStore = aiModelStore;
+        _aiEnablementStore = aiEnablementStore;
         _aiModelDownloads = aiModelDownloads;
 
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
@@ -209,6 +237,9 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         DownloadSelectedAiModelCommand = new AsyncRelayCommand(DownloadSelectedAiModelAsync, () => CanDownloadSelectedAiModel);
         CancelAiModelDownloadCommand = new RelayCommand(CancelAiModelDownload, () => CanCancelAiModelDownload);
+
+        OpenAiModelPickerCommand = new RelayCommand(() => IsAiModelPickerOpen = true);
+        CloseAiModelPickerCommand = new RelayCommand(() => IsAiModelPickerOpen = false);
     }
 
     public string Title { get; } = "Dashboard";
@@ -235,9 +266,44 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         _ = RefreshCardsAsync(RefreshMode.CacheOnly, _activeCts.Token);
 
+        _ = LoadAiEnablementAsync(_activeCts.Token);
         _ = LoadAiModelOptionsAsync(_activeCts.Token);
 
         await LoadReposAsync(_activeCts.Token);
+    }
+
+    private async Task LoadAiEnablementAsync(CancellationToken ct)
+    {
+        try
+        {
+            var enabled = await _aiEnablementStore.GetIsEnabledAsync(ct).ConfigureAwait(false);
+
+            await _dispatcher.ExecuteAsync(() =>
+            {
+                _isAiEnabled = enabled;
+                OnPropertyChanged(nameof(IsAiEnabled));
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // ignore
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task PersistAiEnablementAsync(bool isEnabled)
+    {
+        try
+        {
+            await _aiEnablementStore.SetIsEnabledAsync(isEnabled, CancellationToken.None);
+        }
+        catch
+        {
+            // ignore
+        }
     }
 
     private async Task LoadAiModelOptionsAsync(CancellationToken ct)

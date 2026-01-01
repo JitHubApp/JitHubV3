@@ -161,34 +161,57 @@
                    VerticalAlignment="Stretch"
                    AutomationProperties.Name="Dashboard composer" />
 
-            <Grid Grid.Row="1"
-            Grid.Column="0"
-            ColumnSpacing="{StaticResource DashboardSpacingS}">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-              </Grid.ColumnDefinitions>
+          <StackPanel Grid.Row="1"
+                      Grid.Column="0"
+                      Orientation="Horizontal"
+                      Spacing="{StaticResource DashboardSpacingS}">
+            <ToggleSwitch x:Uid="DashboardPage.Toggle.AiEnabled"
+                          AutomationProperties.AutomationId="DashboardComposeAiToggle"
+                          Header="AI"
+                          MinHeight="44"
+                          IsOn="{Binding IsAiEnabled, Mode=TwoWay}"
+                          AutomationProperties.Name="AI enabled" />
 
-              <ComboBox Grid.Column="0"
-                  ItemsSource="{Binding AiModelOptions}"
-                  SelectedItem="{Binding SelectedAiModel, Mode=TwoWay}"
-                  DisplayMemberPath="DisplayName"
-                  AutomationProperties.AutomationId="DashboardComposeModelPicker"
-                  AutomationProperties.Name="AI model" />
+            <Button x:Uid="DashboardPage.Button.AiSettings"
+                    AutomationProperties.AutomationId="DashboardComposeAiSettings"
+                    MinWidth="44"
+                    MinHeight="44"
+                    Command="{Binding OpenAiModelPickerCommand}"
+                    AutomationProperties.Name="AI settings">
+              <SymbolIcon Symbol="Setting" />
+            </Button>
 
-              <Button Grid.Column="1"
-                Content="Download"
-                MinHeight="44"
-                Command="{Binding DownloadSelectedAiModelCommand}"
-                    Visibility="{Binding CanDownloadSelectedAiModel}" />
+            <Button x:Uid="DashboardPage.Button.AiInfo"
+                    AutomationProperties.AutomationId="DashboardComposeAiInfo"
+                    MinWidth="44"
+                    MinHeight="44"
+                    AutomationProperties.Name="AI info">
+              <SymbolIcon Symbol="Help" />
 
-              <Button Grid.Column="2"
-                Content="Cancel"
-                MinHeight="44"
-                Command="{Binding CancelAiModelDownloadCommand}"
-                    Visibility="{Binding CanCancelAiModelDownload}" />
-            </Grid>
+              <Button.Flyout>
+                <Flyout Placement="Top">
+                  <StackPanel Spacing="{StaticResource DashboardSpacingXS}">
+                    <TextBlock x:Uid="DashboardPage.AiInfo.Title"
+                               Text="Natural language search (not chat)."
+                               Style="{ThemeResource TitleTextBlockStyle}"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock x:Uid="DashboardPage.AiInfo.Body"
+                               Text="Your input is converted into GitHub queries."
+                               Style="{ThemeResource BodyTextBlockStyle}"
+                               Opacity="0.72"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock x:Uid="DashboardPage.AiInfo.Status"
+                               Text="AI: On/Off · Runtime/Model · HW"
+                               Style="{ThemeResource BodyTextBlockStyle}"
+                               Opacity="0.72"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
+          </StackPanel>
 
             <Button Grid.Row="1"
               Grid.RowSpan="2"
@@ -201,20 +224,48 @@
             <SymbolIcon Symbol="Send" />
           </Button>
 
-            <StackPanel Grid.Row="2"
-                  Grid.Column="0"
-                  Spacing="{StaticResource DashboardSpacingXS}"
-                  Visibility="{Binding IsAiModelDownloadVisible}">
-              <ProgressBar IsIndeterminate="{Binding IsAiModelDownloadIndeterminate}"
-               Value="{Binding AiModelDownloadProgressPercent}"
-               Maximum="100" />
-
-              <TextBlock Text="{Binding AiModelDownloadStatusText}"
-                   Opacity="0.72"
-                   TextWrapping="Wrap" />
-            </StackPanel>
+          <!-- Download UI moved to the picker dialog (Phase 2+). -->
         </Grid>
       </Border>
+
+      <!-- Placeholder overlay for the model/settings picker (Phase 2 adds the full UI). -->
+      <Grid x:Name="AiModelPickerOverlay"
+            Visibility="{Binding IsAiModelPickerOpen}">
+        <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                Opacity="0.72" />
+
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MaxWidth="{StaticResource DashboardComposeMaxWidth}"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusL}"
+                Padding="{StaticResource DashboardComposePadding}">
+          <Border.Shadow>
+            <ThemeShadow />
+          </Border.Shadow>
+
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock x:Uid="DashboardPage.AiPickerPlaceholder.Title"
+                       Text="AI model picker"
+                       Style="{ThemeResource TitleTextBlockStyle}"
+                       TextWrapping="Wrap" />
+
+            <TextBlock x:Uid="DashboardPage.AiPickerPlaceholder.Body"
+                       Text="Coming soon. Use this dialog to pick a runtime/model and manage local downloads."
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+
+            <Button x:Uid="DashboardPage.AiPickerPlaceholder.Close"
+                    Content="Close"
+                    MinHeight="44"
+                    HorizontalAlignment="Right"
+                    Command="{Binding CloseAiModelPickerCommand}" />
+          </StackPanel>
+        </Border>
+      </Grid>
     </Grid>
   </ContentControl>
 </local:ActivatablePage>

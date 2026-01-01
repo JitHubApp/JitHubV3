@@ -66,6 +66,7 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
     private readonly IGitHubCodeSearchService _code;
 
     private readonly AiSettings? _aiSettings;
+    private readonly IAiEnablementStore? _aiEnablementStore;
     private readonly IAiRuntimeResolver? _aiRuntimeResolver;
 
     public ComposeSearchOrchestrator(
@@ -74,6 +75,7 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
         IGitHubUserSearchService users,
         IGitHubCodeSearchService code,
         AiSettings? aiSettings = null,
+        IAiEnablementStore? aiEnablementStore = null,
         IAiRuntimeResolver? aiRuntimeResolver = null)
     {
         _issues = issues ?? throw new ArgumentNullException(nameof(issues));
@@ -82,6 +84,7 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
         _code = code ?? throw new ArgumentNullException(nameof(code));
 
         _aiSettings = aiSettings;
+        _aiEnablementStore = aiEnablementStore;
         _aiRuntimeResolver = aiRuntimeResolver;
     }
 
@@ -139,6 +142,15 @@ public sealed class ComposeSearchOrchestrator : IComposeSearchOrchestrator
         if (_aiSettings?.Enabled != true)
         {
             return null;
+        }
+
+        if (_aiEnablementStore is not null)
+        {
+            var enabled = await _aiEnablementStore.GetIsEnabledAsync(ct).ConfigureAwait(false);
+            if (!enabled)
+            {
+                return null;
+            }
         }
 
         if (_aiRuntimeResolver is null)

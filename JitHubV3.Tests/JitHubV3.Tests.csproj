@@ -53,7 +53,9 @@
     <Compile Include="..\JitHubV3\Services\Ai\IAiRuntime.cs" Link="Ai\IAiRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiRuntimeCatalog.cs" Link="Ai\IAiRuntimeCatalog.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiModelStore.cs" Link="Ai\IAiModelStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiEnablementStore.cs" Link="Ai\IAiEnablementStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiModelStore.cs" Link="Ai\JsonFileAiModelStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiEnablementStore.cs" Link="Ai\JsonFileAiEnablementStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiGitHubQueryPlanValidator.cs" Link="Ai\AiGitHubQueryPlanValidator.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiSecretKeys.cs" Link="Ai\AiSecretKeys.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiRuntimeConfiguration.cs" Link="Ai\AiRuntimeConfiguration.cs" />
