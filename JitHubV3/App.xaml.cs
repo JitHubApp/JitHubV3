@@ -149,6 +149,7 @@ public partial class App : Application
                     services.AddSingleton<ISecretStore, PlatformSecretStore>();
 
                     services.AddSingleton<IAiRuntimeCatalog, ConfiguredAiRuntimeCatalog>();
+                    services.AddSingleton<IAiRuntimeDescriptorCatalog, DefaultAiRuntimeDescriptorCatalog>();
                     services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
                     services.AddSingleton<IAiEnablementStore>(sp => new JsonFileAiEnablementStore());
                     services.AddSingleton(sp => AiSettings.FromConfiguration(context.Configuration));

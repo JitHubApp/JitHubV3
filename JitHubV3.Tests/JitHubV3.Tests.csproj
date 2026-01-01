@@ -68,6 +68,9 @@
     <Compile Include="..\JitHubV3\Services\Ai\AzureAiFoundryRuntime.cs" Link="Ai\AzureAiFoundryRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ConfiguredAiRuntimeCatalog.cs" Link="Ai\ConfiguredAiRuntimeCatalog.cs" />
 
+    <Compile Include="..\JitHubV3\Services\Ai\IAiRuntimeDescriptorCatalog.cs" Link="Ai\IAiRuntimeDescriptorCatalog.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\DefaultAiRuntimeDescriptorCatalog.cs" Link="Ai\DefaultAiRuntimeDescriptorCatalog.cs" />
+
     <Compile Include="..\JitHubV3\Services\Ai\ILocalFoundryClient.cs" Link="Ai\ILocalFoundryClient.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\AiLocalModels.cs" Link="Ai\AiLocalModels.cs" />
