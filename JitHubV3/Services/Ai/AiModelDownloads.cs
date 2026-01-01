@@ -15,7 +15,8 @@ public sealed record AiModelDownloadRequest(
     Uri SourceUri,
     string InstallPath,
     string? ArtifactFileName = null,
-    long? ExpectedBytes = null);
+    long? ExpectedBytes = null,
+    string? ExpectedSha256 = null);
 
 public sealed record AiModelDownloadProgress(
     Guid DownloadId,

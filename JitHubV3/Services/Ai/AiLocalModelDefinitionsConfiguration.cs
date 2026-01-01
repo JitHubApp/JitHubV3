@@ -25,6 +25,7 @@ public static class AiLocalModelDefinitionsConfiguration
 
             var expectedBytes = TryReadLong(child["ExpectedBytes"]);
             var downloadUri = child["DownloadUri"];
+            var expectedSha256 = child["ExpectedSha256"];
 
             items.Add(new AiLocalModelDefinition(
                 ModelId: modelId,
@@ -33,7 +34,8 @@ public static class AiLocalModelDefinitionsConfiguration
                 DefaultInstallFolderName: child["DefaultInstallFolderName"],
                 DownloadUri: downloadUri,
                 ArtifactFileName: child["ArtifactFileName"],
-                ExpectedBytes: expectedBytes));
+                ExpectedBytes: expectedBytes,
+                ExpectedSha256: expectedSha256));
         }
 
         return items;

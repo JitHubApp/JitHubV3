@@ -1,0 +1,328 @@
+{"instruction":"Find repos about React authentication","output":"react authentication language:JavaScript"}
+{"instruction":"Search for Azure SDK samples","output":"azure sdk samples language:C#"}
+{"instruction":"Find repositories demonstrating Docker Compose with PostgreSQL","output":"docker compose postgresql language:yaml"}
+{"instruction":"Search for Spring Boot REST examples","output":"spring boot rest example language:Java"}
+{"instruction":"Find repos with unit tests for Python Flask","output":"flask unit tests language:Python"}
+{"instruction":"Search for examples of OAuth2 in ASP.NET Core","output":"oauth2 asp.net core sample language:C#"}
+{"instruction":"Find mobile apps using SQLite with Flutter","output":"flutter sqlite example language:Dart"}
+{"instruction":"Search for machine learning examples using PyTorch Lightning","output":"pytorch lightning examples language:Python"}
+{"instruction":"Find repos showing GitHub Actions CI for .NET","output":"github actions ci dotnet language:C#"}
+{"instruction":"Search for examples of GraphQL with Node.js","output":"graphql nodejs example language:JavaScript"}
+{"instruction":"Find projects demonstrating TypeScript monorepos","output":"typescript monorepo example language:TypeScript"}
+{"instruction":"Search for examples integrating Elasticsearch with Java","output":"elasticsearch java example language:Java"}
+{"instruction":"Find sample repos using Terraform to provision Azure resources","output":"terraform azure examples language:HCL"}
+{"instruction":"Search for image classification examples with TensorFlow","output":"tensorflow image classification example language:Python"}
+{"instruction":"Find repositories showing CI with GitLab for Docker builds","output":"gitlab ci docker build language:yaml"}
+{"instruction":"Search for Redis caching examples in Node.js","output":"redis caching nodejs example language:JavaScript"}
+{"instruction":"Find projects demonstrating Microservices with Dapr","output":"dapr microservices example language:C#"}
+{"instruction":"Search for examples using FastAPI with async database","output":"fastapi async database example language:Python"}
+{"instruction":"Find repos demonstrating SignalR in ASP.NET Core","output":"signalr asp.net core example language:C#"}
+{"instruction":"Search for end-to-end tests with Playwright in TypeScript","output":"playwright e2e typescript language:TypeScript"}
+{"instruction":"Find example repos using Next.js with TypeScript","output":"nextjs typescript example language:TypeScript"}
+{"instruction":"Search for repositories demonstrating serverless functions on AWS Lambda","output":"aws lambda serverless functions examples language:Python"}
+{"instruction":"Find projects showing integration of Stripe payments in Node.js","output":"stripe payments nodejs example language:JavaScript"}
+{"instruction":"Search for sample Electron apps using React","output":"electron react example language:JavaScript"}
+{"instruction":"Find repos illustrating state management with Redux Toolkit","output":"redux toolkit example language:JavaScript"}
+{"instruction":"Search for examples of CI/CD with Azure DevOps for .NET","output":"azure devops ci cd dotnet language:C#"}
+{"instruction":"Find projects that demonstrate Helm charts for Kubernetes","output":"helm charts kubernetes example language:yaml"}
+{"instruction":"Search for repos showing OAuth login with Google in JavaScript","output":"google oauth javascript example language:JavaScript"}
+{"instruction":"Find sample projects for building REST APIs with Express.js","output":"express rest api example language:JavaScript"}
+{"instruction":"Search for projects that use gRPC in Go","output":"grpc go example language:Go"}
+{"instruction":"Find repos demonstrating unit testing with Jest","output":"jest unit tests example language:JavaScript"}
+{"instruction":"Search for examples of Celery with Django","output":"celery django example language:Python"}
+{"instruction":"Find repos showing CI with GitHub Actions for Python packages","output":"github actions ci python language:Python"}
+{"instruction":"Search for projects using protobufs with C#","output":"protobuf c# example language:C#"}
+{"instruction":"Find example repos using SvelteKit","output":"sveltekit example language:JavaScript"}
+{"instruction":"Search for projects demonstrating database migrations with Flyway","output":"flyway migrations example language:SQL"}
+{"instruction":"Find repos with examples of using RabbitMQ in Java","output":"rabbitmq java example language:Java"}
+{"instruction":"Search for examples of building CLI tools with Rust","output":"rust cli example language:Rust"}
+{"instruction":"Find projects that use GraphQL Apollo Server with TypeScript","output":"apollo server typescript example language:TypeScript"}
+{"instruction":"Search for demos of continuous deployment to Kubernetes via Argo CD","output":"argo cd kubernetes cd example language:yaml"}
+{"instruction":"Find sample repos showcasing authentication with Auth0 in React","output":"auth0 react example language:JavaScript"}
+{"instruction":"Search for projects integrating Sentry for error monitoring in Python","output":"sentry error monitoring python example language:Python"}
+{"instruction":"Find example repositories that use OpenAPI (Swagger) for API docs","output":"openapi swagger example language:yaml"}
+{"instruction":"Search for sample apps using Mapbox GL JS","output":"mapbox gl js example language:JavaScript"}
+{"instruction":"Find repos using Azure Functions with C#","output":"azure functions c# example language:C#"}
+{"instruction":"Search for examples of Kafka consumers in Java","output":"kafka consumer java example language:Java"}
+{"instruction":"Find projects showing image processing with OpenCV in Python","output":"opencv image processing python example language:Python"}
+{"instruction":"Search for repos demonstrating SDL2 games in C++","output":"sdl2 game example language:C++"}
+{"instruction":"Find sample projects using Ionic with Angular","output":"ionic angular example language:TypeScript"}
+{"instruction":"Search for examples of server-side rendering with Nuxt.js","output":"nuxt ssr example language:JavaScript"}
+{"instruction":"Find repos demonstrating web scraping with BeautifulSoup","output":"beautifulsoup web scraping python example language:Python"}
+{"instruction":"Search for examples of using Prisma ORM with Node.js","output":"prisma nodejs example language:JavaScript"}
+{"instruction":"Find projects that implement OAuth2 in Spring Security","output":"oauth2 spring security example language:Java"}
+{"instruction":"Search for repositories demonstrating image uploads to S3 in Python","output":"s3 image upload python example language:Python"}
+{"instruction":"Find sample repos using React Native and Redux","output":"react native redux example language:JavaScript"}
+{"instruction":"Search for examples of building micro frontends with Module Federation","output":"module federation micro frontends example language:JavaScript"}
+{"instruction":"Find projects demonstrating CI pipelines for Go using GitHub Actions","output":"github actions ci go language:Go"}
+{"instruction":"Search for repos showing how to build a REST API with Flask","output":"flask rest api example language:Python"}
+{"instruction":"Find sample projects that use Zod for schema validation in TypeScript","output":"zod validation typescript example language:TypeScript"}
+{"instruction":"Search for example implementations of OAuth2 PKCE in mobile apps","output":"oauth2 pkce mobile example language:Kotlin"}
+{"instruction":"Find projects demonstrating Redis Streams in Node.js","output":"redis streams nodejs example language:JavaScript"}
+{"instruction":"Search for tutorials on building a chat app with WebSockets in Python","output":"websockets chat python example language:Python"}
+{"instruction":"Find example repos showing CI for iOS using GitHub Actions","output":"github actions ci ios language:yaml"}
+{"instruction":"Search for sample projects using Knockout.js","output":"knockout js example language:JavaScript"}
+{"instruction":"Find repositories demonstrating stateful services with Orleans in .NET","output":"orleans stateful services example language:C#"}
+{"instruction":"Search for projects integrating MLflow for experiment tracking","output":"mlflow experiment tracking example language:Python"}
+{"instruction":"Find repos showing usage of Hugging Face Transformers for text classification","output":"huggingface transformers text classification example language:Python"}
+{"instruction":"Search for examples of building RESTful APIs with Ktor in Kotlin","output":"ktor rest api kotlin example language:Kotlin"}
+{"instruction":"Find projects demonstrating SAML SSO integration in Java","output":"saml sso java example language:Java"}
+{"instruction":"Search for sample repos using Vite with React","output":"vite react example language:JavaScript"}
+{"instruction":"Find repos demonstrating image segmentation with PyTorch","output":"pytorch image segmentation example language:Python"}
+{"instruction":"Search for examples of Tailwind CSS with Next.js","output":"tailwind nextjs example language:CSS"}
+{"instruction":"Find projects that show how to implement OAuth2 with Passport.js","output":"passport oauth2 example language:JavaScript"}
+{"instruction":"Search for sample infrastructure-as-code with Pulumi in TypeScript","output":"pulumi typescript example language:TypeScript"}
+{"instruction":"Find example repos for deploying static sites with Netlify","output":"netlify static deploy example language:HTML"}
+{"instruction":"Search for projects demonstrating WebRTC video chat in JavaScript","output":"webrtc video chat example language:JavaScript"}
+{"instruction":"Find repositories with examples of code formatting using Prettier","output":"prettier code formatting example language:JavaScript"}
+{"instruction":"Search for sample projects using Apollo Client in React","output":"apollo client react example language:JavaScript"}
+{"instruction":"Find repos demonstrating data visualization with D3.js","output":"d3 data visualization example language:JavaScript"}
+{"instruction":"Search for Spring Data JPA repository examples","output":"spring data jpa example language:Java"}
+{"instruction":"Find example repos showing how to integrate Stripe in Ruby on Rails","output":"stripe rails example language:Ruby"}
+{"instruction":"Search for projects using nginx as a reverse proxy for Node apps","output":"nginx reverse proxy nodejs example language:nginx"}
+{"instruction":"Find repos demonstrating Elasticsearch indexing with Python","output":"elasticsearch indexing python example language:Python"}
+{"instruction":"Search for examples of Continuous Integration for React Apps","output":"ci react apps example language:JavaScript"}
+{"instruction":"Find sample projects demonstrating Laravel queues","output":"laravel queues example language:PHP"}
+{"instruction":"Search for repos showing Babel configuration for modern JS","output":"babel configuration example language:JavaScript"}
+{"instruction":"Find example projects using Fastify for high performance Node servers","output":"fastify example language:JavaScript"}
+{"instruction":"Search for repos demonstrating Kubernetes Operators with Java","output":"kubernetes operator java example language:Java"}
+{"instruction":"Find sample repos for building maps with Leaflet.js","output":"leaflet maps example language:JavaScript"}
+{"instruction":"Search for projects demonstrating socket.io chat implementations","output":"socket.io chat example language:JavaScript"}
+{"instruction":"Find example repos demonstrating image classification with scikit-learn","output":"scikit-learn image classification example language:Python"}
+{"instruction":"Search for repos showing integration of OAuth with Okta","output":"okta oauth integration example language:JavaScript"}
+{"instruction":"Find projects demonstrating generative art with Processing","output":"processing generative art example language:Java"}
+{"instruction":"Search for sample repos using RabbitMQ with Python","output":"rabbitmq python example language:Python"}
+{"instruction":"Find repos that show how to build a REST API with ASP.NET Core Minimal APIs","output":"asp.net core minimal api example language:C#"}
+{"instruction":"Search for projects demonstrating using SQLite in Electron apps","output":"sqlite electron example language:JavaScript"}
+{"instruction":"Find example repos showing how to do A/B testing with Feature Flags","output":"feature flags a/b testing example language:JavaScript"}
+{"instruction":"Search for sample projects using WebAssembly with Rust","output":"wasm rust example language:Rust"}
+{"instruction":"Find repos demonstrating OAuth integration with Django","output":"django oauth integration example language:Python"}
+{"instruction":"Search for examples of using OpenTelemetry for tracing in Go","output":"opentelemetry tracing go example language:Go"}
+{"instruction":"Find sample repos for building command-line tools in Node.js","output":"nodejs cli example language:JavaScript"}
+{"instruction":"Search for projects demonstrating multipart file uploads in Java","output":"multipart file upload java example language:Java"}
+{"instruction":"Find repos showing example usage of SASS/SCSS in frontend projects","output":"sass scss example language:CSS"}
+{"instruction":"Search for projects demonstrating building PWAs with Angular","output":"pwa angular example language:TypeScript"}
+{"instruction":"Find example repos for building maps with Leaflet.js","output":"leaflet maps example language:JavaScript"}
+{"instruction":"Search for projects demonstrating using Webpack with TypeScript","output":"webpack typescript example language:TypeScript"}
+{"instruction":"Find example repos that show serverless GraphQL with AWS AppSync","output":"appsync serverless graphql example language:JavaScript"}
+{"instruction":"Search for repos demonstrating using CMake for C++ projects","output":"cmake example language:C++"}
+{"instruction":"Find projects showing how to implement OAuth login with Twitter API","output":"twitter oauth login example language:JavaScript"}
+{"instruction":"Search for example repos showing usage of SQLite with Python","output":"sqlite python example language:Python"}
+{"instruction":"Find sample projects demonstrating using Webpack Module Federation with React","output":"module federation react example language:JavaScript"}
+{"instruction":"Search for repos showing how to use Rollup for bundling libraries","output":"rollup bundling libraries example language:JavaScript"}
+{"instruction":"Find example repos demonstrating integrating Google Cloud Pub/Sub with Java","output":"google pubsub java example language:Java"}
+{"instruction":"Search for projects demonstrating setting up OAuth2 with Keycloak","output":"keycloak oauth2 example language:Java"}
+{"instruction":"Find repos showing how to use Tailwind CSS with Svelte","output":"tailwind svelte example language:CSS"}
+{"instruction":"Search for sample projects using OpenCV for face detection in C++","output":"opencv face detection c++ example language:C++"}
+{"instruction":"Find example repos demonstrating server push with SSE in Node.js","output":"sse server push nodejs example language:JavaScript"}
+{"instruction":"Search for projects that implement email sending with SendGrid in Python","output":"sendgrid email python example language:Python"}
+{"instruction":"Find repos demonstrating building a real-time dashboard with Grafana","output":"grafana realtime dashboard example language:Go"}
+{"instruction":"Search for sample projects using Django Rest Framework with JWT auth","output":"drf jwt auth example language:Python"}
+{"instruction":"Find example repos showing how to use Celery with Redis as broker","output":"celery redis broker example language:Python"}
+{"instruction":"Search for projects demonstrating static analysis tools configured in CI","output":"static analysis ci example language:JavaScript"}
+{"instruction":"Find sample repos for bootstrapping microservices with .NET Core","output":"dotnet microservices example language:C#"}
+{"instruction":"Search for projects demonstrating using GraphQL Nexus with TypeScript","output":"nexus graphql typescript example language:TypeScript"}
+{"instruction":"Find example repos showing integration of Stripe Billing in Node.js","output":"stripe billing nodejs example language:JavaScript"}
+{"instruction":"Search for repos that implement an event-sourcing pattern in Java","output":"event sourcing java example language:Java"}
+{"instruction":"Find sample projects demonstrating CI/CD for Docker images in GitHub Actions","output":"github actions docker ci example language:yaml"}
+{"instruction":"Search for projects showing usage of the Web Audio API","output":"web audio api example language:JavaScript"}
+{"instruction":"Find example repos demonstrating code generation with Yeoman","output":"yeoman code generation example language:JavaScript"}
+{"instruction":"Search for projects that use Exposed ORM in Kotlin","output":"exposed orm kotlin example language:Kotlin"}
+{"instruction":"Find repos showing best practices for monorepo layouts with Yarn Workspaces","output":"yarn workspaces monorepo example language:JavaScript"}
+{"instruction":"Search for sample projects demonstrating building REST APIs with Hapi.js","output":"hapi rest api example language:JavaScript"}
+{"instruction":"Find example repos using Azure Kubernetes Service (AKS) with Helm","output":"aks helm example language:yaml"}
+{"instruction":"Search for projects demonstrating using gRPC-Web with Envoy","output":"grpc-web envoy example language:JavaScript"}
+{"instruction":"Find repos that show how to implement web sockets in ASP.NET Core","output":"asp.net core websockets example language:C#"}
+{"instruction":"Search for example repos that demonstrate server-side caching strategies","output":"server side caching example language:Python"}
+{"instruction":"Find sample projects demonstrating how to write browser extensions","output":"browser extension example language:JavaScript"}
+{"instruction":"Search for repos that show how to implement OAuth with Azure AD B2C","output":"azure ad b2c oauth example language:C#"}
+{"instruction":"Find example repos demonstrating how to use LXC containers","output":"lxc containers example language:Shell"}
+{"instruction":"Search for projects showing integration of Stripe webhooks in PHP","output":"stripe webhooks php example language:PHP"}
+{"instruction":"Find repos illustrating how to perform log aggregation with ELK stack","output":"elk log aggregation example language:Shell"}
+{"instruction":"Search for sample projects demonstrating integration tests with Testcontainers","output":"testcontainers integration tests example language:Java"}
+{"instruction":"Find example repos showing how to implement SSO with ADFS","output":"adfs sso example language:XML"}
+{"instruction":"Search for projects that show best practices for Dockerfile multi-stage builds","output":"dockerfile multi stage example language:Dockerfile"}
+{"instruction":"Find sample projects demonstrating passwordless authentication flows","output":"passwordless auth example language:JavaScript"}
+{"instruction":"Search for repos that implement image optimization pipelines with Sharp","output":"sharp image optimization nodejs example language:JavaScript"}
+{"instruction":"Find example repos demonstrating incremental static regeneration with Next.js","output":"nextjs isr example language:JavaScript"}
+{"instruction":"Search for projects showing how to implement a webhook receiver in Go","output":"webhook receiver go example language:Go"}
+{"instruction":"Find sample repos that use PostgREST to expose Postgres as REST","output":"postgrest example language:SQL"}
+{"instruction":"Search for projects demonstrating how to use Tailscale for private networking","output":"tailscale private networking example language:Shell"}
+{"instruction":"Find example repos showing how to use Webpack with React for code splitting","output":"webpack react code splitting example language:JavaScript"}
+{"instruction":"Search for projects demonstrating how to integrate ML models with TensorFlow Serving","output":"tensorflow serving ml models example language:Python"}
+{"instruction":"Find repos showing examples of using LSTM networks for time series forecasting","output":"lstm time series forecasting example language:Python"}
+{"instruction":"Search for repositories demonstrating anomaly detection with IsolationForest","output":"isolationforest anomaly detection example language:Python"}
+{"instruction":"Find sample projects using Apache Kafka with Python consumers","output":"kafka python consumer example language:Python"}
+{"instruction":"Search for repos demonstrating OAuth2 with Spring Boot","output":"oauth2 spring boot example language:Java"}
+{"instruction":"Find example projects showing how to use SQLite with Electron and React","output":"sqlite electron react example language:JavaScript"}
+{"instruction":"Search for repos demonstrating Web Components with Lit","output":"lit web components example language:JavaScript"}
+{"instruction":"Find sample repos for building Progressive Web Apps with React","output":"pwa react example language:JavaScript"}
+{"instruction":"Search for projects showing how to use Sentry with Node.js","output":"sentry nodejs example language:JavaScript"}
+{"instruction":"Find repos demonstrating background jobs with Sidekiq in Rails","output":"sidekiq background jobs rails example language:Ruby"}
+{"instruction":"Search for example projects implementing webhook processing at scale","output":"webhook processing scale example language:JavaScript"}
+{"instruction":"Find repos demonstrating web performance optimization techniques","output":"web performance optimization example language:HTML"}
+{"instruction":"Search for sample projects using Hasura GraphQL Engine","output":"hasura graphql example language:GraphQL"}
+{"instruction":"Find example repos showing how to build a forum with Discourse","output":"discourse forum example language:Ruby"}
+{"instruction":"Search for projects demonstrating integration tests with Pact","output":"pact contract tests example language:Java"}
+{"instruction":"Find sample repos for building an OAuth2 provider in Node.js","output":"oauth2 provider nodejs example language:JavaScript"}
+{"instruction":"Search for repos showing how to implement rate limiting in Express using Redis","output":"express rate limiting redis example language:JavaScript"}
+{"instruction":"Find example projects demonstrating data pipelines with Airflow","output":"airflow data pipeline example language:Python"}
+{"instruction":"Search for projects showing how to implement feature toggles with LaunchDarkly","output":"launchdarkly feature flags example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating serverless GraphQL with Netlify Functions","output":"netlify functions graphql example language:JavaScript"}
+{"instruction":"Search for repos demonstrating image processing pipelines with Pillow","output":"pillow image processing example language:Python"}
+{"instruction":"Find example projects showing how to use InfluxDB for time series","output":"influxdb time series example language:Go"}
+{"instruction":"Search for repos that demonstrate building a OAuth2 client in React Native","output":"oauth2 react native example language:JavaScript"}
+{"instruction":"Find example repos for building a headless CMS with Strapi","output":"strapi headless cms example language:JavaScript"}
+{"instruction":"Search for projects showing how to integrate Stripe Elements","output":"stripe elements integration example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating the Repository pattern in C#","output":"repository pattern c# example language:C#"}
+{"instruction":"Search for example projects using OpenCV with Python for object detection","output":"opencv object detection python example language:Python"}
+{"instruction":"Find example repos showing how to use NextAuth for authentication in Next.js","output":"nextauth nextjs authentication example language:JavaScript"}
+{"instruction":"Search for sample projects using Docker Swarm for orchestration","output":"docker swarm orchestration example language:yaml"}
+{"instruction":"Find repos demonstrating WebRTC data channels in browser-to-browser apps","output":"webrtc data channels example language:JavaScript"}
+{"instruction":"Search for examples of building a GraphQL client in Swift","output":"graphql swift client example language:Swift"}
+{"instruction":"Find sample projects for integrating OAuth2 with Flask","output":"oauth2 flask example language:Python"}
+{"instruction":"Search for repos showing how to run Redis in cluster mode","output":"redis cluster example language:Shell"}
+{"instruction":"Find example projects demonstrating SSO integration with Okta in Java","output":"okta sso java example language:Java"}
+{"instruction":"Search for repos that show how to use Vault for secret management","output":"vault secret management example language:Shell"}
+{"instruction":"Find sample repos using TensorFlow Lite for mobile inference","output":"tensorflow lite mobile example language:Python"}
+{"instruction":"Search for example projects showing code splitting with React and Webpack","output":"react webpack code splitting example language:JavaScript"}
+{"instruction":"Find repos demonstrating FastAPI dependency injection patterns","output":"fastapi dependency injection example language:Python"}
+{"instruction":"Search for example projects using gRPC with Python servers","output":"grpc python server example language:Python"}
+{"instruction":"Find repos showing how to implement webhooks with secure signatures","output":"webhook secure signatures example language:JavaScript"}
+{"instruction":"Search for projects demonstrating how to deploy Flask apps with uWSGI","output":"flask uwsgi deploy example language:Python"}
+{"instruction":"Find example repos for building a marketplace with Django Oscar","output":"django oscar marketplace example language:Python"}
+{"instruction":"Search for projects showing how to use Apollo Federation","output":"apollo federation example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating SSR with Sapper","output":"sapper ssr example language:JavaScript"}
+{"instruction":"Search for examples of using Webpack with Sass and PostCSS","output":"webpack sass postcss example language:CSS"}
+{"instruction":"Find example projects showing how to use Azure Key Vault in .NET","output":"azure key vault dotnet example language:C#"}
+{"instruction":"Search for repos that demonstrate using Celery with RabbitMQ","output":"celery rabbitmq example language:Python"}
+{"instruction":"Find sample projects showing how to use NGINX as a load balancer for Node apps","output":"nginx load balancer nodejs example language:nginx"}
+{"instruction":"Search for repositories showing how to set up OAuth2 with GitHub as provider","output":"github oauth2 provider example language:JavaScript"}
+{"instruction":"Find example projects demonstrating rate limiting with Kong API Gateway","output":"kong rate limiting example language:yaml"}
+{"instruction":"Search for repos showing how to implement dark mode with CSS variables","output":"dark mode css variables example language:CSS"}
+{"instruction":"Find sample repos demonstrating how to use Tailwind with SvelteKit","output":"tailwind sveltekit example language:CSS"}
+{"instruction":"Search for example projects using SolidJS for interactive UIs","output":"solidjs example language:JavaScript"}
+{"instruction":"Find repos demonstrating data streaming with Redis Pub/Sub","output":"redis pubsub streaming example language:Python"}
+{"instruction":"Search for example projects showing how to use Serverless Framework with AWS","output":"serverless framework aws example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating form validation with Formik in React","output":"formik form validation react example language:JavaScript"}
+{"instruction":"Search for projects showing how to configure Prometheus alerts","output":"prometheus alerting example language:yaml"}
+{"instruction":"Find example repos using Electron with TypeScript and React","output":"electron typescript react example language:TypeScript"}
+{"instruction":"Search for sample projects demonstrating localization with i18next","output":"i18next localization example language:JavaScript"}
+{"instruction":"Find repositories showing how to implement SSO with SAML in Spring","output":"saml spring sso example language:Java"}
+{"instruction":"Search for example projects that use OpenResty for Lua-based APIs","output":"openresty lua apis example language:Lua"}
+{"instruction":"Find sample repos demonstrating how to implement health checks in Kubernetes","output":"kubernetes health checks example language:yaml"}
+{"instruction":"Search for projects showing how to use Brotli compression in Node.js","output":"brotli compression nodejs example language:JavaScript"}
+{"instruction":"Find example repos demonstrating using Fluentd for log aggregation","output":"fluentd log aggregation example language:Shell"}
+{"instruction":"Search for sample projects that implement GraphQL subscriptions with WebSockets","output":"graphql subscriptions websockets example language:JavaScript"}
+{"instruction":"Find repos showing how to use Webpack Dev Server with hot reload","output":"webpack dev server hot reload example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating two-way data binding in Vue 3","output":"vue3 two way binding example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating integration of Stripe Connect","output":"stripe connect integration example language:JavaScript"}
+{"instruction":"Search for projects showing how to use Docker Compose with Redis","output":"docker compose redis example language:yaml"}
+{"instruction":"Find example repos that show how to implement OAuth2 token refresh in mobile apps","output":"oauth2 token refresh mobile example language:Kotlin"}
+{"instruction":"Search for repositories demonstrating how to use PWA caching strategies","output":"pwa caching strategies example language:JavaScript"}
+{"instruction":"Find sample projects showing how to integrate Firebase Authentication with React","output":"firebase auth react example language:JavaScript"}
+{"instruction":"Search for example repos demonstrating how to use graphql-code-generator","output":"graphql code generator example language:TypeScript"}
+{"instruction":"Find repos that show examples of building CI pipelines for Java with Jenkins","output":"jenkins ci java example language:Groovy"}
+{"instruction":"Search for sample projects demonstrating how to implement file uploads in Rails","output":"rails file uploads example language:Ruby"}
+{"instruction":"Find example repos demonstrating how to use Webpack with React for tree-shaking","output":"react webpack tree shaking example language:JavaScript"}
+{"instruction":"Search for projects showing how to implement OAuth2 implicit flow in single page apps","output":"oauth2 implicit flow spa example language:JavaScript"}
+{"instruction":"Find sample repos showing how to implement a microservice for user profiles in Go","output":"go microservice user profiles example language:Go"}
+{"instruction":"Search for repos that show how to use Azure Service Bus with .NET","output":"azure service bus dotnet example language:C#"}
+{"instruction":"Find example projects demonstrating releasing packages to npm with CI","output":"npm release ci example language:JavaScript"}
+{"instruction":"Search for sample projects demonstrating how to use React Query for server state","output":"react query server state example language:JavaScript"}
+{"instruction":"Find repos showing how to implement background processing with Hangfire in .NET","output":"hangfire background processing dotnet example language:C#"}
+{"instruction":"Search for example projects demonstrating how to use Svelte for small widgets","output":"svelte widgets example language:JavaScript"}
+{"instruction":"Find sample repos for building real-time collaborative editors with Operational Transform","output":"operational transform collaborative editor example language:JavaScript"}
+{"instruction":"Search for repos showing how to use Brotli with .NET Core","output":"brotli dotnet core example language:C#"}
+{"instruction":"Find example projects demonstrating building serverless apps with Google Cloud Functions","output":"google cloud functions serverless example language:JavaScript"}
+{"instruction":"Search for repos showing how to build a recommender system with LightFM","output":"lightfm recommender example language:Python"}
+{"instruction":"Find sample projects demonstrating low-latency WebSocket servers in Rust","output":"websocket rust low latency example language:Rust"}
+{"instruction":"Search for projects demonstrating using OpenTelemetry exporters with Java apps","output":"opentelemetry exporters java example language:Java"}
+{"instruction":"Find example repos showing how to perform image augmentation with Albumentations","output":"albumentations image augmentation example language:Python"}
+{"instruction":"Search for sample projects demonstrating how to do model quantization with PyTorch","output":"pytorch model quantization example language:Python"}
+{"instruction":"Find repos that show how to use NATS for event streaming","output":"nats event streaming example language:Go"}
+{"instruction":"Search for example projects demonstrating building dashboards with Grafana and Prometheus","output":"grafana prometheus dashboard example language:Yaml"}
+{"instruction":"Find sample repos showing how to implement permissions and roles in Django","output":"django permissions roles example language:Python"}
+{"instruction":"Search for projects demonstrating how to use Lighthouse for accessibility testing","output":"lighthouse accessibility testing example language:JavaScript"}
+{"instruction":"Find example repos that demonstrate vertical scaling patterns for PostgreSQL","output":"postgres vertical scaling example language:SQL"}
+{"instruction":"Search for sample projects demonstrating how to build federated microfrontends","output":"federated microfrontends example language:JavaScript"}
+{"instruction":"Find repos showing how to implement monotonic id generation using Redis","output":"redis monotonic id example language:Lua"}
+{"instruction":"Search for example projects demonstrating how to use Pact for contract testing in Node.js","output":"pact contract testing nodejs example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating event-driven architectures with AWS SNS/SQS","output":"aws sns sqs event driven example language:Python"}
+{"instruction":"Search for projects showing how to instrument Go apps with Prometheus client","output":"prometheus client go instrumentation example language:Go"}
+{"instruction":"Find example repos demonstrating how to build a URL shortener in Ruby on Rails","output":"rails url shortener example language:Ruby"}
+{"instruction":"Search for sample projects showing how to implement API rate limiting with Envoy","output":"envoy rate limiting example language:yaml"}
+{"instruction":"Find repos demonstrating multi-stage Docker builds for Java applications","output":"docker multi stage java example language:Dockerfile"}
+{"instruction":"Search for example projects demonstrating how to use OpenAPI generators","output":"openapi generator example language:Java"}
+{"instruction":"Find sample repos showing how to implement secure file downloads with signed URLs","output":"signed urls secure file download example language:Python"}
+{"instruction":"Search for projects demonstrating how to use Azure Durable Functions","output":"azure durable functions example language:C#"}
+{"instruction":"Find example repos that show how to use Hadoop MapReduce with Java","output":"hadoop mapreduce java example language:Java"}
+{"instruction":"Search for sample projects demonstrating how to use Webpack with Babel for legacy browser support","output":"webpack babel legacy support example language:JavaScript"}
+{"instruction":"Find repos showing how to integrate Chart.js in React","output":"chart.js react example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating how to implement dark mode using prefers-color-scheme","output":"prefers-color-scheme dark mode example language:CSS"}
+{"instruction":"Find sample repos showing how to build a Slack bot with Bolt","output":"slack bot bolt example language:JavaScript"}
+{"instruction":"Search for projects that demonstrate multi-factor authentication flows in Django","output":"mfa django example language:Python"}
+{"instruction":"Find repos showing how to use CouchDB with PouchDB sync","output":"couchdb pouchdb sync example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating how to use Apache Cassandra with Java","output":"cassandra java example language:Java"}
+{"instruction":"Find sample repos showing how to build an e-commerce checkout with React","output":"react ecommerce checkout example language:JavaScript"}
+{"instruction":"Search for projects demonstrating building a serverless backend with Firebase Cloud Functions","output":"firebase cloud functions serverless example language:JavaScript"}
+{"instruction":"Find example repos showing how to implement CI pipelines that build Docker images and push to ECR","output":"docker ecr ci example language:yaml"}
+{"instruction":"Search for projects showing how to use Webpack for code splitting and dynamic imports","output":"webpack dynamic import code splitting example language:JavaScript"}
+{"instruction":"Find sample repos demonstrating how to implement a background worker architecture in Go","output":"go background worker example language:Go"}
+{"instruction":"Search for example projects demonstrating how to use Lerna for monorepos","output":"lerna monorepo example language:JavaScript"}
+{"instruction":"Find repos showing examples of using Apache Flink for stream processing","output":"flink stream processing example language:Java"}
+{"instruction":"Search for example projects demonstrating how to do A/B testing with LaunchDarkly and React","output":"launchdarkly react ab testing example language:JavaScript"}
+{"instruction":"Find sample repos showing how to use Bootstrap 5 with accessibility best practices","output":"bootstrap5 accessibility example language:HTML"}
+{"instruction":"Search for projects demonstrating byte-pair encoding tokenizers usage","output":"bpe tokenizer usage example language:Python"}
+{"instruction":"Find example repos demonstrating how to use Elasticsearch with Kibana dashboards","output":"elasticsearch kibana dashboards example language:yaml"}
+{"instruction":"Search for sample projects showing how to implement optimistic locking in SQL databases","output":"optimistic locking sql example language:SQL"}
+{"instruction":"Find repos that demonstrate how to implement a GraphQL schema with Apollo Server and schema stitching","output":"apollo server schema stitching example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating how to set up automatic database backups for PostgreSQL","output":"postgres automatic backups example language:Shell"}
+{"instruction":"Find sample repos showing how to implement password hashing best practices in Node.js","output":"password hashing nodejs bcrypt example language:JavaScript"}
+{"instruction":"Search for projects demonstrating how to use Azure Event Grid","output":"azure event grid example language:C#"}
+{"instruction":"Find example repos showing how to use SQLite in Python with SQLAlchemy","output":"sqlite sqlalchemy python example language:Python"}
+{"instruction":"Search for sample projects that demonstrate multitenancy patterns in ASP.NET Core","output":"multitenancy asp.net core example language:C#"}
+{"instruction":"Find repos showing how to implement a CQRS architecture with Event Sourcing in .NET","output":"cqrs event sourcing dotnet example language:C#"}
+{"instruction":"Search for example projects demonstrating how to use Docker secrets for sensitive config","output":"docker secrets example language:yaml"}
+{"instruction":"Find sample repos showing how to build a static blog with Eleventy","output":"eleventy static blog example language:JavaScript"}
+{"instruction":"Search for projects demonstrating how to implement GraphQL subscriptions with Hasura","output":"hasura graphql subscriptions example language:GraphQL"}
+{"instruction":"Find example repos showing how to implement secure password reset flows","output":"secure password reset example language:Python"}
+{"instruction":"Search for repositories demonstrating how to use S3 event notifications to trigger Lambdas","output":"s3 event notifications lambda example language:Python"}
+{"instruction":"Find sample projects showing how to implement OAuth2 with Azure AD in single-page apps","output":"azure ad oauth2 spa example language:JavaScript"}
+{"instruction":"Search for example repos demonstrating how to set up TLS termination with HAProxy","output":"haproxy tls termination example language:Shell"}
+{"instruction":"Find repos that show how to implement multi-region read replicas with MySQL","output":"mysql multi region replicas example language:SQL"}
+{"instruction":"Search for sample projects demonstrating how to use Quarkus for cloud-native Java apps","output":"quarkus cloud native java example language:Java"}
+{"instruction":"Find example repos showing how to use Deno for server-side JavaScript","output":"deno server side js example language:JavaScript"}
+{"instruction":"Search for projects demonstrating how to implement server-side rendering in Ember.js","output":"ember ssr example language:JavaScript"}
+{"instruction":"Find sample repos showing how to integrate Mailgun for transactional emails","output":"mailgun transactional emails example language:Python"}
+{"instruction":"Search for example projects demonstrating how to use Svelte with TypeScript","output":"svelte typescript example language:TypeScript"}
+{"instruction":"Find repos that show how to set up end-to-end encryption for messaging apps","output":"end to end encryption messaging example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating how to use Redis as a session store in Rails","output":"redis session store rails example language:Ruby"}
+{"instruction":"Find sample repos showing how to implement content delivery with CloudFront","output":"cloudfront cdn example language:CloudFormation"}
+{"instruction":"Search for projects demonstrating how to set up IP whitelisting for APIs","output":"ip whitelisting api example language:JavaScript"}
+{"instruction":"Find example repos showing how to use the Web MIDI API","output":"web midi api example language:JavaScript"}
+{"instruction":"Search for sample projects demonstrating how to use IndexedDB in the browser","output":"indexeddb browser example language:JavaScript"}
+{"instruction":"Find repos that show how to use Azure API Management for monetized APIs","output":"azure api management monetized apis example language:JSON"}
+{"instruction":"Search for example projects demonstrating how to use Flux architecture in React","output":"flux architecture react example language:JavaScript"}
+{"instruction":"Find sample repos showing how to build a microservice gateway with Envoy","output":"envoy microservice gateway example language:yaml"}
+{"instruction":"Search for projects demonstrating how to use a job queue with Beanstalkd","output":"beanstalkd job queue example language:Shell"}
+{"instruction":"Find example repos showing how to use OpenAI's embeddings for semantic search","output":"openai embeddings semantic search example language:Python"}
+{"instruction":"Search for sample projects demonstrating how to implement streaming file uploads to S3","output":"streaming file uploads s3 example language:Python"}
+{"instruction":"Find example repos demonstrating how to use gRPC health checks","output":"grpc health checks example language:Go"}
+{"instruction":"Search for projects showing how to configure TLS for PostgreSQL clients","output":"postgres tls clients example language:Shell"}
+{"instruction":"Find sample repos that implement async job processing with Bull in Node.js","output":"bull async job processing nodejs example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating how to use Rollbar for error monitoring in Ruby","output":"rollbar error monitoring ruby example language:Ruby"}
+{"instruction":"Find repos showing examples of automated schema migrations with Hasura metadata","output":"hasura metadata migrations example language:GraphQL"}
+{"instruction":"Search for sample projects showing how to use WebSockets with Phoenix Channels","output":"phoenix channels websockets example language:Elixir"}
+{"instruction":"Find example repos that demonstrate building a CI pipeline for iOS with Bitrise","output":"bitrise ci ios example language:yaml"}
+{"instruction":"Search for projects demonstrating how to use Terraform workspaces for environments","output":"terraform workspaces environments example language:HCL"}
+{"instruction":"Find sample repos showing how to use the Stripe Billing API for subscriptions","output":"stripe billing subscriptions example language:JavaScript"}
+{"instruction":"Search for example projects demonstrating how to use OAuth2 with Passport and Express","output":"passport express oauth2 example language:JavaScript"}
+{"instruction":"Find example repos showing how to implement data validation with Marshmallow in Python","output":"marshmallow data validation python example language:Python"}
+{"instruction":"Search for projects demonstrating how to use Apache Airflow sensors","output":"airflow sensors example language:Python"}
+{"instruction":"Find sample repos showing how to use ZeroMQ for high-throughput messaging","output":"zeromq high throughput messaging example language:C++"}
+{"instruction":"Search for example projects demonstrating how to implement reCAPTCHA in web forms","output":"recaptcha web forms example language:JavaScript"}
+{"instruction":"Find sample repos that demonstrate how to use OpenTracing with Node.js","output":"opentracing nodejs example language:JavaScript"}
+{"instruction":"Search for projects showing how to do partial index builds in PostgreSQL","output":"postgres partial index example language:SQL"}
+{"instruction":"Find example repos showing how to implement a contact form with serverless functions","output":"contact form serverless example language:JavaScript"}
+{"instruction":"Search for sample projects demonstrating how to build an analytics pipeline with Snowflake","output":"snowflake analytics pipeline example language:SQL"}

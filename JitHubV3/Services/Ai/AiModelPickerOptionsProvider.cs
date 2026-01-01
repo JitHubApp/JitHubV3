@@ -9,7 +9,8 @@ public sealed record AiModelPickerOption(
     string? InstallPath = null,
     Uri? DownloadUri = null,
     string? ArtifactFileName = null,
-    long? ExpectedBytes = null);
+    long? ExpectedBytes = null,
+    string? ExpectedSha256 = null);
 
 public interface IAiModelPickerOptionsProvider
 {
@@ -93,7 +94,8 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
                 InstallPath: item.InstallPath,
                 DownloadUri: downloadUri,
                 ArtifactFileName: def?.ArtifactFileName,
-                ExpectedBytes: def?.ExpectedBytes));
+                ExpectedBytes: def?.ExpectedBytes,
+                ExpectedSha256: def?.ExpectedSha256));
         }
 
         return options

@@ -1,4 +1,6 @@
 using System.Net.Http.Headers;
+using System.IO.Compression;
+using System.Security.Cryptography;
 
 namespace JitHubV3.Services.Ai;
 
@@ -187,6 +189,21 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
 
         File.Move(partialPath, finalPath);
 
+        if (!string.IsNullOrWhiteSpace(request.ExpectedSha256))
+        {
+            var actual = ComputeSha256Hex(finalPath);
+            if (!string.Equals(NormalizeSha256Hex(actual), NormalizeSha256Hex(request.ExpectedSha256), StringComparison.OrdinalIgnoreCase))
+            {
+                try { File.Delete(finalPath); } catch { /* ignore */ }
+                throw new InvalidOperationException("Downloaded artifact SHA256 does not match ExpectedSha256.");
+            }
+        }
+
+        if (string.Equals(Path.GetExtension(finalPath), ".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            ZipFile.ExtractToDirectory(finalPath, request.InstallPath, overwriteFiles: true);
+        }
+
         // Persist the inventory entry as "downloaded".
         var current = await _inventoryStore.GetInventoryAsync(ct).ConfigureAwait(false);
         var updated = current
@@ -274,5 +291,23 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
         }
 
         return "model.bin";
+    }
+
+    private static string ComputeSha256Hex(string filePath)
+    {
+        using var sha = SHA256.Create();
+        using var stream = File.OpenRead(filePath);
+        var hash = sha.ComputeHash(stream);
+        return Convert.ToHexString(hash);
+    }
+
+    private static string NormalizeSha256Hex(string s)
+    {
+        var t = (s ?? string.Empty).Trim();
+        if (t.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+        {
+            t = t.Substring("sha256:".Length).Trim();
+        }
+        return t;
     }
 }

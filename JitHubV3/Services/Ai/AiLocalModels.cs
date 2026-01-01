@@ -7,7 +7,8 @@ public sealed record AiLocalModelDefinition(
     string? DefaultInstallFolderName = null,
     string? DownloadUri = null,
     string? ArtifactFileName = null,
-    long? ExpectedBytes = null);
+    long? ExpectedBytes = null,
+    string? ExpectedSha256 = null);
 
 public sealed record AiLocalModelInventoryEntry(
     string ModelId,

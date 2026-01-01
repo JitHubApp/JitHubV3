@@ -1,0 +1,1000 @@
+{"instruction": "Find open-source repos for Kubernetes in Swift with good popularity signals.", "output": "kubernetes open-source repos swift popularity"}
+{"instruction": "Find repos about Docker in Java. Must match size:<50000 and is:public.", "output": "docker-java-repos:public:size:50000"}
+{"instruction": "Find repos about Docker in TypeScript. Must match size:<50000 and stars:>500.", "output": "docker typescript repos size 50000"}
+{"instruction": "Find repos about rate limiting in Java. Must match license:apache-2.0 and size:<50000.", "output": "rate-limiting java repos license apache-2.0 size-50000"}
+{"instruction": "Find open-source repos for Kubernetes in Java with good popularity signals.", "output": "kubernetes open-source java popular"}
+{"instruction": "Find open-source repos for logging in Python with good popularity signals.", "output": "open-source repos logging python good popularity"}
+{"instruction": "Find Kotlin repositories about CI/CD. Exclude archived repos.", "output": "kotlin repositories CI/CD archived"}
+{"instruction": "Find GitHub repositories about Docker written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "docker python repositories active maintainer"}
+{"instruction": "Search for Java repos related to Docker. Add qualifiers to narrow results.", "output": "Java Docker repos - Java Docker projects"}
+{"instruction": "Find repos about rate limiting in TypeScript. Must match is:public and archived:false.", "output": "rate-limiting TypeScript repos"}
+{"instruction": "Find Rust repositories about authentication. Exclude archived repos.", "output": "rust-authenticationrepositories"}
+{"instruction": "Find open-source repos for caching in TypeScript with good popularity signals.", "output": "TypeScript caching open-source repos"}
+{"instruction": "Find TypeScript repositories about CI/CD. Exclude archived repos.", "output": "TypeScript CI/CD repositories"}
+{"instruction": "Find Swift repositories about GraphQL. Exclude archived repos.", "output": "swift-graphql-repos"}
+{"instruction": "Find Kotlin repositories about authentication. Exclude archived repos.", "output": "kotlin authentication repositories"}
+{"instruction": "Find open-source repos for Kubernetes in Rust with good popularity signals.", "output": "kubernetes open-source rust repos good popularity"}
+{"instruction": "Search for Python repos related to Kubernetes. Add qualifiers to narrow results.", "output": "pip+repos+Kubernetes"}
+{"instruction": "Find Rust repositories about rate limiting. Exclude archived repos.", "output": "rust-rate-limiting"}
+{"instruction": "Find repos about authentication in Go. Must match license:apache-2.0 and forks:>50.", "output": "golang authentication\" \"apache-2.0\" \"forks:>50"}
+{"instruction": "Find open-source repos for CI/CD in Rust with good popularity signals.", "output": "open-source repos for CI/CD in Rust with good popularity signals"}
+{"instruction": "Search for Python repos related to REST API. Add qualifiers to narrow results.", "output": "python-rest-api repos"}
+{"instruction": "Find TypeScript repositories about GraphQL. Exclude archived repos.", "output": "typescript/graphql"}
+{"instruction": "Search for Java repos related to caching. Add qualifiers to narrow results.", "output": "Java caching repos"}
+{"instruction": "Search for Rust repos related to async/await. Add qualifiers to narrow results.", "output": "rust async await repos"}
+{"instruction": "Find GitHub repositories about CI/CD written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin-ci\" + \"kotlin\" + \"repositories\" + \"active\" + \"maintained"}
+{"instruction": "Find open-source repos for CI/CD in Swift with good popularity signals.", "output": "open-source repos for CI/CD Swift popular"}
+{"instruction": "Search for Swift repos related to dependency injection. Add qualifiers to narrow results.", "output": "Swift dependency injection repos"}
+{"instruction": "Search for Go repos related to logging. Add qualifiers to narrow results.", "output": "golang\" + \"logging\" + \"repos"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes-go repositories"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes kotlin repositories actively maintained"}
+{"instruction": "Find repos about caching in C#. Must match pushed:>2024-01-01 and archived:false.", "output": "caching C# repos 2024-01-01 2024-01-01 00:00:00 false"}
+{"instruction": "Find GitHub repositories about Docker written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "docker python repositories active maintained"}
+{"instruction": "Find Kotlin repositories about Kubernetes. Exclude archived repos.", "output": "kotlin+kubernetes"}
+{"instruction": "Find Rust repositories about unit testing. Exclude archived repos.", "output": "rust-rs-test"}
+{"instruction": "Find open-source repos for Docker in C# with good popularity signals.", "output": "open-source repos for Docker C# good popularity"}
+{"instruction": "Find GitHub repositories about GraphQL written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL C# repositories"}
+{"instruction": "Search for Kotlin repos related to logging. Add qualifiers to narrow results.", "output": "kotlin logging repositories"}
+{"instruction": "Find repos about REST API in JavaScript. Must match archived:false and stars:>100.", "output": "REST API JavaScript repos (archived:false, stars:>100)"}
+{"instruction": "Find open-source repos for Kubernetes in Kotlin with good popularity signals.", "output": "kubernetes open-source kotlin popular"}
+{"instruction": "Find GitHub repositories about Kubernetes written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes c# repositories actively maintained"}
+{"instruction": "Search for JavaScript repos related to rate limiting. Add qualifiers to narrow results.", "output": "rate-limiting JavaScript repos"}
+{"instruction": "Find GitHub repositories about Docker written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "docker-js-repos"}
+{"instruction": "Find GitHub repositories about caching written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "caching JavaScript repositories"}
+{"instruction": "Find Java repositories about REST API. Exclude archived repos.", "output": "java-rest-api repositories"}
+{"instruction": "Find GitHub repositories about logging written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin logging repositories actively maintained"}
+{"instruction": "Find open-source repos for Docker in Python with good popularity signals.", "output": "open-source repos for Docker in Python with good popularity signals"}
+{"instruction": "Find GitHub repositories about authentication written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java authentication repositories"}
+{"instruction": "Find open-source repos for caching in Swift with good popularity signals.", "output": "swift-caching open-source repos good popularity"}
+{"instruction": "Find GitHub repositories about caching written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "caching Swift repositories"}
+{"instruction": "Find GitHub repositories about unit testing written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java unit testing repositories"}
+{"instruction": "Find GitHub repositories about authentication written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "rust-authentication repositories actively maintained"}
+{"instruction": "Find repos about async/await in Rust. Must match pushed:>2024-01-01 and pushed:>2024-01-01.", "output": "async+await+rust+2024-01-01+repos"}
+{"instruction": "Search for JavaScript repos related to authentication. Add qualifiers to narrow results.", "output": "JavaScript authentication repos"}
+{"instruction": "Find Python repositories about async/await. Exclude archived repos.", "output": "asyncio python repos"}
+{"instruction": "Find repos about REST API in Python. Must match license:apache-2.0 and forks:>50.", "output": "REST API Python repos license:apache-2.0 forks:50"}
+{"instruction": "Find open-source repos for async/await in C# with good popularity signals.", "output": "asyncawait-csharp-open-source-repos-popularity"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes python repositories"}
+{"instruction": "Find open-source repos for dependency injection in Kotlin with good popularity signals.", "output": "kotlin dependency-injection open-source repos popularity"}
+{"instruction": "Find Rust repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" rust repositories"}
+{"instruction": "Find C# repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes repositories C#"}
+{"instruction": "Find GitHub repositories about authentication written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "java-authentication repositories active maintainer"}
+{"instruction": "Find open-source repos for Kubernetes in Java with good popularity signals.", "output": "kubernetes java open-source repos popularity"}
+{"instruction": "Find Swift repositories about CI/CD. Exclude archived repos.", "output": "swift ci-cd repositories"}
+{"instruction": "Find open-source repos for rate limiting in TypeScript with good popularity signals.", "output": "rate-limiting TypeScript open-source repos"}
+{"instruction": "Search for C# repos related to GraphQL. Add qualifiers to narrow results.", "output": "C# GraphQL repos"}
+{"instruction": "Find open-source repos for GraphQL in Java with good popularity signals.", "output": "open-source GraphQL Java repos with good popularity"}
+{"instruction": "Find open-source repos for logging in Java with good popularity signals.", "output": "open-source logging repos Java popular"}
+{"instruction": "Find open-source repos for Docker in Python with good popularity signals.", "output": "open-source repos for docker python good popularity signals"}
+{"instruction": "Search for JavaScript repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes\" + \"javascript\" + \"repo"}
+{"instruction": "Find GitHub repositories about GraphQL written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL JavaScript repositories"}
+{"instruction": "Search for TypeScript repos related to dependency injection. Add qualifiers to narrow results.", "output": "TypeScript repos dependency injection"}
+{"instruction": "Find Python repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" python repositories"}
+{"instruction": "Find GitHub repositories about CI/CD written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "swift ci cd repositories"}
+{"instruction": "Find TypeScript repositories about GraphQL. Exclude archived repos.", "output": "TypeScript GraphQL Repositories"}
+{"instruction": "Find open-source repos for Kubernetes in C# with good popularity signals.", "output": "kubernetes open-source repos c# popularity"}
+{"instruction": "Find open-source repos for dependency injection in Swift with good popularity signals.", "output": "open-source Swift dependency injection repos"}
+{"instruction": "Find open-source repos for unit testing in C# with good popularity signals.", "output": "open-source C# unit testing repos with good popularity"}
+{"instruction": "Find Python repositories about Docker. Exclude archived repos.", "output": "python docker repositories"}
+{"instruction": "Search for Go repos related to authentication. Add qualifiers to narrow results.", "output": "golang authentication repositories"}
+{"instruction": "Search for Java repos related to logging. Add qualifiers to narrow results.", "output": "Java logging repos"}
+{"instruction": "Find GitHub repositories about caching written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java caching repositories"}
+{"instruction": "Find open-source repos for Kubernetes in TypeScript with good popularity signals.", "output": "kubernetes open-source repos TypeScript popular"}
+{"instruction": "Find TypeScript repositories about caching. Exclude archived repos.", "output": "typescript[caching]"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match forks:>50 and pushed:>2024-01-01.", "output": "kubernetes kotlin repositories 2024-01-01"}
+{"instruction": "Find open-source repos for unit testing in JavaScript with good popularity signals.", "output": "open-source repos for unit testing JavaScript with good popularity"}
+{"instruction": "Find open-source repos for rate limiting in Python with good popularity signals.", "output": "rate-limiting python open-source repos good popularity"}
+{"instruction": "Search for Java repos related to GraphQL. Add qualifiers to narrow results.", "output": "Java GraphQL repos"}
+{"instruction": "Find Swift repositories about async/await. Exclude archived repos.", "output": "swift async await repositories"}
+{"instruction": "Find repos about unit testing in C#. Must match stars:>500 and pushed:>2024-01-01.", "output": "unit-testing C# repos 2024-01-01 stars:>500"}
+{"instruction": "Find GitHub repositories about logging written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "Swift logging repositories"}
+{"instruction": "Find GitHub repositories about GraphQL written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql typescript repositories active"}
+{"instruction": "Find C# repositories about CI/CD. Exclude archived repos.", "output": "C# CI/CD repositories"}
+{"instruction": "Find open-source repos for REST API in Rust with good popularity signals.", "output": "rust-rest-api open-source repos good popularity"}
+{"instruction": "Search for Go repos related to CI/CD. Add qualifiers to narrow results.", "output": "golang ci"}
+{"instruction": "Find repos about caching in C#. Must match pushed:>2024-01-01 and stars:>500.", "output": "caching C# repos pushed:2024-01-01 stars:500"}
+{"instruction": "Find GitHub repositories about async/await written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "async await Java GitHub repositories"}
+{"instruction": "Find repos about authentication in TypeScript. Must match license:apache-2.0 and forks:>50.", "output": "typescript authentication repos apache-2.0 forks 50"}
+{"instruction": "Find repos about CI/CD in Go. Must match size:<50000 and is:public.", "output": "golang-ci"}
+{"instruction": "Find open-source repos for rate limiting in JavaScript with good popularity signals.", "output": "open-source repos rate-limiting JavaScript popular"}
+{"instruction": "Find Rust repositories about logging. Exclude archived repos.", "output": "rust logging repositories"}
+{"instruction": "Find GitHub repositories about caching written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "caching TypeScript repositories"}
+{"instruction": "Find Rust repositories about authentication. Exclude archived repos.", "output": "rust-authentication-repos"}
+{"instruction": "Find repos about CI/CD in Go. Must match license:mit and is:public.", "output": "ci-cd-go-licenses-mit-public-repos"}
+{"instruction": "Find repos about caching in JavaScript. Must match stars:>100 and size:<50000.", "output": "cache-js repos stars 100 size 50000"}
+{"instruction": "Search for Java repos related to CI/CD. Add qualifiers to narrow results.", "output": "Java CI/CD repos"}
+{"instruction": "Find repos about Docker in Kotlin. Must match license:apache-2.0 and forks:>50.", "output": "docker-kotlin-licenses:apache-2.0\" \"docker-kotlin-licenses:apache-2.0\" \"docker-kotlin-licenses:apache-2.0\" \"docker-kotlin-licenses:apache-2.0\" \"docker-kotlin-licenses:apache-2.0"}
+{"instruction": "Find Go repositories about unit testing. Exclude archived repos.", "output": "golang\" + \"unit testing\" + \"github.com\" + \"archived"}
+{"instruction": "Find Go repositories about async/await. Exclude archived repos.", "output": "golang\" + \"async\" + \"await\" + \"repos\" + \"archived"}
+{"instruction": "Find GitHub repositories about caching written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "caching swift repositories actively maintained"}
+{"instruction": "Find open-source repos for dependency injection in JavaScript with good popularity signals.", "output": "open-source repos dependency injection JavaScript popular"}
+{"instruction": "Find open-source repos for caching in Python with good popularity signals.", "output": "open-source repos for caching Python with good popularity"}
+{"instruction": "Find open-source repos for GraphQL in Go with good popularity signals.", "output": "open-source GraphQL Go repos good popularity"}
+{"instruction": "Find GitHub repositories about logging written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "Python logging repositories"}
+{"instruction": "Search for Swift repos related to rate limiting. Add qualifiers to narrow results.", "output": "swift rate-limiting repos"}
+{"instruction": "Find GitHub repositories about async/await written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "async await Swift repositories actively maintained"}
+{"instruction": "Find open-source repos for GraphQL in C# with good popularity signals.", "output": "GraphQL C# open-source repos with good popularity"}
+{"instruction": "Search for Swift repos related to logging. Add qualifiers to narrow results.", "output": "swift logging repositories"}
+{"instruction": "Search for Python repos related to caching. Add qualifiers to narrow results.", "output": "Python caching repos"}
+{"instruction": "Find open-source repos for caching in Rust with good popularity signals.", "output": "rust-caching open-source repos with good popularity"}
+{"instruction": "Find repos about logging in Swift. Must match is:public and stars:>500.", "output": "swift logging repos with stars > 500"}
+{"instruction": "Search for Go repos related to rate limiting. Add qualifiers to narrow results.", "output": "golang repos rate limiting"}
+{"instruction": "Search for Go repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes-go repos"}
+{"instruction": "Find TypeScript repositories about GraphQL. Exclude archived repos.", "output": "typescript/graphql archived-repos"}
+{"instruction": "Search for JavaScript repos related to dependency injection. Add qualifiers to narrow results.", "output": "JavaScript dependencies injection repositories"}
+{"instruction": "Find repos about caching in Go. Must match pushed:>2024-01-01 and is:public.", "output": "golang\" + \"caching\" + \"github.com\" + \"2024-01-01\" + \"public"}
+{"instruction": "Find repos about async/await in C#. Must match archived:false and is:public.", "output": "async await C# repos"}
+{"instruction": "Find repos about caching in Swift. Must match size:<50000 and license:mit.", "output": "swift caching mit repos"}
+{"instruction": "Find JavaScript repositories about async/await. Exclude archived repos.", "output": "async/await JavaScript repositories"}
+{"instruction": "Find open-source repos for unit testing in JavaScript with good popularity signals.", "output": "open-source repos for unit testing JavaScript popular"}
+{"instruction": "Find open-source repos for Kubernetes in Java with good popularity signals.", "output": "kubernetes open-source java repos good popularity"}
+{"instruction": "Find TypeScript repositories about dependency injection. Exclude archived repos.", "output": "TypeScript TypeScript repositories dependency injection"}
+{"instruction": "Find C# repositories about dependency injection. Exclude archived repos.", "output": "C# repositories dependency injection"}
+{"instruction": "Search for Rust repos related to Docker. Add qualifiers to narrow results.", "output": "rust-docker-repos"}
+{"instruction": "Find open-source repos for Kubernetes in JavaScript with good popularity signals.", "output": "kubernetes open-source repos javascript popularity"}
+{"instruction": "Find repos about GraphQL in TypeScript. Must match is:public and license:apache-2.0.", "output": "GraphQL TypeScript repos"}
+{"instruction": "Find open-source repos for Docker in Java with good popularity signals.", "output": "open-source Docker Java repos with good popularity"}
+{"instruction": "Find open-source repos for authentication in Rust with good popularity signals.", "output": "rust-authentication open-source repos good popularity"}
+{"instruction": "Find GitHub repositories about dependency injection written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "Python dependency injection repositories"}
+{"instruction": "Find Swift repositories about REST API. Exclude archived repos.", "output": "swift-rest-api repositories"}
+{"instruction": "Search for TypeScript repos related to authentication. Add qualifiers to narrow results.", "output": "TypeScript authentication repos"}
+{"instruction": "Find GitHub repositories about dependency injection written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin dependency-injection repositories actively maintained"}
+{"instruction": "Find open-source repos for async/await in Go with good popularity signals.", "output": "async-await-go-repos"}
+{"instruction": "Search for Kotlin repos related to async/await. Add qualifiers to narrow results.", "output": "kotlin async await repos"}
+{"instruction": "Find JavaScript repositories about logging. Exclude archived repos.", "output": "logging\" JavaScript repositories"}
+{"instruction": "Find repos about logging in C#. Must match size:<50000 and pushed:>2024-01-01.", "output": "logging C# 2024 50000"}
+{"instruction": "Find open-source repos for logging in Rust with good popularity signals.", "output": "Rust logging open-source repos good popularity"}
+{"instruction": "Find GitHub repositories about REST API written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API C# repositories"}
+{"instruction": "Find GitHub repositories about Docker written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "swift docker repositories actively maintained"}
+{"instruction": "Find open-source repos for logging in TypeScript with good popularity signals.", "output": "open-source TypeScript logging repos with good popularity"}
+{"instruction": "Find GitHub repositories about dependency injection written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "TypeScript dependency injection repositories"}
+{"instruction": "Find GitHub repositories about logging written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "Rust logging repositories"}
+{"instruction": "Find JavaScript repositories about rate limiting. Exclude archived repos.", "output": "rate-limiting JavaScript repositories"}
+{"instruction": "Find Go repositories about caching. Exclude archived repos.", "output": "golang\" + \"caching\" + \"github.com\" + \"archived"}
+{"instruction": "Find repos about authentication in Go. Must match stars:>500 and license:mit.", "output": "golang authentication stars:500 license:mit"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match license:apache-2.0 and license:apache-2.0.", "output": "dependency-injection typescript"}
+{"instruction": "Search for Rust repos related to REST API. Add qualifiers to narrow results.", "output": "rust-rest-api repos"}
+{"instruction": "Find open-source repos for Kubernetes in Python with good popularity signals.", "output": "kubernetes python open-source repos"}
+{"instruction": "Find repos about rate limiting in Swift. Must match license:apache-2.0 and stars:>500.", "output": "swift rate-limiting repos apache-2.0 stars 500"}
+{"instruction": "Find GitHub repositories about GraphQL written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-python-repos"}
+{"instruction": "Find repos about REST API in TypeScript. Must match pushed:>2024-01-01 and archived:false.", "output": "REST API TypeScript repos 2024-01-01"}
+{"instruction": "Search for Python repos related to REST API. Add qualifiers to narrow results.", "output": "Python REST API repos"}
+{"instruction": "Search for Rust repos related to Kubernetes. Add qualifiers to narrow results.", "output": "rust+kubernetes"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes java repos"}
+{"instruction": "Find open-source repos for caching in Kotlin with good popularity signals.", "output": "kotlin caching open-source repos"}
+{"instruction": "Find open-source repos for Docker in C# with good popularity signals.", "output": "C# Docker open-source repos"}
+{"instruction": "Search for TypeScript repos related to dependency injection. Add qualifiers to narrow results.", "output": "TypeScript TypeScript dependency injection"}
+{"instruction": "Find open-source repos for unit testing in TypeScript with good popularity signals.", "output": "open-source repos for unit testing TypeScript good popularity"}
+{"instruction": "Find repos about async/await in JavaScript. Must match is:public and pushed:>2024-01-01.", "output": "async await repos 2024-01-01"}
+{"instruction": "Search for Rust repos related to authentication. Add qualifiers to narrow results.", "output": "rust authentication repos"}
+{"instruction": "Search for C# repos related to REST API. Add qualifiers to narrow results.", "output": "C# REST API repositories"}
+{"instruction": "Find TypeScript repositories about unit testing. Exclude archived repos.", "output": "TypeScript TypeScript unit testing repositories"}
+{"instruction": "Find repos about unit testing in C#. Must match size:<50000 and license:mit.", "output": "unit-testing C# repositories matching size <= 50000 and license:mit"}
+{"instruction": "Find open-source repos for CI/CD in C# with good popularity signals.", "output": "C# CI/CD open-source repos with good popularity signals"}
+{"instruction": "Find GitHub repositories about unit testing written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "Python unit testing repositories"}
+{"instruction": "Find open-source repos for Kubernetes in Go with good popularity signals.", "output": "kubernetes-go open-source repos popularity"}
+{"instruction": "Search for C# repos related to async/await. Add qualifiers to narrow results.", "output": "C# async await repos"}
+{"instruction": "Search for TypeScript repos related to Docker. Add qualifiers to narrow results.", "output": "TypeScript Docker repos"}
+{"instruction": "Find open-source repos for unit testing in Swift with good popularity signals.", "output": "open-source Swift unit testing repositories"}
+{"instruction": "Find JavaScript repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" JavaScript repository"}
+{"instruction": "Find GitHub repositories about GraphQL written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-kotlin-repos.active"}
+{"instruction": "Find GitHub repositories about rate limiting written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java rate limiting repositories"}
+{"instruction": "Find repos about authentication in Java. Must match pushed:>2024-01-01 and stars:>100.", "output": "Java authentication repos pushed:2024-01-01,stars:100"}
+{"instruction": "Find TypeScript repositories about Docker. Exclude archived repos.", "output": "typescript.docker archived repos"}
+{"instruction": "Search for Go repos related to caching. Add qualifiers to narrow results.", "output": "golang\" + \"caching\" + \"repos"}
+{"instruction": "Find GitHub repositories about dependency injection written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "dependency-injection JavaScript active maintainers"}
+{"instruction": "Find open-source repos for async/await in JavaScript with good popularity signals.", "output": "asyncawait open-source repos JavaScript popular"}
+{"instruction": "Find repos about rate limiting in Swift. Must match archived:false and license:mit.", "output": "rate-limiting Swift repos (archived=false, license:mit)"}
+{"instruction": "Find open-source repos for Docker in TypeScript with good popularity signals.", "output": "open-source repos Docker TypeScript popular"}
+{"instruction": "Find open-source repos for REST API in Go with good popularity signals.", "output": "golang\" REST API open-source repos good popularity"}
+{"instruction": "Find repos about Docker in JavaScript. Must match size:<50000 and license:apache-2.0.", "output": "docker-js repos size 50000 license apache-2.0"}
+{"instruction": "Search for Java repos related to rate limiting. Add qualifiers to narrow results.", "output": "Java repos rate limiting"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match archived:false and forks:>50.", "output": "dependency-injection TypeScript archived:50 forks"}
+{"instruction": "Search for TypeScript repos related to async/await. Add qualifiers to narrow results.", "output": "TypeScript async/await repos"}
+{"instruction": "Find GitHub repositories about Docker written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin docker repositories actively maintained"}
+{"instruction": "Find repos about authentication in C#. Must match license:mit and is:public.", "output": "mit license authentication C# public repos"}
+{"instruction": "Find JavaScript repositories about unit testing. Exclude archived repos.", "output": "unit-testing JavaScript repositories"}
+{"instruction": "Find open-source repos for GraphQL in Rust with good popularity signals.", "output": "open-source GraphQL Rust repositories with high popularity"}
+{"instruction": "Find open-source repos for logging in Go with good popularity signals.", "output": "open-source Go logging repos"}
+{"instruction": "Find repos about logging in Go. Must match forks:>50 and archived:false.", "output": "logging-go-repos-forks-50-archived"}
+{"instruction": "Search for JavaScript repos related to GraphQL. Add qualifiers to narrow results.", "output": "JavaScript GraphQL repos"}
+{"instruction": "Find repos about REST API in Python. Must match size:<50000 and size:<50000.", "output": "REST API Python repos"}
+{"instruction": "Find GitHub repositories about GraphQL written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL Rust Repositories"}
+{"instruction": "Find repos about Kubernetes in Go. Must match size:<50000 and is:public.", "output": "kubernetes-go"}
+{"instruction": "Search for JavaScript repos related to unit testing. Add qualifiers to narrow results.", "output": "JavaScript unit testing repositories"}
+{"instruction": "Find Go repositories about unit testing. Exclude archived repos.", "output": "golang\" unit testing repositories"}
+{"instruction": "Search for Swift repos related to rate limiting. Add qualifiers to narrow results.", "output": "swift rate-limiting repositories"}
+{"instruction": "Find Java repositories about rate limiting. Exclude archived repos.", "output": "rate-limiting java repositories"}
+{"instruction": "Search for C# repos related to Docker. Add qualifiers to narrow results.", "output": "C# Docker repositories"}
+{"instruction": "Find repos about caching in Swift. Must match license:apache-2.0 and forks:>50.", "output": "caching swift repos apache-2.0 licenses forks 50"}
+{"instruction": "Find repos about caching in Go. Must match size:<50000 and stars:>500.", "output": "golang cacher"}
+{"instruction": "Find open-source repos for CI/CD in JavaScript with good popularity signals.", "output": "open-source CI/CD JavaScript popular"}
+{"instruction": "Find repos about unit testing in C#. Must match stars:>500 and is:public.", "output": "unit-testing C# stars:>500 public"}
+{"instruction": "Find repos about rate limiting in Python. Must match archived:false and stars:>500.", "output": "rate-limiting Python repos"}
+{"instruction": "Find Rust repositories about CI/CD. Exclude archived repos.", "output": "rust-ci-cd-repositories"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes swift repositories"}
+{"instruction": "Search for Kotlin repos related to caching. Add qualifiers to narrow results.", "output": "kotlin caching repositories"}
+{"instruction": "Find repos about REST API in Java. Must match stars:>500 and stars:>100.", "output": "REST API Java repos with stars > 500 and > 100"}
+{"instruction": "Find TypeScript repositories about authentication. Exclude archived repos.", "output": "typescript authentication repositories"}
+{"instruction": "Search for Go repos related to dependency injection. Add qualifiers to narrow results.", "output": "golang\" + \"dependency injection\" + \"repos"}
+{"instruction": "Find GitHub repositories about REST API written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API TypeScript repositories actively maintained"}
+{"instruction": "Search for Java repos related to async/await. Add qualifiers to narrow results.", "output": "Java async await repos"}
+{"instruction": "Find TypeScript repositories about unit testing. Exclude archived repos.", "output": "TypeScript repositories with unit testing"}
+{"instruction": "Find GitHub repositories about caching written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "caching java\" repository"}
+{"instruction": "Find GitHub repositories about unit testing written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "unit-testing C# repositories"}
+{"instruction": "Find open-source repos for Kubernetes in JavaScript with good popularity signals.", "output": "kubernetes open-source repos js popular"}
+{"instruction": "Find GitHub repositories about GraphQL written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-rust-repos"}
+{"instruction": "Find GitHub repositories about REST API written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Java repositories"}
+{"instruction": "Find open-source repos for REST API in Go with good popularity signals.", "output": "open-source repos for REST API in Go with good popularity signals"}
+{"instruction": "Search for TypeScript repos related to Kubernetes. Add qualifiers to narrow results.", "output": "TypeScript Kubernetes repos"}
+{"instruction": "Find repos about dependency injection in JavaScript. Must match stars:>500 and stars:>500.", "output": "dependency-injection repos:stars:>500"}
+{"instruction": "Find open-source repos for logging in C# with good popularity signals.", "output": "open-source repos C# logging good popularity"}
+{"instruction": "Search for Rust repos related to Kubernetes. Add qualifiers to narrow results.", "output": "rust-kubernetes-repos"}
+{"instruction": "Find GitHub repositories about CI/CD written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "CI/CD JavaScript repositories"}
+{"instruction": "Search for Kotlin repos related to GraphQL. Add qualifiers to narrow results.", "output": "kotlin/graphql repos"}
+{"instruction": "Find Go repositories about GraphQL. Exclude archived repos.", "output": "graphql-go repositories"}
+{"instruction": "Find repos about REST API in Swift. Must match size:<50000 and license:apache-2.0.", "output": "REST API Swift 50000 licenses apache-2.0"}
+{"instruction": "Find open-source repos for dependency injection in TypeScript with good popularity signals.", "output": "open-source TypeScript dependency injection repos with good popularity"}
+{"instruction": "Find GitHub repositories about CI/CD written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "CI/CD C# GitHub repositories actively maintained"}
+{"instruction": "Find repos about unit testing in Rust. Must match size:<50000 and license:mit.", "output": "Rust unit testing\" - size:50000 - license:mit"}
+{"instruction": "Find open-source repos for Kubernetes in Rust with good popularity signals.", "output": "kubernetes rust open-source repos"}
+{"instruction": "Search for Go repos related to unit testing. Add qualifiers to narrow results.", "output": "golang repos unit testing"}
+{"instruction": "Find open-source repos for rate limiting in JavaScript with good popularity signals.", "output": "rate-limiting open-source JavaScript repos"}
+{"instruction": "Find open-source repos for authentication in Swift with good popularity signals.", "output": "open-source Swift authentication repos good popularity"}
+{"instruction": "Find Java repositories about async/await. Exclude archived repos.", "output": "Java async/await repositories"}
+{"instruction": "Search for Swift repos related to authentication. Add qualifiers to narrow results.", "output": "swift authentication repos"}
+{"instruction": "Search for Swift repos related to async/await. Add qualifiers to narrow results.", "output": "swift async await repos"}
+{"instruction": "Find repos about logging in TypeScript. Must match size:<50000 and forks:>50.", "output": "logging TypeScript 50000+ repositories"}
+{"instruction": "Find GitHub repositories about async/await written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "asyncio+python+active+maintained+repos"}
+{"instruction": "Find Rust repositories about caching. Exclude archived repos.", "output": "rust-caching-repos"}
+{"instruction": "Find Java repositories about GraphQL. Exclude archived repos.", "output": "graphql-java"}
+{"instruction": "Find open-source repos for GraphQL in C# with good popularity signals.", "output": "open-source GraphQL C# repos with good popularity"}
+{"instruction": "Search for C# repos related to Kubernetes. Add qualifiers to narrow results.", "output": "C# Kubernetes repositories"}
+{"instruction": "Find GitHub repositories about REST API written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin-rest-api repositories actively maintained"}
+{"instruction": "Find open-source repos for caching in Kotlin with good popularity signals.", "output": "kotlin caching open-source repositories good popularity"}
+{"instruction": "Find repos about rate limiting in C#. Must match archived:false and stars:>100.", "output": "rate-limiting C# repos (archived:false) stars:>100"}
+{"instruction": "Find GitHub repositories about rate limiting written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin rate-limiting repositories"}
+{"instruction": "Find open-source repos for rate limiting in Swift with good popularity signals.", "output": "rate-limiting Swift open-source repos with good popularity"}
+{"instruction": "Find open-source repos for Docker in Go with good popularity signals.", "output": "open-source repos for Docker in Go with good popularity"}
+{"instruction": "Find open-source repos for unit testing in Kotlin with good popularity signals.", "output": "kotlin unit tests open-source repos"}
+{"instruction": "Find repos about Docker in Python. Must match stars:>500 and forks:>50.", "output": "docker python repos stars:>500 and forks:>50"}
+{"instruction": "Find Kotlin repositories about rate limiting. Exclude archived repos.", "output": "kotlin repositories rate-limiting"}
+{"instruction": "Find TypeScript repositories about Docker. Exclude archived repos.", "output": "TypeScript Docker repositories"}
+{"instruction": "Find repos about rate limiting in Swift. Must match pushed:>2024-01-01 and stars:>500.", "output": "swift rate-limiting repos pushed:2024-01-01 stars:500"}
+{"instruction": "Search for Go repos related to Docker. Add qualifiers to narrow results.", "output": "golang\" + \"docker\" + \"repos"}
+{"instruction": "Find repos about dependency injection in Kotlin. Must match is:public and pushed:>2024-01-01.", "output": "kotlin dependency-injection repositories 2024-01-01"}
+{"instruction": "Find open-source repos for REST API in TypeScript with good popularity signals.", "output": "open-source REST API TypeScript popular"}
+{"instruction": "Find open-source repos for rate limiting in Swift with good popularity signals.", "output": "rate-limiting Swift open-source repos"}
+{"instruction": "Find GitHub repositories about GraphQL written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL Python repositories"}
+{"instruction": "Find open-source repos for Kubernetes in Go with good popularity signals.", "output": "kubernetes-go open-source repos good popularity"}
+{"instruction": "Search for Python repos related to GraphQL. Add qualifiers to narrow results.", "output": "python3 graphql repos"}
+{"instruction": "Find repos about logging in Python. Must match size:<50000 and stars:>500.", "output": "logging python 50000 stars"}
+{"instruction": "Find repos about Kubernetes in C#. Must match stars:>500 and stars:>500.", "output": "kubernetes repos C# stars:>500"}
+{"instruction": "Find repos about caching in TypeScript. Must match is:public and license:mit.", "output": "caching TypeScript public MIT repos"}
+{"instruction": "Find open-source repos for authentication in JavaScript with good popularity signals.", "output": "open-source authentication JavaScript popular"}
+{"instruction": "Find TypeScript repositories about logging. Exclude archived repos.", "output": "typescript logging repositories"}
+{"instruction": "Find open-source repos for logging in Kotlin with good popularity signals.", "output": "kotlin logging open-source repos good popularity"}
+{"instruction": "Find repos about caching in Python. Must match size:<50000 and stars:>500.", "output": "Python caching repos size 50000 stars 500"}
+{"instruction": "Find GitHub repositories about unit testing written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "Rust unit testing repositories"}
+{"instruction": "Find GitHub repositories about caching written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang\" + \"caching\" + \"github\" + \"active"}
+{"instruction": "Find open-source repos for unit testing in Python with good popularity signals.", "output": "open-source repos for unit testing Python popular"}
+{"instruction": "Find C# repositories about logging. Exclude archived repos.", "output": "C# logging repositories"}
+{"instruction": "Search for Python repos related to async/await. Add qualifiers to narrow results.", "output": "Python async/await repos"}
+{"instruction": "Find GitHub repositories about authentication written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "active C# authentication repositories"}
+{"instruction": "Find repos about CI/CD in Kotlin. Must match license:apache-2.0 and stars:>100.", "output": "kotlin-ci-cd\" -license:apache-2.0 stars:>100"}
+{"instruction": "Find GitHub repositories about rate limiting written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "rate-limiting TypeScript repositories"}
+{"instruction": "Find repos about caching in Go. Must match size:<50000 and size:<50000.", "output": "caching go 50000"}
+{"instruction": "Find Rust repositories about CI/CD. Exclude archived repos.", "output": "rust-cicd-repos"}
+{"instruction": "Find GitHub repositories about CI/CD written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang-ci\" + \"active\" + \"maintained"}
+{"instruction": "Search for Swift repos related to unit testing. Add qualifiers to narrow results.", "output": "swift unit testing repositories"}
+{"instruction": "Find open-source repos for GraphQL in Rust with good popularity signals.", "output": "open-source GraphQL Rust repos with good popularity"}
+{"instruction": "Find JavaScript repositories about Docker. Exclude archived repos.", "output": "docker-js"}
+{"instruction": "Find open-source repos for logging in Swift with good popularity signals.", "output": "open-source Swift logging repos with good popularity"}
+{"instruction": "Find repos about unit testing in JavaScript. Must match stars:>500 and stars:>100.", "output": "unit-testing JavaScript repos with stars > 500 and > 100"}
+{"instruction": "Find repos about authentication in C#. Must match license:mit and stars:>500.", "output": "mit license authentication C# repositories stars 500"}
+{"instruction": "Find Kotlin repositories about Docker. Exclude archived repos.", "output": "kotlin docker repositories"}
+{"instruction": "Find open-source repos for async/await in Rust with good popularity signals.", "output": "asyncawait-rust-open-source-repos"}
+{"instruction": "Search for Swift repos related to Docker. Add qualifiers to narrow results.", "output": "swift repos related to Docker"}
+{"instruction": "Find GitHub repositories about CI/CD written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java CI/CD repositories"}
+{"instruction": "Find Rust repositories about GraphQL. Exclude archived repos.", "output": "rust-graphql repositories"}
+{"instruction": "Search for Rust repos related to caching. Add qualifiers to narrow results.", "output": "rust caching repos"}
+{"instruction": "Find Java repositories about Docker. Exclude archived repos.", "output": "docker-java"}
+{"instruction": "Find JavaScript repositories about dependency injection. Exclude archived repos.", "output": "JavaScript dependency injection repositories"}
+{"instruction": "Find GitHub repositories about rate limiting written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "rate-limiting Python repositories"}
+{"instruction": "Find repos about CI/CD in Kotlin. Must match pushed:>2024-01-01 and license:mit.", "output": "kotlin-ci-cd\" -pushed:>2024-01-01 -license:mit"}
+{"instruction": "Search for JavaScript repos related to REST API. Add qualifiers to narrow results.", "output": "REST API JavaScript repositories"}
+{"instruction": "Find GitHub repositories about authentication written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "python-authentication-repos"}
+{"instruction": "Find GitHub repositories about rate limiting written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "rate-limiting C# repositories"}
+{"instruction": "Find open-source repos for logging in Python with good popularity signals.", "output": "Python logging open-source repos good popularity"}
+{"instruction": "Find Swift repositories about caching. Exclude archived repos.", "output": "swift cacher repositories"}
+{"instruction": "Find open-source repos for rate limiting in TypeScript with good popularity signals.", "output": "rate-limiting TypeScript open-source repos with good popularity"}
+{"instruction": "Find JavaScript repositories about CI/CD. Exclude archived repos.", "output": "javascript-ci-cd-repos"}
+{"instruction": "Find repos about authentication in Python. Must match stars:>100 and stars:>100.", "output": "Python authentication repos"}
+{"instruction": "Find repos about async/await in Swift. Must match stars:>100 and forks:>50.", "output": "async await swift stars 100 forks 50"}
+{"instruction": "Find GitHub repositories about CI/CD written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "CI/CD Python repositories"}
+{"instruction": "Find repos about async/await in TypeScript. Must match stars:>500 and license:mit.", "output": "async/await TypeScript repos with >500 stars and MIT license"}
+{"instruction": "Find Kotlin repositories about caching. Exclude archived repos.", "output": "kotlin repositories caching"}
+{"instruction": "Search for C# repos related to rate limiting. Add qualifiers to narrow results.", "output": "C# rate limiting repositories"}
+{"instruction": "Find repos about dependency injection in Swift. Must match stars:>100 and license:mit.", "output": "dependency-injection swift stars 100 license mit"}
+{"instruction": "Find open-source repos for caching in JavaScript with good popularity signals.", "output": "open-source repos for caching in JavaScript with good popularity signals"}
+{"instruction": "Find open-source repos for unit testing in Rust with good popularity signals.", "output": "Rust unit testing open-source repos"}
+{"instruction": "Find C# repositories about unit testing. Exclude archived repos.", "output": "C# repositories with unit testing"}
+{"instruction": "Find Python repositories about caching. Exclude archived repos.", "output": "python caching repositories"}
+{"instruction": "Find TypeScript repositories about rate limiting. Exclude archived repos.", "output": "TypeScript rate limiting repositories"}
+{"instruction": "Find open-source repos for GraphQL in Kotlin with good popularity signals.", "output": "open-source GraphQL Kotlin good popularity signals"}
+{"instruction": "Search for JavaScript repos related to REST API. Add qualifiers to narrow results.", "output": "REST API JavaScript"}
+{"instruction": "Find repos about logging in C#. Must match is:public and license:apache-2.0.", "output": "logging C# Apache-2.0"}
+{"instruction": "Find GitHub repositories about async/await written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "async await swift repositories actively maintained"}
+{"instruction": "Find open-source repos for caching in Java with good popularity signals.", "output": "open-source repos for Java caching with good popularity"}
+{"instruction": "Find repos about authentication in Rust. Must match license:mit and is:public.", "output": "rust-authentication mit public"}
+{"instruction": "Find C# repositories about authentication. Exclude archived repos.", "output": "C# authentication repositories"}
+{"instruction": "Search for Go repos related to REST API. Add qualifiers to narrow results.", "output": "golang repos rest api"}
+{"instruction": "Search for Python repos related to dependency injection. Add qualifiers to narrow results.", "output": "Python repos with dependency injection"}
+{"instruction": "Find repos about async/await in TypeScript. Must match stars:>100 and pushed:>2024-01-01.", "output": "async/await TypeScript repos 2024-01-01 stars >100"}
+{"instruction": "Find Java repositories about logging. Exclude archived repos.", "output": "logging java repositories"}
+{"instruction": "Find GitHub repositories about dependency injection written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin dependency injection repositories actively maintained"}
+{"instruction": "Find GitHub repositories about CI/CD written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "CI/CD TypeScript repositories actively maintained"}
+{"instruction": "Find GitHub repositories about async/await written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await TypeScript repositories actively maintained"}
+{"instruction": "Find open-source repos for unit testing in Rust with good popularity signals.", "output": "open-source Rust unit testing repositories"}
+{"instruction": "Find GitHub repositories about GraphQL written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL Python Repositories"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes\" + \"rust\" + \"active\" + \"maintained"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match stars:>500 and is:public.", "output": "dependency-injection TypeScript public repos with stars > 500"}
+{"instruction": "Find repos about unit testing in Python. Must match is:public and forks:>50.", "output": "unit-testing-python-repos-forks-50"}
+{"instruction": "Find open-source repos for authentication in Java with good popularity signals.", "output": "open-source Java authentication repos with good popularity"}
+{"instruction": "Search for JavaScript repos related to Docker. Add qualifiers to narrow results.", "output": "JavaScript Docker repositories"}
+{"instruction": "Search for Kotlin repos related to rate limiting. Add qualifiers to narrow results.", "output": "kotlin\" + \"rate limiting\" + \"repos"}
+{"instruction": "Find GitHub repositories about rate limiting written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "Swift rate limiting repositories"}
+{"instruction": "Find repos about logging in TypeScript. Must match pushed:>2024-01-01 and is:public.", "output": "logging in TypeScript repos pushed:2024-01-01 public"}
+{"instruction": "Search for TypeScript repos related to CI/CD. Add qualifiers to narrow results.", "output": "TypeScript CI/CD repos"}
+{"instruction": "Find repos about unit testing in Python. Must match stars:>500 and license:mit.", "output": "unit-testing Python repositories with >500 stars and MIT license"}
+{"instruction": "Find Go repositories about Docker. Exclude archived repos.", "output": "golang.org/x/repo"}
+{"instruction": "Find Swift repositories about unit testing. Exclude archived repos.", "output": "Swift unit testing repositories"}
+{"instruction": "Find repos about rate limiting in C#. Must match pushed:>2024-01-01 and license:mit.", "output": "rate-limiting C# repositories pushed on or after 2024-01-01 that use MIT license"}
+{"instruction": "Find open-source repos for Docker in Go with good popularity signals.", "output": "golang\" + \"docker\" + \"open-source\" + \"popular"}
+{"instruction": "Find repos about Docker in Rust. Must match license:mit and is:public.", "output": "docker rust license:mit public"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match pushed:>2024-01-01 and forks:>50.", "output": "kubernetes kotlin repositories 2024-01-01 50 forks"}
+{"instruction": "Find repos about REST API in Swift. Must match stars:>100 and pushed:>2024-01-01.", "output": "REST API Swift repos 2024-01-01 100 stars"}
+{"instruction": "Find GitHub repositories about Docker written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "docker typing-repos"}
+{"instruction": "Find Swift repositories about dependency injection. Exclude archived repos.", "output": "swift dependency injection repositories"}
+{"instruction": "Find repos about logging in Go. Must match stars:>100 and pushed:>2024-01-01.", "output": "logging/go-repos stars:>100 and pushed:>2024-01-01"}
+{"instruction": "Find repos about unit testing in C#. Must match size:<50000 and stars:>100.", "output": "unit-testing C# repos size:50000 stars:>100"}
+{"instruction": "Search for Java repos related to rate limiting. Add qualifiers to narrow results.", "output": "Java 8+ repos with rate limiting related features"}
+{"instruction": "Find Go repositories about caching. Exclude archived repos.", "output": "golang\" + \"caching\" + \"go\" + \"archived"}
+{"instruction": "Find open-source repos for rate limiting in Swift with good popularity signals.", "output": "swift rate-limiting open-source repos"}
+{"instruction": "Find repos about GraphQL in Rust. Must match size:<50000 and stars:>500.", "output": "graphql rust repositories size:50000 stars:>500"}
+{"instruction": "Find repos about unit testing in Swift. Must match is:public and size:<50000.", "output": "swift unit testing repos"}
+{"instruction": "Find GitHub repositories about GraphQL written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL Kotlin repositories"}
+{"instruction": "Find open-source repos for caching in Swift with good popularity signals.", "output": "caching swift open-source repos good popularity"}
+{"instruction": "Search for JavaScript repos related to logging. Add qualifiers to narrow results.", "output": "JavaScript logging repos"}
+{"instruction": "Search for Python repos related to logging. Add qualifiers to narrow results.", "output": "Python logging repos"}
+{"instruction": "Search for JavaScript repos related to REST API. Add qualifiers to narrow results.", "output": "JavaScript REST API repos"}
+{"instruction": "Find GitHub repositories about authentication written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin authentication repositories actively maintained"}
+{"instruction": "Find open-source repos for CI/CD in Kotlin with good popularity signals.", "output": "kotlin ci\" + \"open-source\" + \"ci\" + \"charts"}
+{"instruction": "Search for Go repos related to unit testing. Add qualifiers to narrow results.", "output": "golang\" + \"unit testing\" + \"repos"}
+{"instruction": "Search for JavaScript repos related to caching. Add qualifiers to narrow results.", "output": "JavaScript caching repositories"}
+{"instruction": "Find repos about GraphQL in TypeScript. Must match stars:>100 and is:public.", "output": "GraphQL TypeScript repos: stars:>100, public"}
+{"instruction": "Find open-source repos for async/await in JavaScript with good popularity signals.", "output": "asyncawait open-source repos JavaScript good popularity"}
+{"instruction": "Search for Kotlin repos related to REST API. Add qualifiers to narrow results.", "output": "kotlin\" + \"rest api\" + \"repos"}
+{"instruction": "Find repos about unit testing in Kotlin. Must match license:apache-2.0 and pushed:>2024-01-01.", "output": "kotlin unit testing repos 2024-01-01 license apache-2.0"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match stars:>500 and archived:false.", "output": "kubernetes kotlin repos stars:>500 archived:false"}
+{"instruction": "Find repos about GraphQL in JavaScript. Must match license:apache-2.0 and pushed:>2024-01-01.", "output": "GraphQL JavaScript repos 2024-01-01 license:apache-2.0"}
+{"instruction": "Find open-source repos for logging in Rust with good popularity signals.", "output": "Rust logging open-source repos"}
+{"instruction": "Find GitHub repositories about unit testing written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "unit-testing Python repositories"}
+{"instruction": "Search for JavaScript repos related to dependency injection. Add qualifiers to narrow results.", "output": "JavaScript dependency injection repos"}
+{"instruction": "Search for C# repos related to unit testing. Add qualifiers to narrow results.", "output": "C# unit testing repositories"}
+{"instruction": "Find repos about unit testing in TypeScript. Must match stars:>500 and pushed:>2024-01-01.", "output": "unit-testing TypeScript repos 2024-01-01"}
+{"instruction": "Find repos about caching in Swift. Must match license:mit and archived:false.", "output": "caching swift mit archived"}
+{"instruction": "Find GitHub repositories about unit testing written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "TypeScript unit testing repositories"}
+{"instruction": "Find repos about Docker in Swift. Must match license:mit and license:apache-2.0.", "output": "docker swift license mit apache-2.0"}
+{"instruction": "Find open-source repos for CI/CD in Rust with good popularity signals.", "output": "open-source Rust CI/CD repos"}
+{"instruction": "Find repos about caching in Swift. Must match license:apache-2.0 and archived:false.", "output": "swift-caching\" \"apache-2.0\" \"archived:false"}
+{"instruction": "Search for Python repos related to Docker. Add qualifiers to narrow results.", "output": "python docker repos"}
+{"instruction": "Search for C# repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes C# repos"}
+{"instruction": "Find repos about logging in Python. Must match forks:>50 and pushed:>2024-01-01.", "output": "logging python forks:2024-01-01"}
+{"instruction": "Find Java repositories about async/await. Exclude archived repos.", "output": "Java async await repositories"}
+{"instruction": "Find Python repositories about unit testing. Exclude archived repos.", "output": "python unit testing repositories"}
+{"instruction": "Find Kotlin repositories about GraphQL. Exclude archived repos.", "output": "kotlin/graphql"}
+{"instruction": "Search for Go repos related to Docker. Add qualifiers to narrow results.", "output": "golang repos docker"}
+{"instruction": "Find open-source repos for authentication in Go with good popularity signals.", "output": "golang authentication open-source repos"}
+{"instruction": "Find GitHub repositories about CI/CD written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "Rust CI/CD repositories"}
+{"instruction": "Search for Swift repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes swift"}
+{"instruction": "Find open-source repos for logging in Go with good popularity signals.", "output": "golang\" logs \"good popularity\" open-source repos"}
+{"instruction": "Find open-source repos for rate limiting in Kotlin with good popularity signals.", "output": "open-source kotlin rate-limiting repositories good popularity"}
+{"instruction": "Find GitHub repositories about Docker written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "Docker C# repositories"}
+{"instruction": "Find GitHub repositories about dependency injection written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java dependency injection repositories"}
+{"instruction": "Find GitHub repositories about dependency injection written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "Swift dependency injection repositories"}
+{"instruction": "Find GitHub repositories about logging written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "logging-java-active-repos"}
+{"instruction": "Find open-source repos for Docker in C# with good popularity signals.", "output": "open-source repos for Docker in C# with good popularity signals"}
+{"instruction": "Find GitHub repositories about caching written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "typescript-caching-repos"}
+{"instruction": "Find repos about Kubernetes in Rust. Must match forks:>50 and archived:false.", "output": "kubernetes\" -forks:>50 -archived:false -repo-type:repos"}
+{"instruction": "Find repos about rate limiting in Go. Must match stars:>100 and license:mit.", "output": "rate-limiting Go repos with stars > 100 and license:mit"}
+{"instruction": "Find repos about dependency injection in Rust. Must match pushed:>2024-01-01 and stars:>100.", "output": "dependency-injection rust repositories 2024-01-01 stars 100"}
+{"instruction": "Find Rust repositories about unit testing. Exclude archived repos.", "output": "rust-rs/rust-unit-testing"}
+{"instruction": "Find GitHub repositories about logging written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "Java logging repositories"}
+{"instruction": "Find open-source repos for GraphQL in JavaScript with good popularity signals.", "output": "GraphQL open-source repos with good popularity"}
+{"instruction": "Find repos about dependency injection in Rust. Must match forks:>50 and forks:>50.", "output": "dependency-injection rust forks\">50"}
+{"instruction": "Find GitHub repositories about async/await written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "asyncio+python+active+maintained+github+repositories"}
+{"instruction": "Find C# repositories about rate limiting. Exclude archived repos.", "output": "C# repositories rate limiting"}
+{"instruction": "Find open-source repos for rate limiting in Go with good popularity signals.", "output": "golang rate-limiting open-source repos"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes rust repositories"}
+{"instruction": "Find repos about GraphQL in JavaScript. Must match license:mit and is:public.", "output": "GraphQL JavaScript repos license:mit is:public"}
+{"instruction": "Find repos about Docker in Java. Must match stars:>100 and pushed:>2024-01-01.", "output": "docker-java repos:stars:>100, pushed:>2024-01-01"}
+{"instruction": "Find open-source repos for rate limiting in Java with good popularity signals.", "output": "rate-limiting Java open-source repos with good popularity"}
+{"instruction": "Find open-source repos for GraphQL in C# with good popularity signals.", "output": "open-source graphql c# popular"}
+{"instruction": "Find open-source repos for async/await in Kotlin with good popularity signals.", "output": "async await kotlin open-source popular"}
+{"instruction": "Find Python repositories about logging. Exclude archived repos.", "output": "logging python repositories"}
+{"instruction": "Find repos about authentication in Go. Must match stars:>500 and forks:>50.", "output": "golang authentication stars 500 forks 50"}
+{"instruction": "Find repos about caching in Java. Must match stars:>100 and stars:>500.", "output": "caching java repos stars 100 500"}
+{"instruction": "Find Rust repositories about dependency injection. Exclude archived repos.", "output": "rust dependency injection repositories"}
+{"instruction": "Find repos about REST API in JavaScript. Must match stars:>100 and forks:>50.", "output": "REST API JavaScript repos (stars:100, forks:50)"}
+{"instruction": "Find GitHub repositories about logging written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang\" + \"repositories\" + \"logging\" + \"active\" + \"maintained"}
+{"instruction": "Find open-source repos for rate limiting in C# with good popularity signals.", "output": "rate-limiting C# open-source repos with good popularity"}
+{"instruction": "Find TypeScript repositories about Docker. Exclude archived repos.", "output": "typescript.docker.archived"}
+{"instruction": "Search for Rust repos related to logging. Add qualifiers to narrow results.", "output": "rust logging crates"}
+{"instruction": "Find repos about Docker in Rust. Must match forks:>50 and license:mit.", "output": "docker rust forks with license mit"}
+{"instruction": "Search for JavaScript repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes\" + \"JavaScript\" + \"repo"}
+{"instruction": "Find Go repositories about dependency injection. Exclude archived repos.", "output": "golang\" + \"dependency injection\" + \"repositories\" + \"archived"}
+{"instruction": "Search for Java repos related to dependency injection. Add qualifiers to narrow results.", "output": "Java dependency injection repos"}
+{"instruction": "Find repos about REST API in Swift. Must match archived:false and pushed:>2024-01-01.", "output": "rest-api swift archived:2024-01-01"}
+{"instruction": "Find open-source repos for Docker in Java with good popularity signals.", "output": "docker-java-open-source-repos"}
+{"instruction": "Find open-source repos for logging in JavaScript with good popularity signals.", "output": "open-source logging repos with good popularity"}
+{"instruction": "Find repos about async/await in JavaScript. Must match archived:false and license:mit.", "output": "async await repos mit archived"}
+{"instruction": "Find TypeScript repositories about Docker. Exclude archived repos.", "output": "typescript@* docker"}
+{"instruction": "Search for Kotlin repos related to unit testing. Add qualifiers to narrow results.", "output": "kotlin unit testing repositories"}
+{"instruction": "Find repos about unit testing in Java. Must match forks:>50 and pushed:>2024-01-01.", "output": "Java unit testing repos 2024-01-01 forks 50"}
+{"instruction": "Find repos about caching in Go. Must match license:apache-2.0 and size:<50000.", "output": "golang\" + \"caching\" + \"apache-2.0\" + \"size:50000"}
+{"instruction": "Search for JavaScript repos related to Docker. Add qualifiers to narrow results.", "output": "JavaScript Docker repos"}
+{"instruction": "Find GitHub repositories about Kubernetes written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes\" JavaScript repositories actively maintained"}
+{"instruction": "Find open-source repos for dependency injection in TypeScript with good popularity signals.", "output": "open-source TypeScript dependency injection repos"}
+{"instruction": "Search for Kotlin repos related to dependency injection. Add qualifiers to narrow results.", "output": "kotlin dependency injection repos"}
+{"instruction": "Find Swift repositories about unit testing. Exclude archived repos.", "output": "swift-unit-testing-repos"}
+{"instruction": "Find open-source repos for authentication in Swift with good popularity signals.", "output": "open-source authentication Swift popular"}
+{"instruction": "Find repos about GraphQL in Python. Must match forks:>50 and license:mit.", "output": "GraphQL Python repos forks 50 license mit"}
+{"instruction": "Find repos about logging in Python. Must match archived:false and pushed:>2024-01-01.", "output": "logging python archived >2024-01-01"}
+{"instruction": "Find open-source repos for caching in Go with good popularity signals.", "output": "golang\" + \"cache\" + \"open-source\" + \"good-popularity-signals"}
+{"instruction": "Find repos about GraphQL in JavaScript. Must match size:<50000 and license:apache-2.0.", "output": "graphql-js-size-50000-licenses-apache-2-0"}
+{"instruction": "Find GitHub repositories about REST API written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Kotlin repositories actively maintained"}
+{"instruction": "Find GitHub repositories about REST API written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Swift repositories"}
+{"instruction": "Find open-source repos for dependency injection in Kotlin with good popularity signals.", "output": "kotlin dependency-injection open-source popular"}
+{"instruction": "Search for TypeScript repos related to unit testing. Add qualifiers to narrow results.", "output": "TypeScript TypeScript unit testing"}
+{"instruction": "Find C# repositories about async/await. Exclude archived repos.", "output": "asyncawait-csharp-repos"}
+{"instruction": "Search for Go repos related to GraphQL. Add qualifiers to narrow results.", "output": "Go GraphQL repos"}
+{"instruction": "Find TypeScript repositories about async/await. Exclude archived repos.", "output": "typescript async await repositories"}
+{"instruction": "Find repos about CI/CD in Go. Must match size:<50000 and size:<50000.", "output": "ci/cd go"}
+{"instruction": "Find repos about authentication in Go. Must match forks:>50 and license:mit.", "output": "golang authentication forks mit license"}
+{"instruction": "Find GitHub repositories about logging written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "logging java actively maintained repositories"}
+{"instruction": "Find C# repositories about async/await. Exclude archived repos.", "output": "C# async/await repositories"}
+{"instruction": "Search for Go repos related to dependency injection. Add qualifiers to narrow results.", "output": "golang repos dependency injection"}
+{"instruction": "Find Go repositories about CI/CD. Exclude archived repos.", "output": "golang repositories ci/ci"}
+{"instruction": "Find open-source repos for logging in Go with good popularity signals.", "output": "golang\" + \"logging\" + \"github\" + \"open-source"}
+{"instruction": "Find GitHub repositories about async/await written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "async await JavaScript GitHub repositories"}
+{"instruction": "Find open-source repos for GraphQL in Swift with good popularity signals.", "output": "open-source GraphQL Swift popular"}
+{"instruction": "Find open-source repos for Docker in Kotlin with good popularity signals.", "output": "open-source repos for Docker Kotlin good popularity"}
+{"instruction": "Find repos about logging in Kotlin. Must match forks:>50 and stars:>100.", "output": "kotlin logging repos forks:>50 stars:>100"}
+{"instruction": "Find repos about REST API in TypeScript. Must match forks:>50 and pushed:>2024-01-01.", "output": "REST API TypeScript repos 2024-01-01 forks:>50"}
+{"instruction": "Search for TypeScript repos related to GraphQL. Add qualifiers to narrow results.", "output": "typescript/graphql repos"}
+{"instruction": "Find GitHub repositories about GraphQL written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-kotlin-repos active maintainers"}
+{"instruction": "Find repos about Kubernetes in TypeScript. Must match stars:>500 and license:mit.", "output": "kubernetes TypeScript repos mit license"}
+{"instruction": "Find repos about rate limiting in Swift. Must match stars:>100 and license:mit.", "output": "swift repos rate-limiting mit license stars 100"}
+{"instruction": "Find GitHub repositories about dependency injection written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "dependency-injection JavaScript actively maintained repositories"}
+{"instruction": "Find open-source repos for dependency injection in Rust with good popularity signals.", "output": "open-source Rust dependency injection repos"}
+{"instruction": "Find repos about logging in JavaScript. Must match archived:false and stars:>500.", "output": "logging in JavaScript repos (archived=false, stars:>500)"}
+{"instruction": "Find open-source repos for unit testing in Java with good popularity signals.", "output": "open-source Java unit testing repos with good popularity"}
+{"instruction": "Find open-source repos for CI/CD in Kotlin with good popularity signals.", "output": "kotlin-ci\" + \"open-source\" + \"ci\" + \"cd"}
+{"instruction": "Search for Swift repos related to GraphQL. Add qualifiers to narrow results.", "output": "swift/graphql"}
+{"instruction": "Find open-source repos for CI/CD in Kotlin with good popularity signals.", "output": "kotlin-ci"}
+{"instruction": "Find GitHub repositories about REST API written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Python repositories"}
+{"instruction": "Find Python repositories about authentication. Exclude archived repos.", "output": "python authentication repositories"}
+{"instruction": "Find repos about Kubernetes in Python. Must match stars:>100 and pushed:>2024-01-01.", "output": "kubernetes python repos 2024-01-01 stars 100"}
+{"instruction": "Find GitHub repositories about GraphQL written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-go-repos.active"}
+{"instruction": "Find open-source repos for caching in C# with good popularity signals.", "output": "C# caching open-source repos with good popularity"}
+{"instruction": "Find repos about unit testing in Java. Must match stars:>500 and size:<50000.", "output": "Java unit testing repos stars:>500 size:<50000"}
+{"instruction": "Find open-source repos for CI/CD in TypeScript with good popularity signals.", "output": "open-source repos for CI/CD in TypeScript with good popularity signals"}
+{"instruction": "Find repos about caching in TypeScript. Must match stars:>100 and license:mit.", "output": "caching TypeScript repos with stars > 100 and license:mit"}
+{"instruction": "Find repos about unit testing in Swift. Must match license:apache-2.0 and license:apache-2.0.", "output": "swift unit testing\" \"apache-2.0\" \"swift unit testing"}
+{"instruction": "Find repos about GraphQL in Kotlin. Must match stars:>500 and archived:false.", "output": "GraphQL Kotlin repos stars:>500 archived:false"}
+{"instruction": "Find open-source repos for CI/CD in Java with good popularity signals.", "output": "open-source Java CI/CD repos"}
+{"instruction": "Find GitHub repositories about unit testing written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "Rust unit tests repositories"}
+{"instruction": "Find open-source repos for GraphQL in Rust with good popularity signals.", "output": "open-source/graphql-rust-good-popularity-signals"}
+{"instruction": "Search for Rust repos related to dependency injection. Add qualifiers to narrow results.", "output": "rust dependency injection repos"}
+{"instruction": "Find Kotlin repositories about CI/CD. Exclude archived repos.", "output": "kotlin ci/CD repositories"}
+{"instruction": "Find repos about Docker in Java. Must match size:<50000 and is:public.", "output": "docker-java-repos-size-50000"}
+{"instruction": "Find repos about rate limiting in Java. Must match license:apache-2.0 and size:<50000.", "output": "rate-limiting-java-repos-2.0-size-50000"}
+{"instruction": "Find open-source repos for Kubernetes in Java with good popularity signals.", "output": "kubernetes open-source java popular repos"}
+{"instruction": "Find Kotlin repositories about CI/CD. Exclude archived repos.", "output": "kotlin ci/ci"}
+{"instruction": "Find GitHub repositories about Docker written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "docker python repositories actively maintained"}
+{"instruction": "Search for Python repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes python"}
+{"instruction": "Find repos about authentication in Go. Must match license:apache-2.0 and forks:>50.", "output": "golang authentication\" -golang -license apache-2.0 -forks:>50"}
+{"instruction": "Find open-source repos for CI/CD in Rust with good popularity signals.", "output": "open-source Rust CI/CD repositories"}
+{"instruction": "Find repos about authentication in JavaScript. Must match license:mit and size:<50000.", "output": "mit license authentication JavaScript repositories 50000 size"}
+{"instruction": "Find TypeScript repositories about GraphQL. Exclude archived repos.", "output": "TypeScript GraphQL repositories"}
+{"instruction": "Find GitHub repositories about CI/CD written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin-ci\" + \"kotlin\" + \"repositories\" + \"active"}
+{"instruction": "Find open-source repos for CI/CD in Swift with good popularity signals.", "output": "open-source repos for CI/CD in Swift with good popularity signals"}
+{"instruction": "Search for Swift repos related to dependency injection. Add qualifiers to narrow results.", "output": "Swift Swift dependency injection Swift dependency injection repos Swift"}
+{"instruction": "Search for Go repos related to logging. Add qualifiers to narrow results.", "output": "golang\" + \"logging\" + \"repos\" + \"github.com"}
+{"instruction": "Find repos about caching in C#. Must match pushed:>2024-01-01 and archived:false.", "output": "caching C# repos pushed after 2024-01-01 and archived false"}
+{"instruction": "Find Rust repositories about unit testing. Exclude archived repos.", "output": "rust-rs-testing"}
+{"instruction": "Find repos about REST API in JavaScript. Must match archived:false and stars:>100.", "output": "REST API JavaScript repos (archived=false, stars:>100)"}
+{"instruction": "Search for JavaScript repos related to rate limiting. Add qualifiers to narrow results.", "output": "JavaScript repos with rate limiting"}
+{"instruction": "Find Java repositories about REST API. Exclude archived repos.", "output": "Java REST API repositories"}
+{"instruction": "Find GitHub repositories about caching written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "caching swift repositories"}
+{"instruction": "Find open-source repos for async/await in C# with good popularity signals.", "output": "asyncawait C# open-source repos good popularity"}
+{"instruction": "Find GitHub repositories about Kubernetes written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "kubernetes python repositories actively maintained"}
+{"instruction": "Find C# repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" C# repositories"}
+{"instruction": "Find open-source repos for logging in Java with good popularity signals.", "output": "open-source logging repos Java good popularity"}
+{"instruction": "Find open-source repos for Kubernetes in C# with good popularity signals.", "output": "kubernetes open-source repos C# popularity"}
+{"instruction": "Find GitHub repositories about caching written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "caching java repos"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match forks:>50 and pushed:>2024-01-01.", "output": "kubernetes kotlin repositories 2024-01-01 forks:>50"}
+{"instruction": "Find open-source repos for unit testing in JavaScript with good popularity signals.", "output": "open-source repos with unit testing in JavaScript"}
+{"instruction": "Find open-source repos for rate limiting in Python with good popularity signals.", "output": "open-source repos rate-limiting python good popularity"}
+{"instruction": "Find repos about unit testing in C#. Must match stars:>500 and pushed:>2024-01-01.", "output": "unit-testing C# repos 2024-01-01 stars 500"}
+{"instruction": "Find GitHub repositories about GraphQL written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL TypeScript repositories"}
+{"instruction": "Find open-source repos for rate limiting in JavaScript with good popularity signals.", "output": "rate-limiting JavaScript open-source repos with good popularity"}
+{"instruction": "Find Rust repositories about authentication. Exclude archived repos.", "output": "rust-authentication-repositories"}
+{"instruction": "Find repos about CI/CD in Go. Must match license:mit and is:public.", "output": "ci-cd-go-mit-public"}
+{"instruction": "Find repos about caching in JavaScript. Must match stars:>100 and size:<50000.", "output": "caching JavaScript repos with stars > 100 and size < 50000"}
+{"instruction": "Search for Java repos related to CI/CD. Add qualifiers to narrow results.", "output": "Java CI/CD repos: java-ci, java-ci-java, java-ci-cd, java-ci-cd-java"}
+{"instruction": "Find repos about Docker in Kotlin. Must match license:apache-2.0 and forks:>50.", "output": "docker-kotlin-licenses:apache-2.0\" \"docker-kotlin-licenses:apache-2.0\" \"docker-kotlin-licenses:apache-2.0"}
+{"instruction": "Find open-source repos for caching in Python with good popularity signals.", "output": "open-source repos for caching in Python with good popularity"}
+{"instruction": "Find open-source repos for GraphQL in Go with good popularity signals.", "output": "GraphQL Go open-source repos good popularity"}
+{"instruction": "Search for JavaScript repos related to dependency injection. Add qualifiers to narrow results.", "output": "JavaScript dependencies injection repos"}
+{"instruction": "Find repos about async/await in C#. Must match archived:false and is:public.", "output": "async await C# repos archived false"}
+{"instruction": "Find repos about caching in Swift. Must match size:<50000 and license:mit.", "output": "caching swift 50000 licenses mit"}
+{"instruction": "Find Rust repositories about logging. Exclude archived repos.", "output": "rust-log-analysis"}
+{"instruction": "Find open-source repos for authentication in Rust with good popularity signals.", "output": "rust-authentication open-source repos popularity"}
+{"instruction": "Find GitHub repositories about dependency injection written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "dependency-injection Python active maintainers"}
+{"instruction": "Find open-source repos for async/await in Go with good popularity signals.", "output": "async-await-go-repos-popularity"}
+{"instruction": "Find repos about logging in C#. Must match size:<50000 and pushed:>2024-01-01.", "output": "logging C# 50000+ 2024-01-01"}
+{"instruction": "Find open-source repos for logging in Python with good popularity signals.", "output": "open-source python logging good popularity"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match license:apache-2.0 and license:apache-2.0.", "output": "dependency-injection TypeScript license apache-2.0"}
+{"instruction": "Find GitHub repositories about GraphQL written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-python-repos active maintainers"}
+{"instruction": "Find open-source repos for caching in Kotlin with good popularity signals.", "output": "kotlin caching open-source repositories popularity"}
+{"instruction": "Find open-source repos for Docker in C# with good popularity signals.", "output": "open-source repos for Docker C# popular"}
+{"instruction": "Find repos about async/await in JavaScript. Must match is:public and pushed:>2024-01-01.", "output": "async+await+javascript+public+2024-01-01+repos"}
+{"instruction": "Find TypeScript repositories about unit testing. Exclude archived repos.", "output": "typescript unit-testing repositories"}
+{"instruction": "Find repos about unit testing in C#. Must match size:<50000 and license:mit.", "output": "unit-testing C# repositories matching size 50000 with license MIT"}
+{"instruction": "Find open-source repos for CI/CD in C# with good popularity signals.", "output": "open-source repos for CI/CD in C# with good popularity"}
+{"instruction": "Find open-source repos for unit testing in Swift with good popularity signals.", "output": "open-source Swift unit testing repositories with high popularity"}
+{"instruction": "Find repos about authentication in Java. Must match pushed:>2024-01-01 and stars:>100.", "output": "Java authentication repos pushed 2024-01-01 stars 100"}
+{"instruction": "Search for Python repos related to caching. Add qualifiers to narrow results.", "output": "python caching repos"}
+{"instruction": "Find open-source repos for async/await in JavaScript with good popularity signals.", "output": "async await open-source repos JavaScript good popularity"}
+{"instruction": "Find repos about rate limiting in Swift. Must match archived:false and license:mit.", "output": "rate-limiting Swift repos"}
+{"instruction": "Find repos about Docker in JavaScript. Must match size:<50000 and license:apache-2.0.", "output": "docker-js license apache-2.0 size 50000"}
+{"instruction": "Find repos about authentication in C#. Must match license:mit and is:public.", "output": "mit license authentication C# repos"}
+{"instruction": "Find repos about logging in Go. Must match forks:>50 and archived:false.", "output": "logging/go-repos forks:>50 archived:false"}
+{"instruction": "Find GitHub repositories about GraphQL written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-rust-active-repos"}
+{"instruction": "Find Java repositories about rate limiting. Exclude archived repos.", "output": "java -r rate-limiting"}
+{"instruction": "Find repos about caching in Go. Must match size:<50000 and stars:>500.", "output": "golang repos caching size 50000 stars 500"}
+{"instruction": "Find JavaScript repositories about logging. Exclude archived repos.", "output": "logging javascript repositories"}
+{"instruction": "Find open-source repos for CI/CD in JavaScript with good popularity signals.", "output": "open-source CI/CD JavaScript repos with high popularity"}
+{"instruction": "Find repos about unit testing in C#. Must match stars:>500 and is:public.", "output": "unit-testing C# repos with stars > 500 and public"}
+{"instruction": "Search for Kotlin repos related to caching. Add qualifiers to narrow results.", "output": "kotlin caching repos"}
+{"instruction": "Find repos about REST API in Java. Must match stars:>500 and stars:>100.", "output": "REST API Java repos stars 500 100"}
+{"instruction": "Find GitHub repositories about caching written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "caching java repositories"}
+{"instruction": "Find open-source repos for REST API in Go with good popularity signals.", "output": "open-source REST API Go good popularity signals"}
+{"instruction": "Search for TypeScript repos related to Kubernetes. Add qualifiers to narrow results.", "output": "typescript:kubernetes"}
+{"instruction": "Find repos about dependency injection in JavaScript. Must match stars:>500 and stars:>500.", "output": "dependency-injection js stars 500"}
+{"instruction": "Find open-source repos for logging in C# with good popularity signals.", "output": "open-source C# logging repos with good popularity"}
+{"instruction": "Find Go repositories about GraphQL. Exclude archived repos.", "output": "golang\" + \"graphql\" + \"archived\" + \"false"}
+{"instruction": "Find repos about REST API in Swift. Must match size:<50000 and license:apache-2.0.", "output": "REST API Swift 50000 license apache-2.0"}
+{"instruction": "Find open-source repos for dependency injection in TypeScript with good popularity signals.", "output": "open-source repos with dependency injection TypeScript popular"}
+{"instruction": "Find GitHub repositories about CI/CD written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "CI/CD C# repositories"}
+{"instruction": "Find open-source repos for authentication in Swift with good popularity signals.", "output": "open-source Swift authentication repos with good popularity"}
+{"instruction": "Find GitHub repositories about caching written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin caching repositories actively maintained"}
+{"instruction": "Search for Swift repos related to authentication. Add qualifiers to narrow results.", "output": "swift authentication repositories"}
+{"instruction": "Find repos about logging in TypeScript. Must match size:<50000 and forks:>50.", "output": "logging TypeScript 50000+ repos with 50+ forks"}
+{"instruction": "Find Rust repositories about caching. Exclude archived repos.", "output": "rust-caching-repositories"}
+{"instruction": "Find GitHub repositories about REST API written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Kotlin repositories"}
+{"instruction": "Find repos about rate limiting in C#. Must match archived:false and stars:>100.", "output": "rate-limiting C# repos"}
+{"instruction": "Find open-source repos for Docker in Java with good popularity signals.", "output": "open-source repos for Docker in Java with good popularity"}
+{"instruction": "Find open-source repos for unit testing in Kotlin with good popularity signals.", "output": "kotlin unit testing open-source repos"}
+{"instruction": "Find repos about Docker in Python. Must match stars:>500 and forks:>50.", "output": "docker python repos stars 500 forks 50"}
+{"instruction": "Search for Python repos related to GraphQL. Add qualifiers to narrow results.", "output": "Python GraphQL repos"}
+{"instruction": "Find repos about logging in Python. Must match size:<50000 and stars:>500.", "output": "logging/python/repos/size/50000/500/"}
+{"instruction": "Find repos about Kubernetes in C#. Must match stars:>500 and stars:>500.", "output": "kubernetes repos (stars:>500) C#"}
+{"instruction": "Find open-source repos for rate limiting in JavaScript with good popularity signals.", "output": "rate-limiting open-source JavaScript repos with good popularity"}
+{"instruction": "Find repos about caching in TypeScript. Must match is:public and license:mit.", "output": "typescript caching public license mit"}
+{"instruction": "Find open-source repos for logging in Kotlin with good popularity signals.", "output": "open-source Kotlin logging repos with good popularity"}
+{"instruction": "Find open-source repos for Docker in Python with good popularity signals.", "output": "open-source repos docker python good popularity signals"}
+{"instruction": "Find open-source repos for unit testing in Python with good popularity signals.", "output": "open-source repos for unit testing in Python with good popularity signals"}
+{"instruction": "Find GitHub repositories about authentication written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "active authentication C# repositories"}
+{"instruction": "Find open-source repos for logging in Java with good popularity signals.", "output": "open-source logging-java popular"}
+{"instruction": "Find Rust repositories about CI/CD. Exclude archived repos.", "output": "rust-ci"}
+{"instruction": "Find JavaScript repositories about Docker. Exclude archived repos.", "output": "javascript docker repositories"}
+{"instruction": "Find open-source repos for logging in Swift with good popularity signals.", "output": "open-source Swift logging repos"}
+{"instruction": "Find repos about unit testing in JavaScript. Must match stars:>500 and stars:>100.", "output": "unit-testing JavaScript repos stars:>500 and stars:>100"}
+{"instruction": "Find repos about authentication in C#. Must match license:mit and stars:>500.", "output": "authentication C# Mit License Stars 500"}
+{"instruction": "Find Kotlin repositories about Docker. Exclude archived repos.", "output": "kotlin repositories docker archived"}
+{"instruction": "Find open-source repos for async/await in Rust with good popularity signals.", "output": "async await open-source Rust repos good popularity"}
+{"instruction": "Search for Rust repos related to caching. Add qualifiers to narrow results.", "output": "rust caching repositories"}
+{"instruction": "Find Java repositories about Docker. Exclude archived repos.", "output": "docker-javarepositories"}
+{"instruction": "Find repos about CI/CD in Kotlin. Must match pushed:>2024-01-01 and license:mit.", "output": "CI/CD Kotlin repositories pushed 2024-01-01 with MIT license"}
+{"instruction": "Find GitHub repositories about authentication written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "Python authentication repositories"}
+{"instruction": "Find JavaScript repositories about CI/CD. Exclude archived repos.", "output": "JavaScript CI/CD repositories"}
+{"instruction": "Find repos about authentication in Python. Must match stars:>100 and stars:>100.", "output": "Python authentication repos stars 100"}
+{"instruction": "Find repos about async/await in Swift. Must match stars:>100 and forks:>50.", "output": "async-await Swift stars:100 forks:50"}
+{"instruction": "Find open-source repos for unit testing in Python with good popularity signals.", "output": "open-source repos for unit testing in Python with good popularity"}
+{"instruction": "Find repos about async/await in TypeScript. Must match stars:>500 and license:mit.", "output": "async/await repos:stars:>500,license:mit"}
+{"instruction": "Find open-source repos for GraphQL in Kotlin with good popularity signals.", "output": "open-source/graphql-kotlin-good-popularity-signals"}
+{"instruction": "Find repos about async/await in TypeScript. Must match stars:>100 and pushed:>2024-01-01.", "output": "async await repos TypeScript stars 2024-01-01"}
+{"instruction": "Find GitHub repositories about CI/CD written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "CI/CD TypeScript repositories"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match stars:>500 and is:public.", "output": "dependency-injection TypeScript public repos stars 500"}
+{"instruction": "Find open-source repos for dependency injection in Swift with good popularity signals.", "output": "open-source Swift dependency injection repos with good popularity"}
+{"instruction": "Search for Kotlin repos related to rate limiting. Add qualifiers to narrow results.", "output": "kotlin\" + \"rate limiting\" + \"kotlin repos"}
+{"instruction": "Search for Java repos related to CI/CD. Add qualifiers to narrow results.", "output": "Java CI/CD repos: java-ci, java-ci-java, java-ci-maven, java-ci-cd, java-ci-nodejs"}
+{"instruction": "Find GitHub repositories about async/await written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await repositories JavaScript actively maintained"}
+{"instruction": "Find repos about unit testing in Python. Must match stars:>500 and license:mit.", "output": "unit-testing-python-repos mit license stars 500"}
+{"instruction": "Find Go repositories about Docker. Exclude archived repos.", "output": "golang.org/x/repo/docker"}
+{"instruction": "Find repos about rate limiting in C#. Must match pushed:>2024-01-01 and license:mit.", "output": "rate-limiting C# repositories pushed on or after 2024-01-01 that are MIT licensed"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match pushed:>2024-01-01 and forks:>50.", "output": "kubernetes kotlin repos 2024-01-01 50 forks"}
+{"instruction": "Search for TypeScript repos related to Docker. Add qualifiers to narrow results.", "output": "typescript docker"}
+{"instruction": "Find repos about REST API in Swift. Must match stars:>100 and pushed:>2024-01-01.", "output": "REST API Swift repositories 2024-01-01 100 stars"}
+{"instruction": "Find GitHub repositories about Docker written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "docker type TypeScript active-repos"}
+{"instruction": "Find repos about unit testing in C#. Must match size:<50000 and stars:>100.", "output": "unit-testing C# repos size 50000 stars 100"}
+{"instruction": "Find repos about GraphQL in Rust. Must match size:<50000 and stars:>500.", "output": "graphql rust repositories size 50000 stars 500"}
+{"instruction": "Find Java repositories about rate limiting. Exclude archived repos.", "output": "java rate-limiting repositories"}
+{"instruction": "Find GitHub repositories about GraphQL written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL Kotlin Repositories"}
+{"instruction": "Find GitHub repositories about CI/CD written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin-ci\" + \"kotlin\" + \"github\" + \"repositories\" + \"active"}
+{"instruction": "Find open-source repos for CI/CD in Kotlin with good popularity signals.", "output": "kotlin-ci\" + \"open-source\" + \"ci\" + \"cd\" + \"kotlin\" + \"popularity"}
+{"instruction": "Search for Python repos related to dependency injection. Add qualifiers to narrow results.", "output": "Python repos dependency injection"}
+{"instruction": "Find repos about GraphQL in TypeScript. Must match stars:>100 and is:public.", "output": "GraphQL TypeScript repos with >100 stars"}
+{"instruction": "Find open-source repos for async/await in JavaScript with good popularity signals.", "output": "open-source repos with async await JavaScript popular"}
+{"instruction": "Search for JavaScript repos related to REST API. Add qualifiers to narrow results.", "output": "JavaScript REST API repositories"}
+{"instruction": "Find repos about unit testing in TypeScript. Must match stars:>500 and pushed:>2024-01-01.", "output": "unit-testing TypeScript repos 2024-01-01 stars:>500"}
+{"instruction": "Find repos about caching in Swift. Must match license:mit and archived:false.", "output": "swift-caching mit archived"}
+{"instruction": "Find repos about caching in Swift. Must match license:apache-2.0 and archived:false.", "output": "swift-caching\" license Apache-2.0 archived:false"}
+{"instruction": "Find repos about logging in Python. Must match forks:>50 and pushed:>2024-01-01.", "output": "logging python forks pushed 2024-01-01"}
+{"instruction": "Find Java repositories about async/await. Exclude archived repos.", "output": "async-java-lang-jdk8"}
+{"instruction": "Find open-source repos for authentication in Go with good popularity signals.", "output": "golang authentication open-source repos good popularity"}
+{"instruction": "Find open-source repos for logging in Go with good popularity signals.", "output": "golang\" + \"logging\" + \"github"}
+{"instruction": "Find GitHub repositories about Docker written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "docker csharp repositories actively maintained"}
+{"instruction": "Find repos about dependency injection in Rust. Must match pushed:>2024-01-01 and stars:>100.", "output": "dependency-injection rust repositories pushed:2024-01-01 stars:100"}
+{"instruction": "Find Rust repositories about unit testing. Exclude archived repos.", "output": "rust-rs-rust-unit-testing"}
+{"instruction": "Find open-source repos for GraphQL in JavaScript with good popularity signals.", "output": "GraphQL open-source repos JavaScript good popularity"}
+{"instruction": "Find repos about dependency injection in Rust. Must match forks:>50 and forks:>50.", "output": "dependency-injection rust forks 50"}
+{"instruction": "Find GitHub repositories about async/await written in Python. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await Python repositories"}
+{"instruction": "Find open-source repos for rate limiting in Go with good popularity signals.", "output": "open-source repos rate-limiting Go good popularity"}
+{"instruction": "Find open-source repos for GraphQL in Go with good popularity signals.", "output": "open-source GraphQL Go repos with good popularity"}
+{"instruction": "Find Rust repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" Rust repositories"}
+{"instruction": "Find open-source repos for rate limiting in Java with good popularity signals.", "output": "rate-limiting-java-open-source-repos"}
+{"instruction": "Find open-source repos for caching in Swift with good popularity signals.", "output": "Swift caching open-source repos"}
+{"instruction": "Find Python repositories about Kubernetes. Exclude archived repos.", "output": "python-kubernetes repositories"}
+{"instruction": "Find repos about authentication in Go. Must match stars:>500 and forks:>50.", "output": "golang authentication stars:stars:>500 and forks:>50"}
+{"instruction": "Find repos about caching in Java. Must match stars:>100 and stars:>500.", "output": "Java caching repos with stars between 100 and 500"}
+{"instruction": "Find repos about REST API in JavaScript. Must match stars:>100 and forks:>50.", "output": "REST API JavaScript repos (stars: 100, forks: 50)"}
+{"instruction": "Find open-source repos for async/await in Go with good popularity signals.", "output": "async await open-source Go repos"}
+{"instruction": "Find Go repositories about dependency injection. Exclude archived repos.", "output": "golang\" + \"dependency injection\" + \"repos\" + \"archived"}
+{"instruction": "Search for Java repos related to dependency injection. Add qualifiers to narrow results.", "output": "Java repos dependency injection"}
+{"instruction": "Search for Kotlin repos related to logging. Add qualifiers to narrow results.", "output": "kotlin logging repos"}
+{"instruction": "Find open-source repos for rate limiting in Go with good popularity signals.", "output": "golang rate-limiting\" open-source repos with good popularity"}
+{"instruction": "Find repos about REST API in Swift. Must match archived:false and pushed:>2024-01-01.", "output": "rest-api-swift archived:2024-01-01 archived:2024-01-01"}
+{"instruction": "Find GitHub repositories about unit testing written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin unit tests repositories"}
+{"instruction": "Find open-source repos for authentication in Swift with good popularity signals.", "output": "open-source Swift authentication repos"}
+{"instruction": "Find repos about logging in Python. Must match archived:false and pushed:>2024-01-01.", "output": "Python logging\" archived: false pushed:>2024-01-01"}
+{"instruction": "Find open-source repos for caching in Go with good popularity signals.", "output": "golang\" + \"cache\" + \"open-source\" + \"popularity"}
+{"instruction": "Find repos about GraphQL in JavaScript. Must match size:<50000 and license:apache-2.0.", "output": "GraphQL JavaScript repos size 50000 license apache-2.0"}
+{"instruction": "Find GitHub repositories about REST API written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "kotlin-rest-api\" + \"repositories\" + \"active"}
+{"instruction": "Find GitHub repositories about REST API written in Swift. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Swift repositories actively maintained"}
+{"instruction": "Search for Go repos related to GraphQL. Add qualifiers to narrow results.", "output": "GraphQL Go Repos"}
+{"instruction": "Find TypeScript repositories about async/await. Exclude archived repos.", "output": "TypeScript async/await repositories"}
+{"instruction": "Find open-source repos for logging in Go with good popularity signals.", "output": "golang\" logs \"open-source\" \"popular\" \"signals\" \"search"}
+{"instruction": "Find GitHub repositories about async/await written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await JavaScript repositories actively maintained"}
+{"instruction": "Find open-source repos for GraphQL in Swift with good popularity signals.", "output": "GraphQL Swift open-source repos with good popularity"}
+{"instruction": "Find open-source repos for Docker in Kotlin with good popularity signals.", "output": "kotlin docker open-source"}
+{"instruction": "Find repos about logging in Kotlin. Must match forks:>50 and stars:>100.", "output": "kotlin logging repositories forks:50 stars:100"}
+{"instruction": "Search for TypeScript repos related to GraphQL. Add qualifiers to narrow results.", "output": "TypeScript GraphQL repos"}
+{"instruction": "Search for Java repos related to rate limiting. Add qualifiers to narrow results.", "output": "Java repos with rate limiting related features"}
+{"instruction": "Find open-source repos for dependency injection in Rust with good popularity signals.", "output": "open-source Rust dependency injection repositories"}
+{"instruction": "Find repos about logging in JavaScript. Must match archived:false and stars:>500.", "output": "logging in JavaScript repos archived:false stars:>500"}
+{"instruction": "Find open-source repos for unit testing in Java with good popularity signals.", "output": "open-source Java unit testing repositories with high popularity"}
+{"instruction": "Search for Swift repos related to GraphQL. Add qualifiers to narrow results.", "output": "swift GraphQL repos"}
+{"instruction": "Find open-source repos for CI/CD in Kotlin with good popularity signals.", "output": "kotlin-ci\" + \"open-source\" + \"ci\" + \"cd\" + \"kotlin"}
+{"instruction": "Find repos about Kubernetes in Python. Must match stars:>100 and pushed:>2024-01-01.", "output": "kubernetes python repos stars:>100 and pushed:>2024-01-01"}
+{"instruction": "Find open-source repos for caching in C# with good popularity signals.", "output": "C# caching open-source repos with good popularity signals"}
+{"instruction": "Find repos about unit testing in Swift. Must match license:apache-2.0 and license:apache-2.0.", "output": "swift unit-testing repos"}
+{"instruction": "Find repos about GraphQL in Kotlin. Must match stars:>500 and archived:false.", "output": "GraphQL Kotlin repos >500 stars"}
+{"instruction": "Search for Rust repos related to rate limiting. Add qualifiers to narrow results.", "output": "rust-ratelimit"}
+{"instruction": "Find open-source repos for GraphQL in Rust with good popularity signals.", "output": "open-source GraphQL Rust repos good popularity"}
+{"instruction": "Find open-source repos for rate limiting in Swift with good popularity signals.", "output": "rate-limiting Swift open-source repos good popularity"}
+{"instruction": "Find open-source repos for authentication in TypeScript with good popularity signals.", "output": "open-source authentication TypeScript popular"}
+{"instruction": "Find TypeScript repositories about dependency injection. Exclude archived repos.", "output": "typescript dependency-injection repositories"}
+{"instruction": "Search for TypeScript repos related to caching. Add qualifiers to narrow results.", "output": "TypeScript caching repositories"}
+{"instruction": "Find GitHub repositories about GraphQL written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "GraphQL Java Repositories"}
+{"instruction": "Find Go repositories about unit testing. Exclude archived repos.", "output": "golang\" + \"unit testing\" + \"github.com\" + \"archive"}
+{"instruction": "Search for Rust repos related to GraphQL. Add qualifiers to narrow results.", "output": "rust rust-lang graphql rust-lang/rust graphql rust-lang/rust-lang/graphql"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match stars:>500 and license:apache-2.0.", "output": "kubernetes kotlin repos"}
+{"instruction": "Find repos about REST API in JavaScript. Must match stars:>500 and license:apache-2.0.", "output": "REST API JavaScript repos (stars:>500, license:apache-2.0)"}
+{"instruction": "Find repos about Docker in Kotlin. Must match stars:>100 and size:<50000.", "output": "docker kotlin repos stars:>100 size:<50000"}
+{"instruction": "Find open-source repos for logging in JavaScript with good popularity signals.", "output": "open-source logging repos JavaScript good popularity"}
+{"instruction": "Find open-source repos for dependency injection in C# with good popularity signals.", "output": "open-source repos for dependency injection C# good popularity"}
+{"instruction": "Find GitHub repositories about unit testing written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang repositories\" + \"active\" + \"maintained"}
+{"instruction": "Find open-source repos for authentication in C# with good popularity signals.", "output": "C# authentication open-source repos with good popularity"}
+{"instruction": "Find repos about logging in Java. Must match is:public and stars:>100.", "output": "logging-java-repos-is:public-stars:>100"}
+{"instruction": "Find repos about Docker in TypeScript. Must match pushed:>2024-01-01 and forks:>50.", "output": "docker typescript repos 2024-01-01 50 forks"}
+{"instruction": "Find repos about logging in Kotlin. Must match archived:false and license:mit.", "output": "logging-kotlin-archived-repos-mit"}
+{"instruction": "Find repos about Docker in Kotlin. Must match size:<50000 and size:<50000.", "output": "docker+kotlin+size:50000"}
+{"instruction": "Find open-source repos for CI/CD in Python with good popularity signals.", "output": "open-source repos for CI/CD in Python with good popularity signals"}
+{"instruction": "Find repos about Kubernetes in JavaScript. Must match archived:false and size:<50000.", "output": "kubernetes archived repos js"}
+{"instruction": "Find open-source repos for Docker in TypeScript with good popularity signals.", "output": "open-source repos for Docker in TypeScript with good popularity signals"}
+{"instruction": "Find repos about rate limiting in Rust. Must match license:mit and is:public.", "output": "rust-rate-limiting\" rate-limiting licenses:mit public"}
+{"instruction": "Find GitHub repositories about authentication written in JavaScript. Prefer actively maintained repos and include useful qualifiers.", "output": "active authentication repositories JavaScript"}
+{"instruction": "Find repos about rate limiting in Python. Must match pushed:>2024-01-01 and stars:>500.", "output": "rate-limiting Python repos pushed:2024-01-01 stars:500"}
+{"instruction": "Find repos about Docker in Java. Must match license:apache-2.0 and archived:false.", "output": "docker-java repos apache-2.0 archived false"}
+{"instruction": "Find repos about async/await in TypeScript. Must match size:<50000 and license:mit.", "output": "async await TypeScript repos matching size 50000 and license MIT"}
+{"instruction": "Find open-source repos for logging in Kotlin with good popularity signals.", "output": "open-source kotlin logging kotlin popular"}
+{"instruction": "Find repos about async/await in Go. Must match license:mit and stars:>500.", "output": "async-await Go Go license MIT stars 500"}
+{"instruction": "Find repos about async/await in Kotlin. Must match stars:>500 and forks:>50.", "output": "async await kotlin stars 500 forks 50"}
+{"instruction": "Find open-source repos for async/await in C# with good popularity signals.", "output": "asyncawait-csharp-open-source-repos"}
+{"instruction": "Search for Go repos related to REST API. Add qualifiers to narrow results.", "output": "golang\" REST API repos"}
+{"instruction": "Find Java repositories about GraphQL. Exclude archived repos.", "output": "java/graphql"}
+{"instruction": "Find Java repositories about Docker. Exclude archived repos.", "output": "docker-java-repositories"}
+{"instruction": "Find repos about Kubernetes in Kotlin. Must match size:<50000 and license:apache-2.0.", "output": "kubernetes kotlin"}
+{"instruction": "Find open-source repos for logging in Kotlin with good popularity signals.", "output": "open-source Kotlin logging repositories"}
+{"instruction": "Search for Swift repos related to authentication. Add qualifiers to narrow results.", "output": "Swift authentication repos"}
+{"instruction": "Find Rust repositories about authentication. Exclude archived repos.", "output": "rust-authentication repositories"}
+{"instruction": "Search for C# repos related to caching. Add qualifiers to narrow results.", "output": "C# caching repositories"}
+{"instruction": "Find open-source repos for Kubernetes in Python with good popularity signals.", "output": "kubernetes open-source repos python popularity"}
+{"instruction": "Find repos about REST API in TypeScript. Must match license:mit and size:<50000.", "output": "REST API TypeScript Mit License Repos"}
+{"instruction": "Find repos about CI/CD in Rust. Must match archived:false and pushed:>2024-01-01.", "output": "rust ci-cd repos"}
+{"instruction": "Search for TypeScript repos related to rate limiting. Add qualifiers to narrow results.", "output": "TypeScript repos rate limiting"}
+{"instruction": "Find repos about unit testing in JavaScript. Must match license:mit and stars:>100.", "output": "unit-testing-jsmit-repos-mit-stars-100"}
+{"instruction": "Find open-source repos for REST API in C# with good popularity signals.", "output": "REST API C# open-source repos with good popularity"}
+{"instruction": "Search for JavaScript repos related to CI/CD. Add qualifiers to narrow results.", "output": "JavaScript CI/CD repos"}
+{"instruction": "Find repos about unit testing in Rust. Must match license:mit and license:apache-2.0.", "output": "Rust unit testing\" \"mit license\" \"Rust\" \"Apache-2.0"}
+{"instruction": "Find repos about REST API in Go. Must match license:mit and stars:>500.", "output": "REST API Go license:mit stars:500"}
+{"instruction": "Find repos about GraphQL in Kotlin. Must match size:<50000 and stars:>500.", "output": "GraphQL kotlin repos size 50000 stars 500"}
+{"instruction": "Find Python repositories about GraphQL. Exclude archived repos.", "output": "graphql-python repositories"}
+{"instruction": "Search for Java repos related to unit testing. Add qualifiers to narrow results.", "output": "Java repos with unit testing"}
+{"instruction": "Find repos about async/await in Swift. Must match license:mit and is:public.", "output": "swift async await"}
+{"instruction": "Find open-source repos for dependency injection in Java with good popularity signals.", "output": "open-source Java dependency injection repos with good popularity"}
+{"instruction": "Find repos about Docker in Java. Must match license:apache-2.0 and pushed:>2024-01-01.", "output": "docker-java repos:apache-2.0 pushed:2024-01-01"}
+{"instruction": "Find repos about async/await in TypeScript. Must match size:<50000 and is:public.", "output": "async/await TypeScript repos size:50000 public"}
+{"instruction": "Find Rust repositories about async/await. Exclude archived repos.", "output": "rust async await repositories"}
+{"instruction": "Find Python repositories about REST API. Exclude archived repos.", "output": "python-rest-api repositories"}
+{"instruction": "Find open-source repos for unit testing in JavaScript with good popularity signals.", "output": "open-source repos for unit testing in JavaScript with good popularity signals"}
+{"instruction": "Find open-source repos for async/await in Python with good popularity signals.", "output": "asyncio python open-source"}
+{"instruction": "Find repos about REST API in C#. Must match stars:>500 and forks:>50.", "output": "REST API C# repositories with stars > 500 and forks > 50"}
+{"instruction": "Find repos about GraphQL in Rust. Must match license:mit and is:public.", "output": "graphql-rs\" -mit -public"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match stars:>500 and size:<50000.", "output": "dependency-injection typescript repos stars 500 size 50000"}
+{"instruction": "Find repos about dependency injection in C#. Must match license:mit and license:mit.", "output": "dependency-injection C# MIT license"}
+{"instruction": "Search for Java repos related to unit testing. Add qualifiers to narrow results.", "output": "Java unit testing repos"}
+{"instruction": "Find Kotlin repositories about unit testing. Exclude archived repos.", "output": "kotlin repositories unit testing"}
+{"instruction": "Find repos about logging in Rust. Must match is:public and pushed:>2024-01-01.", "output": "logging rust public 2024-01-01"}
+{"instruction": "Find repos about caching in TypeScript. Must match archived:false and archived:false.", "output": "TypeScript caching repos"}
+{"instruction": "Find repos about Kubernetes in Rust. Must match archived:false and size:<50000.", "output": "kubernetes archived:rust repos"}
+{"instruction": "Find open-source repos for authentication in Java with good popularity signals.", "output": "open-source Java authentication repos"}
+{"instruction": "Find open-source repos for dependency injection in JavaScript with good popularity signals.", "output": "open-source repos for dependency injection JavaScript good popularity"}
+{"instruction": "Find open-source repos for Docker in Swift with good popularity signals.", "output": "open-source repos for Docker Swift good popularity"}
+{"instruction": "Find Java repositories about authentication. Exclude archived repos.", "output": "java authentication repositories"}
+{"instruction": "Find GitHub repositories about async/await written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "async rust asyncawait activemaintained"}
+{"instruction": "Find repos about authentication in C#. Must match archived:false and license:apache-2.0.", "output": "authentication C# repos 2023 archived license apache"}
+{"instruction": "Find repos about unit testing in C#. Must match forks:>50 and archived:false.", "output": "unit-testing C# repos forks 50 or more and archived false"}
+{"instruction": "Find repos about logging in Kotlin. Must match stars:>100 and is:public.", "output": "logging kotlin stars:100 public"}
+{"instruction": "Find GitHub repositories about GraphQL written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-rust-projects.active"}
+{"instruction": "Find repos about dependency injection in Rust. Must match stars:>100 and stars:>500.", "output": "dependency-injection rust stars 100 500"}
+{"instruction": "Find open-source repos for REST API in JavaScript with good popularity signals.", "output": "REST API open-source repos with good popularity"}
+{"instruction": "Find GitHub repositories about async/await written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await Rust active maintainers repositories"}
+{"instruction": "Search for C# repos related to dependency injection. Add qualifiers to narrow results.", "output": "C# dependency injection repos"}
+{"instruction": "Find repos about REST API in JavaScript. Must match forks:>50 and size:<50000.", "output": "REST API JavaScript repositories forks:>50 size:<50000"}
+{"instruction": "Find Kotlin repositories about dependency injection. Exclude archived repos.", "output": "kotlin dependency injection repositories"}
+{"instruction": "Search for JavaScript repos related to async/await. Add qualifiers to narrow results.", "output": "async await JavaScript repos"}
+{"instruction": "Find open-source repos for authentication in Kotlin with good popularity signals.", "output": "kotlin authentication open-source repos popularity"}
+{"instruction": "Find open-source repos for REST API in Java with good popularity signals.", "output": "open-source REST API Java popular"}
+{"instruction": "Find repos about authentication in Kotlin. Must match pushed:>2024-01-01 and stars:>500.", "output": "kotlin authentication repos 2024-01-01 500 stars"}
+{"instruction": "Find repos about CI/CD in Python. Must match stars:>500 and license:apache-2.0.", "output": "ci-cd-python repos apache-2.0 stars 500"}
+{"instruction": "Find repos about Docker in Rust. Must match size:<50000 and stars:>100.", "output": "docker +rust +size:50000 +stars:100"}
+{"instruction": "Search for Kotlin repos related to Docker. Add qualifiers to narrow results.", "output": "kotlin repos related to Docker"}
+{"instruction": "Find open-source repos for async/await in TypeScript with good popularity signals.", "output": "async await open-source TypeScript repos"}
+{"instruction": "Find Go repositories about REST API. Exclude archived repos.", "output": "golang\" REST API repositories"}
+{"instruction": "Search for Kotlin repos related to Docker. Add qualifiers to narrow results.", "output": "kotlin docker repos"}
+{"instruction": "Find GitHub repositories about Docker written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "docker rust repositories actively maintained"}
+{"instruction": "Search for Java repos related to rate limiting. Add qualifiers to narrow results.", "output": "Java rate limiting repos"}
+{"instruction": "Find open-source repos for dependency injection in Go with good popularity signals.", "output": "golang dependency injection open-source repos good popularity"}
+{"instruction": "Find GitHub repositories about dependency injection written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "dependency-injection C# repositories actively maintained"}
+{"instruction": "Find repos about caching in Go. Must match stars:>500 and pushed:>2024-01-01.", "output": "golang\" caching stars:>500 and pushed:>2024-01-01"}
+{"instruction": "Find repos about async/await in TypeScript. Must match license:mit and license:apache-2.0.", "output": "asyncawait TypeScript repos"}
+{"instruction": "Find repos about Kubernetes in Swift. Must match pushed:>2024-01-01 and forks:>50.", "output": "kubernetes swift repos pushed:>2024-01-01 and forks:>50"}
+{"instruction": "Find GitHub repositories about authentication written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "typescript-authentication-repos"}
+{"instruction": "Find repos about Kubernetes in Go. Must match is:public and stars:>500.", "output": "kubernetes-go repos public stars 500"}
+{"instruction": "Find repos about rate limiting in C#. Must match archived:false and stars:>500.", "output": "rate-limiting C# repos with stars > 500 and archived: false"}
+{"instruction": "Find open-source repos for GraphQL in Python with good popularity signals.", "output": "open-source GraphQL Python repos with good popularity"}
+{"instruction": "Find repos about Kubernetes in Rust. Must match archived:false and archived:false.", "output": "kubernetes\" archived:false rust"}
+{"instruction": "Find open-source repos for rate limiting in Java with good popularity signals.", "output": "open-source repos rate-limiting Java popular"}
+{"instruction": "Find JavaScript repositories about async/await. Exclude archived repos.", "output": "JavaScript async/await repositories"}
+{"instruction": "Find GitHub repositories about dependency injection written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang\" + \"dependency injection\" + \"github\" + \"repositories\" + \"active"}
+{"instruction": "Find repos about rate limiting in C#. Must match pushed:>2024-01-01 and stars:>100.", "output": "rate-limiting C# repos pushed:2024-01-01 stars:100"}
+{"instruction": "Find Kotlin repositories about async/await. Exclude archived repos.", "output": "kotlin async await repositories"}
+{"instruction": "Search for Java repos related to dependency injection. Add qualifiers to narrow results.", "output": "Java repos with dependency injection"}
+{"instruction": "Find repos about CI/CD in Java. Must match is:public and archived:false.", "output": "ci/cd-java repos"}
+{"instruction": "Search for Rust repos related to authentication. Add qualifiers to narrow results.", "output": "rust authentication repositories"}
+{"instruction": "Find repos about Kubernetes in Swift. Must match is:public and stars:>500.", "output": "kubernetes swift repos public stars 500"}
+{"instruction": "Find Swift repositories about authentication. Exclude archived repos.", "output": "swift-authentication-repos"}
+{"instruction": "Find Go repositories about GraphQL. Exclude archived repos.", "output": "golang\" GraphQL repositories"}
+{"instruction": "Find repos about caching in Go. Must match forks:>50 and stars:>100.", "output": "golang\" -forks:>50 -stars:>100 caching"}
+{"instruction": "Find repos about rate limiting in Rust. Must match pushed:>2024-01-01 and is:public.", "output": "rust-rate-limiting repos 2024-01-01 public"}
+{"instruction": "Find open-source repos for authentication in C# with good popularity signals.", "output": "C# authentication open-source repos good popularity"}
+{"instruction": "Find Python repositories about CI/CD. Exclude archived repos.", "output": "pip ci/cd python-ci python-ci-tools python-ci-pipeline python-ci-tools-ci python-ci-tools-ci-python python-ci-tools-ci-python-pip"}
+{"instruction": "Find repos about unit testing in TypeScript. Must match size:<50000 and license:mit.", "output": "unit-testing TypeScript 50000 license MIT"}
+{"instruction": "Find TypeScript repositories about Docker. Exclude archived repos.", "output": "typescript.docker archived repos TypeScript Docker"}
+{"instruction": "Find repos about CI/CD in Rust. Must match forks:>50 and stars:>100.", "output": "rust ci cd repos"}
+{"instruction": "Find open-source repos for GraphQL in TypeScript with good popularity signals.", "output": "GraphQL TypeScript open-source repos"}
+{"instruction": "Find repos about async/await in Kotlin. Must match pushed:>2024-01-01 and archived:false.", "output": "async-await Kotlin repos 2024-01-01"}
+{"instruction": "Find repos about async/await in Kotlin. Must match archived:false and stars:>500.", "output": "async-await Kotlin repos archived:false stars:>500"}
+{"instruction": "Find repos about dependency injection in JavaScript. Must match stars:>100 and pushed:>2024-01-01.", "output": "dependency-injection js repos 2024-01-01"}
+{"instruction": "Find open-source repos for dependency injection in Rust with good popularity signals.", "output": "Rust dependency injection open-source repos"}
+{"instruction": "Find open-source repos for logging in TypeScript with good popularity signals.", "output": "open-source TypeScript logging repos"}
+{"instruction": "Find Python repositories about logging. Exclude archived repos.", "output": "python logging repositories"}
+{"instruction": "Find repos about REST API in Java. Must match size:<50000 and size:<50000.", "output": "REST API Java repos"}
+{"instruction": "Find repos about dependency injection in Go. Must match pushed:>2024-01-01 and is:public.", "output": "dependency-injection-go-repos-2024-01-01-public"}
+{"instruction": "Find GitHub repositories about caching written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "caching C# repositories"}
+{"instruction": "Find repos about caching in Go. Must match stars:>100 and pushed:>2024-01-01.", "output": "golang\" caching stars:>100 pushed:>2024-01-01 repos"}
+{"instruction": "Find repos about rate limiting in Go. Must match forks:>50 and archived:false.", "output": "rate-limiting Go repos forks:>50 archived:false"}
+{"instruction": "Find repos about CI/CD in TypeScript. Must match stars:>500 and pushed:>2024-01-01.", "output": "ci/ci-cd TypeScript GitHub"}
+{"instruction": "Find repos about GraphQL in Rust. Must match size:<50000 and license:apache-2.0.", "output": "graphql-rust-50000-licenses-apache-2-0"}
+{"instruction": "Find open-source repos for logging in Swift with good popularity signals.", "output": "open-source Swift logging repos good popularity"}
+{"instruction": "Find Rust repositories about REST API. Exclude archived repos.", "output": "rust-rest-api repositories"}
+{"instruction": "Find repos about dependency injection in Kotlin. Must match archived:false and is:public.", "output": "kotlin dependency-injection archived:false public repos"}
+{"instruction": "Find repos about dependency injection in C#. Must match license:apache-2.0 and stars:>500.", "output": "dependency-injection c# license apache-2.0 stars 500"}
+{"instruction": "Find repos about logging in Java. Must match license:apache-2.0 and stars:>500.", "output": "logging-java repos:apache-2.0 stars:500"}
+{"instruction": "Find TypeScript repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" type: \"Repositories\" query: \"archived=false"}
+{"instruction": "Find repos about Docker in C#. Must match license:mit and size:<50000.", "output": "docker csharp license mit size 50000"}
+{"instruction": "Find repos about REST API in Rust. Must match pushed:>2024-01-01 and license:mit.", "output": "rust-rest-api repos matching pushed:2024-01-01 license:mit"}
+{"instruction": "Find open-source repos for CI/CD in Python with good popularity signals.", "output": "open-source repos for CI/CD in Python with good popularity"}
+{"instruction": "Find GitHub repositories about Docker written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "docker#c# active#maintained#github"}
+{"instruction": "Find open-source repos for dependency injection in JavaScript with good popularity signals.", "output": "open-source dependencies injection JavaScript popular"}
+{"instruction": "Find repos about authentication in TypeScript. Must match stars:>100 and size:<50000.", "output": "typescript authentication repos"}
+{"instruction": "Find repos about Docker in Java. Must match archived:false and license:mit.", "output": "docker-java-archived-mit-repos"}
+{"instruction": "Find repos about GraphQL in JavaScript. Must match is:public and archived:false.", "output": "GraphQL JavaScript repos"}
+{"instruction": "Find open-source repos for async/await in Python with good popularity signals.", "output": "asyncio + Python + open-source + popularity"}
+{"instruction": "Find Kotlin repositories about REST API. Exclude archived repos.", "output": "kotlin-rest-apis"}
+{"instruction": "Find repos about REST API in Python. Must match size:<50000 and stars:>500.", "output": "REST API Python repos size 50000 stars 500"}
+{"instruction": "Find GitHub repositories about async/await written in Kotlin. Prefer actively maintained repos and include useful qualifiers.", "output": "async await Kotlin repositories"}
+{"instruction": "Find Python repositories about rate limiting. Exclude archived repos.", "output": "python3 rate-limiting repositories"}
+{"instruction": "Find open-source repos for unit testing in Go with good popularity signals.", "output": "golang unit tests open source"}
+{"instruction": "Find open-source repos for async/await in C# with good popularity signals.", "output": "asyncawait-csharp-open-source-popularity"}
+{"instruction": "Find repos about authentication in Python. Must match pushed:>2024-01-01 and license:apache-2.0.", "output": "python-authentication-repos license:apache-2.0 pushed:>2024-01-01"}
+{"instruction": "Search for Java repos related to authentication. Add qualifiers to narrow results.", "output": "Java authentication repos - Java security libraries"}
+{"instruction": "Find JavaScript repositories about unit testing. Exclude archived repos.", "output": "unit-testing repositories"}
+{"instruction": "Find repos about rate limiting in Rust. Must match stars:>500 and forks:>50.", "output": "rust/ratelimit"}
+{"instruction": "Find open-source repos for async/await in Kotlin with good popularity signals.", "output": "async-await open-source Kotlin repos good popularity"}
+{"instruction": "Find repos about caching in TypeScript. Must match stars:>100 and archived:false.", "output": "typescript caching repos"}
+{"instruction": "Find GitHub repositories about Docker written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "docker C# repositories"}
+{"instruction": "Find repos about unit testing in JavaScript. Must match is:public and license:mit.", "output": "unit-testing-jsmit-repos"}
+{"instruction": "Find GitHub repositories about dependency injection written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang dependency injection repositories actively maintained"}
+{"instruction": "Find open-source repos for Docker in Go with good popularity signals.", "output": "golang\" + \"docker\" + \"open-source\" + \"popularity"}
+{"instruction": "Find repos about dependency injection in Go. Must match is:public and stars:>500.", "output": "dependency-injection-go-repos-stars-500"}
+{"instruction": "Find Kotlin repositories about CI/CD. Exclude archived repos.", "output": "kotlin repositories ci-cd"}
+{"instruction": "Find repos about REST API in JavaScript. Must match stars:>100 and is:public.", "output": "REST API JavaScript repos: stars:>100, public"}
+{"instruction": "Find repos about Kubernetes in Python. Must match archived:false and forks:>50.", "output": "kubernetes python repos archived:false forks:>50"}
+{"instruction": "Find open-source repos for Kubernetes in Swift with good popularity signals.", "output": "kubernetes open-source repos swift popular"}
+{"instruction": "Find repos about logging in C#. Must match license:apache-2.0 and pushed:>2024-01-01.", "output": "logging C# repos 2024-01-01 license apache-2.0"}
+{"instruction": "Find JavaScript repositories about authentication. Exclude archived repos.", "output": "javascript authentication repositories"}
+{"instruction": "Find repos about CI/CD in JavaScript. Must match archived:false and stars:>100.", "output": "CI/CD JavaScript repos (archived=false, stars:>100)"}
+{"instruction": "Find repos about logging in Java. Must match stars:>500 and stars:>100.", "output": "logging-java repos stars 500 100"}
+{"instruction": "Find repos about logging in Go. Must match is:public and forks:>50.", "output": "logging/go-repos forks:>50"}
+{"instruction": "Find GitHub repositories about rate limiting written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "rust-ratelimit-rate-limiting-repositories-active-active"}
+{"instruction": "Find Swift repositories about Docker. Exclude archived repos.", "output": "docker swift repositories"}
+{"instruction": "Find repos about Docker in Kotlin. Must match size:<50000 and pushed:>2024-01-01.", "output": "docker+kotlin+size:50000+pushed:>2024-01-01+repos"}
+{"instruction": "Find repos about CI/CD in Go. Must match license:apache-2.0 and size:<50000.", "output": "ci-cd-go-repos apache-2.0 size-50000"}
+{"instruction": "Find open-source repos for logging in Kotlin with good popularity signals.", "output": "open-source kotlin logging good popularity"}
+{"instruction": "Find repos about dependency injection in Rust. Must match archived:false and is:public.", "output": "dependency-injection rust archived public"}
+{"instruction": "Find open-source repos for Docker in TypeScript with good popularity signals.", "output": "open-source repos docker TypeScript popular"}
+{"instruction": "Find repos about CI/CD in Go. Must match stars:>100 and forks:>50.", "output": "golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci\" \"golang-ci"}
+{"instruction": "Find repos about authentication in TypeScript. Must match pushed:>2024-01-01 and archived:false.", "output": "typescript authentication repos 2024-01-01 archived false"}
+{"instruction": "Find repos about unit testing in Rust. Must match is:public and license:apache-2.0.", "output": "Rust unit testing\" \"Rust unit testing repos\" \"Rust unit testing licenses"}
+{"instruction": "Find Java repositories about CI/CD. Exclude archived repos.", "output": "java-ci"}
+{"instruction": "Search for Kotlin repos related to REST API. Add qualifiers to narrow results.", "output": "kotlin-rest-api repos"}
+{"instruction": "Find repos about rate limiting in Kotlin. Must match forks:>50 and forks:>50.", "output": "rate-limiting kotlin repositories forks:>50"}
+{"instruction": "Find repos about GraphQL in Java. Must match stars:>500 and pushed:>2024-01-01.", "output": "GraphQL Java repos 2024-01-01 stars >500"}
+{"instruction": "Find Go repositories about Docker. Exclude archived repos.", "output": "golang\" + \"docker\" + \"repositories\" + \"archived"}
+{"instruction": "Search for Java repos related to dependency injection. Add qualifiers to narrow results.", "output": "Java dependencies injection repos"}
+{"instruction": "Find repos about CI/CD in JavaScript. Must match stars:>500 and license:apache-2.0.", "output": "ci-cd-javascript-repos-500-stars-20-license-apache-2-0"}
+{"instruction": "Find repos about GraphQL in Python. Must match is:public and size:<50000.", "output": "GraphQL Python repos"}
+{"instruction": "Find open-source repos for GraphQL in Python with good popularity signals.", "output": "open-source GraphQL Python repos good popularity"}
+{"instruction": "Find repos about dependency injection in Java. Must match is:public and forks:>50.", "output": "dependency-injection Java Java GitHub forks"}
+{"instruction": "Find repos about rate limiting in Swift. Must match archived:false and forks:>50.", "output": "rate-limiting Swift repos archived:false forks:>50"}
+{"instruction": "Find GitHub repositories about REST API written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "REST API Go repositories"}
+{"instruction": "Find repos about async/await in JavaScript. Must match size:<50000 and is:public.", "output": "async+await+JavaScript+public+size+50000"}
+{"instruction": "Find open-source repos for GraphQL in JavaScript with good popularity signals.", "output": "GraphQL JavaScript open-source repos good popularity"}
+{"instruction": "Find repos about async/await in C#. Must match forks:>50 and license:apache-2.0.", "output": "async await C# forks 50+ licenses apache-2.0"}
+{"instruction": "Find GitHub repositories about CI/CD written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "rust ci cd repositories"}
+{"instruction": "Find repos about dependency injection in TypeScript. Must match license:mit and archived:false.", "output": "dependency-injection TypeScript MIT archived"}
+{"instruction": "Find repos about logging in C#. Must match is:public and archived:false.", "output": "logging C# repos"}
+{"instruction": "Find open-source repos for REST API in Swift with good popularity signals.", "output": "open-source REST API Swift popular"}
+{"instruction": "Find repos about caching in Java. Must match pushed:>2024-01-01 and pushed:>2024-01-01.", "output": "caching java repos pushed 2024-01-01"}
+{"instruction": "Find TypeScript repositories about REST API. Exclude archived repos.", "output": "typescript-rest-api"}
+{"instruction": "Find open-source repos for caching in Kotlin with good popularity signals.", "output": "kotlin caching open-source repos popularity"}
+{"instruction": "Find repos about async/await in Python. Must match archived:false and stars:>500.", "output": "async-await repos python stars>500"}
+{"instruction": "Find repos about CI/CD in Python. Must match size:<50000 and size:<50000.", "output": "CI/CD Python repos"}
+{"instruction": "Find repos about async/await in TypeScript. Must match stars:>100 and stars:>100.", "output": "async/await TypeScript repos with stars > 100"}
+{"instruction": "Find repos about caching in JavaScript. Must match is:public and license:mit.", "output": "caching js repos mit license"}
+{"instruction": "Find repos about Docker in Swift. Must match stars:>100 and pushed:>2024-01-01.", "output": "docker swift repos stars:>100 and pushed:>2024-01-01"}
+{"instruction": "Search for Rust repos related to unit testing. Add qualifiers to narrow results.", "output": "rust-rustc-test"}
+{"instruction": "Find repos about CI/CD in Swift. Must match archived:false and archived:false.", "output": "swift ci cd repos"}
+{"instruction": "Search for TypeScript repos related to logging. Add qualifiers to narrow results.", "output": "TypeScript logging repositories"}
+{"instruction": "Search for JavaScript repos related to Kubernetes. Add qualifiers to narrow results.", "output": "kubernetes\" + \"javascript\" + \"repos"}
+{"instruction": "Find repos about logging in Rust. Must match size:<50000 and stars:>500.", "output": "logging rust 500 stars"}
+{"instruction": "Find TypeScript repositories about Kubernetes. Exclude archived repos.", "output": "kubernetes\" type repository\" TypeScript\" search"}
+{"instruction": "Find GitHub repositories about GraphQL written in TypeScript. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql typescript repositories"}
+{"instruction": "Search for TypeScript repos related to Kubernetes. Add qualifiers to narrow results.", "output": "Kubernetes TypeScript repos"}
+{"instruction": "Find open-source repos for logging in Java with good popularity signals.", "output": "open-source logging-java-good-popularity-signals"}
+{"instruction": "Search for Kotlin repos related to REST API. Add qualifiers to narrow results.", "output": "kotlin\" + \"rest\" + \"api\" + \"kotlin"}
+{"instruction": "Find repos about logging in JavaScript. Must match stars:>100 and stars:>500.", "output": "logging in JavaScript repos with stars:>100 and stars:>500"}
+{"instruction": "Search for Python repos related to authentication. Add qualifiers to narrow results.", "output": "python authentication repos"}
+{"instruction": "Find repos about CI/CD in Rust. Must match pushed:>2024-01-01 and stars:>500.", "output": "rust ci-cd repos pushed:2024-01-01 stars:500"}
+{"instruction": "Find open-source repos for dependency injection in Python with good popularity signals.", "output": "open-source repos for dependency injection in Python with good popularity"}
+{"instruction": "Find Kotlin repositories about REST API. Exclude archived repos.", "output": "kotlin-rest-api repositories"}
+{"instruction": "Find Kotlin repositories about CI/CD. Exclude archived repos.", "output": "kotlin ci cd repositories"}
+{"instruction": "Find repos about unit testing in Rust. Must match license:mit and pushed:>2024-01-01.", "output": "Rust unit testing repositories matching MIT license pushed after 2024-01-01"}
+{"instruction": "Find repos about authentication in TypeScript. Must match forks:>50 and stars:>500.", "output": "typescript authentication repos forks:>50 stars:>500"}
+{"instruction": "Find repos about dependency injection in C#. Must match forks:>50 and pushed:>2024-01-01.", "output": "dependency-injection C# forks:2024-01-01 50"}
+{"instruction": "Find repos about async/await in Java. Must match size:<50000 and archived:false.", "output": "async await java repos size 50000 archived false"}
+{"instruction": "Find open-source repos for async/await in C# with good popularity signals.", "output": "async await C# open-source repos good popularity"}
+{"instruction": "Find GitHub repositories about caching written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "rust-rust-cache"}
+{"instruction": "Find Java repositories about caching. Exclude archived repos.", "output": "java caching repositories"}
+{"instruction": "Find C# repositories about async/await. Exclude archived repos.", "output": "C# async await repositories"}
+{"instruction": "Search for Swift repos related to caching. Add qualifiers to narrow results.", "output": "swift cacher repos"}
+{"instruction": "Find repos about REST API in Go. Must match license:mit and license:mit.", "output": "REST API Go Mit License"}
+{"instruction": "Find repos about GraphQL in Rust. Must match archived:false and pushed:>2024-01-01.", "output": "GraphQL Rust Repos 2024-01-01"}
+{"instruction": "Search for Java repos related to Docker. Add qualifiers to narrow results.", "output": "Java Docker repos: java/docker"}
+{"instruction": "Find GitHub repositories about async/await written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang\" async await repositories actively maintained"}
+{"instruction": "Find repos about Docker in C#. Must match stars:>100 and pushed:>2024-01-01.", "output": "docker csharp stars:>100 and pushed:>2024-01-01"}
+{"instruction": "Find repos about CI/CD in Rust. Must match license:mit and is:public.", "output": "rust ci-cd license:mit is:public"}
+{"instruction": "Find open-source repos for CI/CD in C# with good popularity signals.", "output": "C# CI/CD open-source repos with good popularity"}
+{"instruction": "Find repos about logging in Go. Must match archived:false and is:public.", "output": "logging-go-repos-archived=false-is:public"}
+{"instruction": "Find repos about dependency injection in Rust. Must match stars:>500 and is:public.", "output": "Rust dependency injection repos with >500 stars"}
+{"instruction": "Find repos about logging in Python. Must match size:<50000 and license:apache-2.0.", "output": "logging-python-50000-licenses-apache-2-0"}
+{"instruction": "Find repos about caching in TypeScript. Must match size:<50000 and license:mit.", "output": "typescript caching mit repos"}
+{"instruction": "Find repos about async/await in C#. Must match is:public and forks:>50.", "output": "async await C# repos forks 50"}
+{"instruction": "Find open-source repos for logging in Java with good popularity signals.", "output": "open-source logging java popular"}
+{"instruction": "Find repos about REST API in Swift. Must match is:public and forks:>50.", "output": "REST API Swift repositories forks 50+"}
+{"instruction": "Find GitHub repositories about caching written in Java. Prefer actively maintained repos and include useful qualifiers.", "output": "caching java actively maintained repositories"}
+{"instruction": "Find repos about authentication in JavaScript. Must match license:mit and is:public.", "output": "mit:public authentication JavaScript repos"}
+{"instruction": "Find repos about CI/CD in C#. Must match forks:>50 and license:apache-2.0.", "output": "ci-cd-csharp repos apache-2.0 forks 50"}
+{"instruction": "Find repos about logging in TypeScript. Must match stars:>500 and pushed:>2024-01-01.", "output": "typescript logging stars 2024-01-01"}
+{"instruction": "Find repos about async/await in Java. Must match stars:>500 and size:<50000.", "output": "Java async/await repos stars:>500 size:<50000"}
+{"instruction": "Search for Go repos related to async/await. Add qualifiers to narrow results.", "output": "Go repos async await"}
+{"instruction": "Find repos about async/await in Swift. Must match license:apache-2.0 and archived:false.", "output": "async-await Swift repos"}
+{"instruction": "Find repos about Kubernetes in Python. Must match archived:false and stars:>500.", "output": "kubernetes python repos archived false stars 500"}
+{"instruction": "Find repos about unit testing in TypeScript. Must match is:public and size:<50000.", "output": "unit-testing TypeScript public repos size <50000"}
+{"instruction": "Find Go repositories about rate limiting. Exclude archived repos.", "output": "golang\" + \"rate limiting\" + \"archived"}
+{"instruction": "Find GitHub repositories about async/await written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await Go repositories actively maintained"}
+{"instruction": "Find open-source repos for caching in Go with good popularity signals.", "output": "golang\" + \"caching\" + \"open-source\" + \"good\" + \"popularity"}
+{"instruction": "Find repos about GraphQL in Python. Must match stars:>100 and forks:>50.", "output": "GraphQL Python repos stars 100 forks 50"}
+{"instruction": "Find repos about dependency injection in C#. Must match size:<50000 and forks:>50.", "output": "dependency-injection C# repos size 50000 forks 50"}
+{"instruction": "Find repos about dependency injection in Rust. Must match stars:>100 and license:mit.", "output": "Rust repos with dependency injection stars > 100 and license:mit"}
+{"instruction": "Find repos about Kubernetes in JavaScript. Must match stars:>100 and is:public.", "output": "kubernetes public repos with stars > 100"}
+{"instruction": "Find open-source repos for GraphQL in C# with good popularity signals.", "output": "open-source GraphQL C# repositories with high popularity"}
+{"instruction": "Find repos about GraphQL in Rust. Must match license:mit and is:public.", "output": "graphql-rs-mit-public"}
+{"instruction": "Find repos about unit testing in Go. Must match license:apache-2.0 and license:apache-2.0.", "output": "unit-testing-go-repos"}
+{"instruction": "Find open-source repos for REST API in Go with good popularity signals.", "output": "open-source repos for REST API in Go with good popularity"}
+{"instruction": "Find GitHub repositories about dependency injection written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "dependency-injection C# repositories"}
+{"instruction": "Find GitHub repositories about async/await written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "async/await Rust active repositories"}
+{"instruction": "Find repos about Kubernetes in JavaScript. Must match stars:>100 and license:apache-2.0.", "output": "kubernetes\" repo with 100+ stars and Apache-2.0 license"}
+{"instruction": "Find repos about caching in Go. Must match stars:>100 and license:apache-2.0.", "output": "golang\" caching license apache-2.0 stars:>100"}
+{"instruction": "Find GitHub repositories about dependency injection written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "golang\" + \"dependency injection\" + \"repositories\" + \"active"}
+{"instruction": "Find repos about async/await in C#. Must match license:mit and license:mit.", "output": "asyncawait-csharp"}
+{"instruction": "Find JavaScript repositories about caching. Exclude archived repos.", "output": "javascript caching repositories"}
+{"instruction": "Find open-source repos for authentication in Kotlin with good popularity signals.", "output": "open-source kotlin authentication good popularity signals"}
+{"instruction": "Find repos about CI/CD in JavaScript. Must match pushed:>2024-01-01 and size:<50000.", "output": "CI/CD JavaScript repositories pushed:2024-01-01 size:50000"}
+{"instruction": "Search for Rust repos related to GraphQL. Add qualifiers to narrow results.", "output": "rust-graphql repos related to GraphQL"}
+{"instruction": "Find repos about authentication in JavaScript. Must match archived:false and size:<50000.", "output": "auth-js-repos"}
+{"instruction": "Find repos about logging in JavaScript. Must match is:public and size:<50000.", "output": "logging in JavaScript repos"}
+{"instruction": "Find repos about CI/CD in Python. Must match stars:>100 and archived:false.", "output": "ci-cd-python repos 100 stars"}
+{"instruction": "Search for Java repos related to async/await. Add qualifiers to narrow results.", "output": "Java async/await repos: java:asyncawait"}
+{"instruction": "Find repos about GraphQL in Kotlin. Must match archived:false and size:<50000.", "output": "GraphQL Kotlin Repos"}
+{"instruction": "Find repos about Kubernetes in C#. Must match size:<50000 and license:mit.", "output": "kubernetes mit repos size 50000"}
+{"instruction": "Search for Kotlin repos related to authentication. Add qualifiers to narrow results.", "output": "kotlin authentication repos"}
+{"instruction": "Find repos about authentication in C#. Must match forks:>50 and archived:false.", "output": "authentication C# repos forks 50 or more archived false"}
+{"instruction": "Search for TypeScript repos related to async/await. Add qualifiers to narrow results.", "output": "typescript async await repos"}
+{"instruction": "Find repos about async/await in TypeScript. Must match pushed:>2024-01-01 and license:apache-2.0.", "output": "async/await TypeScript repos pushed 2024-01-01, Apache-2.0 license"}
+{"instruction": "Find open-source repos for GraphQL in JavaScript with good popularity signals.", "output": "GraphQL JavaScript open-source repos"}
+{"instruction": "Find open-source repos for async/await in Kotlin with good popularity signals.", "output": "async-await open-source kotlin good popularity signals"}
+{"instruction": "Find Rust repositories about unit testing. Exclude archived repos.", "output": "rust-rs-unit-testing"}
+{"instruction": "Find repos about Docker in JavaScript. Must match stars:>100 and license:apache-2.0.", "output": "docker-js repos:stars:>100 license:apache-2.0"}
+{"instruction": "Find repos about REST API in Java. Must match is:public and stars:>500.", "output": "REST API Java repos with stars > 500"}
+{"instruction": "Find GitHub repositories about dependency injection written in Rust. Prefer actively maintained repos and include useful qualifiers.", "output": "Rust dependency injection repositories"}
+{"instruction": "Find GitHub repositories about Docker written in Go. Prefer actively maintained repos and include useful qualifiers.", "output": "docker-go-repos"}
+{"instruction": "Find open-source repos for async/await in Go with good popularity signals.", "output": "async await open-source Go repos good popularity"}
+{"instruction": "Find GitHub repositories about GraphQL written in C#. Prefer actively maintained repos and include useful qualifiers.", "output": "graphql-csharp-repos.active"}
+{"instruction": "Find open-source repos for CI/CD in Java with good popularity signals.", "output": "open-source Java CI/CD repos with good popularity"}

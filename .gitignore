@@ -6,6 +6,14 @@
 # dotenv files
 .env
 
+# AI-Training artifacts (large, generated)
+AI-Training/lora-output/
+AI-Training/__pycache__/
+AI-Training/*.zip
+AI-Training/*.safetensors
+AI-Training/*.bin
+AI-Training/.venv/
+
 # User-specific files
 *.rsuser
 *.suo
@@ -491,4 +499,3 @@ solution-config.props
 !**/Properties/PublishProfiles/*.pubxml
 
 JitHub_old/
-AI-Training/

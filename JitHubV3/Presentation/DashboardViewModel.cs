@@ -357,7 +357,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             SourceUri: opt.DownloadUri,
             InstallPath: opt.InstallPath!,
             ArtifactFileName: opt.ArtifactFileName,
-            ExpectedBytes: opt.ExpectedBytes));
+            ExpectedBytes: opt.ExpectedBytes,
+            ExpectedSha256: opt.ExpectedSha256));
 
         _activeAiDownload = handle;
         CancelAiModelDownloadCommand.NotifyCanExecuteChanged();
