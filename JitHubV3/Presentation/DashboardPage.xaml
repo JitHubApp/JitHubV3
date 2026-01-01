@@ -1,11 +1,12 @@
 <local:ActivatablePage x:Class="JitHubV3.Presentation.DashboardPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:local="using:JitHubV3.Presentation"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:JitHubV3.Presentation"
+    xmlns:mp="using:JitHubV3.Presentation.Controls.ModelPicker"
   xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
   xmlns:layouts="using:JitHub.Dashboard.Layouts"
-      xmlns:utu="using:Uno.Toolkit.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    xmlns:utu="using:Uno.Toolkit.UI"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
   <local:ActivatablePage.Resources>
     <ResourceDictionary>
@@ -228,44 +229,7 @@
         </Grid>
       </Border>
 
-      <!-- Placeholder overlay for the model/settings picker (Phase 2 adds the full UI). -->
-      <Grid x:Name="AiModelPickerOverlay"
-            Visibility="{Binding IsAiModelPickerOpen}">
-        <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-                Opacity="0.72" />
-
-        <Border HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                MaxWidth="{StaticResource DashboardComposeMaxWidth}"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="{StaticResource DashboardRadiusL}"
-                Padding="{StaticResource DashboardComposePadding}">
-          <Border.Shadow>
-            <ThemeShadow />
-          </Border.Shadow>
-
-          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-            <TextBlock x:Uid="DashboardPage.AiPickerPlaceholder.Title"
-                       Text="AI model picker"
-                       Style="{ThemeResource TitleTextBlockStyle}"
-                       TextWrapping="Wrap" />
-
-            <TextBlock x:Uid="DashboardPage.AiPickerPlaceholder.Body"
-                       Text="Coming soon. Use this dialog to pick a runtime/model and manage local downloads."
-                       Style="{ThemeResource BodyTextBlockStyle}"
-                       Opacity="0.72"
-                       TextWrapping="Wrap" />
-
-            <Button x:Uid="DashboardPage.AiPickerPlaceholder.Close"
-                    Content="Close"
-                    MinHeight="44"
-                    HorizontalAlignment="Right"
-                    Command="{Binding CloseAiModelPickerCommand}" />
-          </StackPanel>
-        </Border>
-      </Grid>
+      <mp:ModelOrApiPickerOverlay DataContext="{Binding AiModelPicker}" />
     </Grid>
   </ContentControl>
 </local:ActivatablePage>

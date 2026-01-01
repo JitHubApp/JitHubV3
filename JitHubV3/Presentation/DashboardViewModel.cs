@@ -6,6 +6,7 @@ using JitHub.GitHub.Abstractions.Models;
 using JitHub.GitHub.Abstractions.Refresh;
 using JitHub.GitHub.Abstractions.Services;
 using JitHubV3.Services.Ai;
+using JitHubV3.Presentation.Controls.ModelPicker;
 
 namespace JitHubV3.Presentation;
 
@@ -42,6 +43,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
     public ObservableCollection<AiModelPickerOption> AiModelOptions { get; } = new();
 
+    public ModelOrApiPickerViewModel AiModelPicker { get; }
+
     private bool _isAiEnabled = true;
     public bool IsAiEnabled
     {
@@ -57,12 +60,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         }
     }
 
-    private bool _isAiModelPickerOpen;
-    public bool IsAiModelPickerOpen
-    {
-        get => _isAiModelPickerOpen;
-        set => SetProperty(ref _isAiModelPickerOpen, value);
-    }
 
     private AiModelPickerOption? _selectedAiModel;
     public AiModelPickerOption? SelectedAiModel
@@ -129,7 +126,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     public IRelayCommand CancelAiModelDownloadCommand { get; }
 
     public IRelayCommand OpenAiModelPickerCommand { get; }
-    public IRelayCommand CloseAiModelPickerCommand { get; }
 
     private bool _isLoadingCards;
     public bool IsLoadingCards
@@ -232,14 +228,15 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _aiEnablementStore = aiEnablementStore;
         _aiModelDownloads = aiModelDownloads;
 
+        AiModelPicker = new ModelOrApiPickerViewModel();
+
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
         SubmitComposeCommand = new AsyncRelayCommand(SubmitComposeAsync, CanSubmitCompose);
 
         DownloadSelectedAiModelCommand = new AsyncRelayCommand(DownloadSelectedAiModelAsync, () => CanDownloadSelectedAiModel);
         CancelAiModelDownloadCommand = new RelayCommand(CancelAiModelDownload, () => CanCancelAiModelDownload);
 
-        OpenAiModelPickerCommand = new RelayCommand(() => IsAiModelPickerOpen = true);
-        CloseAiModelPickerCommand = new RelayCommand(() => IsAiModelPickerOpen = false);
+        OpenAiModelPickerCommand = new RelayCommand(() => AiModelPicker.IsOpen = true);
     }
 
     public string Title { get; } = "Dashboard";
