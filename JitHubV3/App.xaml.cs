@@ -209,6 +209,8 @@ public partial class App : Application
 
                     services.AddSingleton<IDashboardCardProvider, ComposeSearchDashboardCardProvider>();
 
+                    services.AddSingleton<IDashboardCardProvider, FoundrySetupDashboardCardProvider>();
+
                     services.AddSingleton<IDashboardCardProvider, SelectedRepoDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RecentRepositoriesDashboardCardProvider>();
                     services.AddSingleton<IDashboardCardProvider, RepoIssuesSummaryDashboardCardProvider>();

@@ -16,4 +16,5 @@ public enum DashboardCardKind
     ComposeSearchRepositories = 11,
     ComposeSearchUsers = 12,
     ComposeSearchCode = 13,
+    FoundrySetup = 14,
 }

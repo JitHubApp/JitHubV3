@@ -23,6 +23,7 @@ public sealed class DashboardCardKindToAutomationIdConverter : IValueConverter
                 DashboardCardKind.ComposeSearchRepositories => "DashboardCard.ComposeSearchRepositories",
                 DashboardCardKind.ComposeSearchUsers => "DashboardCard.ComposeSearchUsers",
                 DashboardCardKind.ComposeSearchCode => "DashboardCard.ComposeSearchCode",
+                DashboardCardKind.FoundrySetup => "DashboardCard.FoundrySetup",
                 _ => "DashboardCard.Unknown",
             };
         }

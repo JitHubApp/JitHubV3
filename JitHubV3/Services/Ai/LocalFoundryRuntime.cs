@@ -1,3 +1,5 @@
+using JitHubV3.Presentation.ComposeSearch;
+
 namespace JitHubV3.Services.Ai;
 
 /// <summary>

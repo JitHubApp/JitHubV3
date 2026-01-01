@@ -47,6 +47,7 @@
     <Compile Include="..\JitHubV3\Presentation\MyReviewRequestsDashboardCardProvider.cs" Link="DashboardCards\MyReviewRequestsDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\NotificationsDashboardCardProvider.cs" Link="DashboardCards\NotificationsDashboardCardProvider.cs" />
     <Compile Include="..\JitHubV3\Presentation\MyRecentActivityDashboardCardProvider.cs" Link="DashboardCards\MyRecentActivityDashboardCardProvider.cs" />
+    <Compile Include="..\JitHubV3\Presentation\FoundrySetupDashboardCardProvider.cs" Link="DashboardCards\FoundrySetupDashboardCardProvider.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\AiModels.cs" Link="Ai\AiModels.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiRuntime.cs" Link="Ai\IAiRuntime.cs" />
@@ -64,6 +65,8 @@
     <Compile Include="..\JitHubV3\Services\Ai\AnthropicRuntime.cs" Link="Ai\AnthropicRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AzureAiFoundryRuntime.cs" Link="Ai\AzureAiFoundryRuntime.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ConfiguredAiRuntimeCatalog.cs" Link="Ai\ConfiguredAiRuntimeCatalog.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\ILocalFoundryClient.cs" Link="Ai\ILocalFoundryClient.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\AiLocalModels.cs" Link="Ai\AiLocalModels.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelInventoryStore.cs" Link="Ai\IAiLocalModelInventoryStore.cs" />

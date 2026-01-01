@@ -9,6 +9,8 @@ internal static class DashboardCardId
     public const long ComposeSearchUsers = 40_000_003;
     public const long ComposeSearchCode = 40_000_004;
 
+    public const long FoundrySetup = 40_000_010;
+
     public const long RepoRecentlyUpdatedIssues = 20_000_003;
     public const long RepoSnapshot = 20_000_005;
 
