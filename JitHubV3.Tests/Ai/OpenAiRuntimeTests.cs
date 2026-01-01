@@ -21,6 +21,8 @@ public sealed class OpenAiRuntimeTests
             Selection = new AiModelSelection(RuntimeId: "openai", ModelId: "gpt-test")
         };
 
+        var settingsStore = new TestAiRuntimeSettingsStore();
+
         var handler = new RecordingHttpMessageHandler(req =>
         {
             req.Headers.Authorization!.Scheme.Should().Be("Bearer");
@@ -40,9 +42,9 @@ public sealed class OpenAiRuntimeTests
             };
         });
 
-        var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.openai.com") };
+        var http = new HttpClient(handler);
         var cfg = new OpenAiRuntimeConfig { ModelId = null };
-        var runtime = new OpenAiRuntime(http, secrets, modelStore, cfg);
+        var runtime = new OpenAiRuntime(http, secrets, modelStore, settingsStore, cfg);
 
         var plan = await runtime.BuildGitHubQueryPlanAsync(
             new AiGitHubQueryBuildRequest("find uno bugs", AllowedDomains: new[] { ComposeSearchDomain.IssuesAndPullRequests }),
@@ -63,13 +65,12 @@ public sealed class OpenAiRuntimeTests
             Selection = new AiModelSelection(RuntimeId: "openai", ModelId: "gpt-test")
         };
 
-        var http = new HttpClient(new RecordingHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)))
-        {
-            BaseAddress = new Uri("https://api.openai.com")
-        };
+        var settingsStore = new TestAiRuntimeSettingsStore();
+
+        var http = new HttpClient(new RecordingHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)));
 
         var cfg = new OpenAiRuntimeConfig { ModelId = null };
-        var runtime = new OpenAiRuntime(http, secrets, modelStore, cfg);
+        var runtime = new OpenAiRuntime(http, secrets, modelStore, settingsStore, cfg);
 
         var plan = await runtime.BuildGitHubQueryPlanAsync(new AiGitHubQueryBuildRequest("x"), CancellationToken.None);
         plan.Should().BeNull();

@@ -21,6 +21,8 @@ public sealed class AnthropicRuntimeTests
             Selection = new AiModelSelection(RuntimeId: "anthropic", ModelId: "claude-test")
         };
 
+        var settingsStore = new TestAiRuntimeSettingsStore();
+
         var handler = new RecordingHttpMessageHandler(req =>
         {
             req.Headers.Contains("x-api-key").Should().BeTrue();
@@ -43,9 +45,9 @@ public sealed class AnthropicRuntimeTests
             };
         });
 
-        var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.anthropic.com") };
+        var http = new HttpClient(handler);
         var cfg = new AnthropicRuntimeConfig { ModelId = null };
-        var runtime = new AnthropicRuntime(http, secrets, modelStore, cfg);
+        var runtime = new AnthropicRuntime(http, secrets, modelStore, settingsStore, cfg);
 
         var plan = await runtime.BuildGitHubQueryPlanAsync(
             new AiGitHubQueryBuildRequest("find httpclient usages", AllowedDomains: new[] { ComposeSearchDomain.Code }),

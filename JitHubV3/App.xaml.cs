@@ -152,6 +152,7 @@ public partial class App : Application
                     services.AddSingleton<IAiRuntimeDescriptorCatalog, DefaultAiRuntimeDescriptorCatalog>();
                     services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
                     services.AddSingleton<IAiEnablementStore>(sp => new JsonFileAiEnablementStore());
+                    services.AddSingleton<IAiRuntimeSettingsStore>(sp => new JsonFileAiRuntimeSettingsStore());
                     services.AddSingleton(sp => AiSettings.FromConfiguration(context.Configuration));
                     services.AddSingleton<IAiRuntimeResolver, AiRuntimeResolver>();
 
@@ -174,23 +175,35 @@ public partial class App : Application
 
                     services.AddSingleton<IAiRuntime>(sp =>
                     {
-                        var cfg = sp.GetRequiredService<OpenAiRuntimeConfig>();
-                        var http = new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
-                        return new OpenAiRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
+                        var http = new HttpClient();
+                        return new OpenAiRuntime(
+                            http,
+                            sp.GetRequiredService<ISecretStore>(),
+                            sp.GetRequiredService<IAiModelStore>(),
+                            sp.GetRequiredService<IAiRuntimeSettingsStore>(),
+                            sp.GetRequiredService<OpenAiRuntimeConfig>());
                     });
 
                     services.AddSingleton<IAiRuntime>(sp =>
                     {
-                        var cfg = sp.GetRequiredService<AnthropicRuntimeConfig>();
-                        var http = new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
-                        return new AnthropicRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
+                        var http = new HttpClient();
+                        return new AnthropicRuntime(
+                            http,
+                            sp.GetRequiredService<ISecretStore>(),
+                            sp.GetRequiredService<IAiModelStore>(),
+                            sp.GetRequiredService<IAiRuntimeSettingsStore>(),
+                            sp.GetRequiredService<AnthropicRuntimeConfig>());
                     });
 
                     services.AddSingleton<IAiRuntime>(sp =>
                     {
-                        var cfg = sp.GetRequiredService<AzureAiFoundryRuntimeConfig>();
-                        var http = string.IsNullOrWhiteSpace(cfg.Endpoint) ? new HttpClient() : new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
-                        return new AzureAiFoundryRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
+                        var http = new HttpClient();
+                        return new AzureAiFoundryRuntime(
+                            http,
+                            sp.GetRequiredService<ISecretStore>(),
+                            sp.GetRequiredService<IAiModelStore>(),
+                            sp.GetRequiredService<IAiRuntimeSettingsStore>(),
+                            sp.GetRequiredService<AzureAiFoundryRuntimeConfig>());
                     });
 
                     // Local Foundry runtime (best-effort local execution). Falls back to a conservative heuristic when Foundry is not present.

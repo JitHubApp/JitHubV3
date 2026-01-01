@@ -11,8 +11,9 @@ public sealed class ConfiguredAiRuntimeCatalogTests
     {
         var config = new InMemoryConfiguration();
         var secrets = new TestSecretStore();
+        var settingsStore = new TestAiRuntimeSettingsStore();
 
-        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets);
+        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore);
 
         var available = await catalog.GetAvailableRuntimesAsync(CancellationToken.None);
 
@@ -28,7 +29,28 @@ public sealed class ConfiguredAiRuntimeCatalogTests
         var secrets = new TestSecretStore();
         await secrets.SetAsync(AiSecretKeys.OpenAiApiKey, "secret", CancellationToken.None);
 
-        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets);
+        var settingsStore = new TestAiRuntimeSettingsStore();
+
+        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore);
+
+        var available = await catalog.GetAvailableRuntimesAsync(CancellationToken.None);
+
+        available.Should().ContainSingle(r => r.RuntimeId == "openai");
+    }
+
+    [Test]
+    public async Task GetAvailableRuntimesAsync_UsesOverrides_WhenBaseConfigMissing()
+    {
+        var config = new InMemoryConfiguration();
+        var secrets = new TestSecretStore();
+        await secrets.SetAsync(AiSecretKeys.OpenAiApiKey, "secret", CancellationToken.None);
+
+        var settingsStore = new TestAiRuntimeSettingsStore
+        {
+            Settings = new AiRuntimeSettings(OpenAi: new OpenAiRuntimeSettings(ModelId: "gpt-override"))
+        };
+
+        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore);
 
         var available = await catalog.GetAvailableRuntimesAsync(CancellationToken.None);
 

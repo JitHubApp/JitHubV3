@@ -54,11 +54,14 @@
     <Compile Include="..\JitHubV3\Services\Ai\IAiRuntimeCatalog.cs" Link="Ai\IAiRuntimeCatalog.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiModelStore.cs" Link="Ai\IAiModelStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiEnablementStore.cs" Link="Ai\IAiEnablementStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiRuntimeSettingsStore.cs" Link="Ai\IAiRuntimeSettingsStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiModelStore.cs" Link="Ai\JsonFileAiModelStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiEnablementStore.cs" Link="Ai\JsonFileAiEnablementStore.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiRuntimeSettingsStore.cs" Link="Ai\JsonFileAiRuntimeSettingsStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiGitHubQueryPlanValidator.cs" Link="Ai\AiGitHubQueryPlanValidator.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiSecretKeys.cs" Link="Ai\AiSecretKeys.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiRuntimeConfiguration.cs" Link="Ai\AiRuntimeConfiguration.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiRuntimeEffectiveConfiguration.cs" Link="Ai\AiRuntimeEffectiveConfiguration.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiPromptBuilder.cs" Link="Ai\AiPromptBuilder.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiJsonUtilities.cs" Link="Ai\AiJsonUtilities.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiSettings.cs" Link="Ai\AiSettings.cs" />

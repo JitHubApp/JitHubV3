@@ -22,6 +22,7 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
     private readonly IAiRuntimeCatalog _runtimeCatalog;
     private readonly IAiModelStore _modelStore;
     private readonly IAiLocalModelCatalog _localCatalog;
+    private readonly IAiRuntimeSettingsStore _settingsStore;
     private readonly OpenAiRuntimeConfig _openAi;
     private readonly AnthropicRuntimeConfig _anthropic;
     private readonly AzureAiFoundryRuntimeConfig _foundry;
@@ -31,6 +32,7 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
         IAiRuntimeCatalog runtimeCatalog,
         IAiModelStore modelStore,
         IAiLocalModelCatalog localCatalog,
+        IAiRuntimeSettingsStore settingsStore,
         IReadOnlyList<AiLocalModelDefinition> localDefinitions,
         OpenAiRuntimeConfig openAi,
         AnthropicRuntimeConfig anthropic,
@@ -39,6 +41,7 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
         _runtimeCatalog = runtimeCatalog;
         _modelStore = modelStore;
         _localCatalog = localCatalog;
+        _settingsStore = settingsStore;
         _localDefinitions = localDefinitions ?? Array.Empty<AiLocalModelDefinition>();
         _openAi = openAi;
         _anthropic = anthropic;
@@ -51,12 +54,17 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
 
         var selection = await _modelStore.GetSelectionAsync(ct);
 
+        var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
+        var openAi = AiRuntimeEffectiveConfiguration.GetEffective(_openAi, settings);
+        var anthropic = AiRuntimeEffectiveConfiguration.GetEffective(_anthropic, settings);
+        var foundry = AiRuntimeEffectiveConfiguration.GetEffective(_foundry, settings);
+
         var runtimes = await _runtimeCatalog.GetAvailableRuntimesAsync(ct);
         var options = new List<AiModelPickerOption>(capacity: runtimes.Count + 8);
 
         foreach (var r in runtimes)
         {
-            var modelId = GetConfiguredModelIdOrSelection(r.RuntimeId, selection);
+            var modelId = GetConfiguredModelIdOrSelection(r.RuntimeId, selection, openAi, anthropic, foundry);
             if (string.IsNullOrWhiteSpace(modelId))
             {
                 continue;
@@ -104,7 +112,12 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
             .ToArray();
     }
 
-    private string? GetConfiguredModelIdOrSelection(string runtimeId, AiModelSelection? selection)
+    private static string? GetConfiguredModelIdOrSelection(
+        string runtimeId,
+        AiModelSelection? selection,
+        OpenAiRuntimeConfig openAi,
+        AnthropicRuntimeConfig anthropic,
+        AzureAiFoundryRuntimeConfig foundry)
     {
         if (selection is not null && string.Equals(selection.RuntimeId, runtimeId, StringComparison.OrdinalIgnoreCase))
         {
@@ -113,9 +126,9 @@ public sealed class AiModelPickerOptionsProvider : IAiModelPickerOptionsProvider
 
         return runtimeId switch
         {
-            "openai" => _openAi.ModelId,
-            "anthropic" => _anthropic.ModelId,
-            "azure-ai-foundry" => _foundry.ModelId,
+            "openai" => openAi.ModelId,
+            "anthropic" => anthropic.ModelId,
+            "azure-ai-foundry" => foundry.ModelId,
             _ => null,
         };
     }

@@ -48,6 +48,7 @@ public sealed class AiModelPickerOptionsProviderTests
             new AiRuntimeDescriptor("anthropic", "Anthropic", RequiresApiKey: true));
 
         var store = new TestAiModelStore();
+        var settingsStore = new TestAiRuntimeSettingsStore();
         var localCatalog = new FakeLocalCatalog();
         var localDefs = Array.Empty<AiLocalModelDefinition>();
 
@@ -55,6 +56,7 @@ public sealed class AiModelPickerOptionsProviderTests
             catalog,
             store,
             localCatalog,
+            settingsStore,
             localDefs,
             openAi: new OpenAiRuntimeConfig { ModelId = "gpt-test" },
             anthropic: new AnthropicRuntimeConfig { ModelId = "claude-test" },
@@ -71,6 +73,7 @@ public sealed class AiModelPickerOptionsProviderTests
     {
         var catalog = new FakeCatalog();
         var store = new TestAiModelStore();
+        var settingsStore = new TestAiRuntimeSettingsStore();
 
         var localCatalog = new FakeLocalCatalog(
             new AiLocalModelCatalogItem(
@@ -96,6 +99,7 @@ public sealed class AiModelPickerOptionsProviderTests
             catalog,
             store,
             localCatalog,
+            settingsStore,
             localDefs,
             openAi: new OpenAiRuntimeConfig { ModelId = null },
             anthropic: new AnthropicRuntimeConfig { ModelId = null },
@@ -116,6 +120,7 @@ public sealed class AiModelPickerOptionsProviderTests
     {
         var catalog = new FakeCatalog();
         var store = new TestAiModelStore();
+        var settingsStore = new TestAiRuntimeSettingsStore();
 
         var localCatalog = new FakeLocalCatalog(
             new AiLocalModelCatalogItem(
@@ -141,6 +146,7 @@ public sealed class AiModelPickerOptionsProviderTests
             catalog,
             store,
             localCatalog,
+            settingsStore,
             localDefs,
             openAi: new OpenAiRuntimeConfig { ModelId = null },
             anthropic: new AnthropicRuntimeConfig { ModelId = null },
@@ -166,6 +172,11 @@ public sealed class AiModelPickerOptionsProviderTests
             Selection = new AiModelSelection(RuntimeId: "openai", ModelId: "gpt-selected")
         };
 
+        var settingsStore = new TestAiRuntimeSettingsStore
+        {
+            Settings = new AiRuntimeSettings(OpenAi: new OpenAiRuntimeSettings(ModelId: "gpt-override"))
+        };
+
         var localCatalog = new FakeLocalCatalog();
         var localDefs = Array.Empty<AiLocalModelDefinition>();
 
@@ -173,6 +184,7 @@ public sealed class AiModelPickerOptionsProviderTests
             catalog,
             store,
             localCatalog,
+            settingsStore,
             localDefs,
             openAi: new OpenAiRuntimeConfig { ModelId = "gpt-config" },
             anthropic: new AnthropicRuntimeConfig { ModelId = null },
@@ -181,5 +193,31 @@ public sealed class AiModelPickerOptionsProviderTests
         var options = await provider.GetOptionsAsync(CancellationToken.None);
 
         options.Should().ContainSingle(o => o.RuntimeId == "openai" && o.ModelId == "gpt-selected");
+    }
+
+    [Test]
+    public async Task Options_UseOverrideModelId_WhenNoSelection()
+    {
+        var catalog = new FakeCatalog(new AiRuntimeDescriptor("openai", "OpenAI", RequiresApiKey: true));
+
+        var store = new TestAiModelStore();
+        var settingsStore = new TestAiRuntimeSettingsStore
+        {
+            Settings = new AiRuntimeSettings(OpenAi: new OpenAiRuntimeSettings(ModelId: "gpt-override"))
+        };
+
+        var provider = new AiModelPickerOptionsProvider(
+            catalog,
+            store,
+            new FakeLocalCatalog(),
+            settingsStore,
+            Array.Empty<AiLocalModelDefinition>(),
+            openAi: new OpenAiRuntimeConfig { ModelId = null },
+            anthropic: new AnthropicRuntimeConfig { ModelId = null },
+            foundry: new AzureAiFoundryRuntimeConfig { ModelId = null });
+
+        var options = await provider.GetOptionsAsync(CancellationToken.None);
+
+        options.Should().ContainSingle(o => o.RuntimeId == "openai" && o.ModelId == "gpt-override");
     }
 }

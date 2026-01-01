@@ -7,20 +7,24 @@ public sealed class ConfiguredAiRuntimeCatalog : IAiRuntimeCatalog
 {
     private readonly IConfiguration _configuration;
     private readonly ISecretStore _secrets;
+    private readonly IAiRuntimeSettingsStore _settingsStore;
 
-    public ConfiguredAiRuntimeCatalog(IConfiguration configuration, ISecretStore secrets)
+    public ConfiguredAiRuntimeCatalog(IConfiguration configuration, ISecretStore secrets, IAiRuntimeSettingsStore settingsStore)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _secrets = secrets ?? throw new ArgumentNullException(nameof(secrets));
+        _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
     }
 
     public async Task<IReadOnlyList<AiRuntimeDescriptor>> GetAvailableRuntimesAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
+        var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
+
         var runtimes = new List<AiRuntimeDescriptor>();
 
-        var openAi = OpenAiRuntimeConfig.FromConfiguration(_configuration);
+        var openAi = AiRuntimeEffectiveConfiguration.GetEffective(OpenAiRuntimeConfig.FromConfiguration(_configuration), settings);
         if (!string.IsNullOrWhiteSpace(openAi.ModelId))
         {
             var key = await _secrets.GetAsync(AiSecretKeys.OpenAiApiKey, ct).ConfigureAwait(false);
@@ -34,7 +38,7 @@ public sealed class ConfiguredAiRuntimeCatalog : IAiRuntimeCatalog
             }
         }
 
-        var anthropic = AnthropicRuntimeConfig.FromConfiguration(_configuration);
+        var anthropic = AiRuntimeEffectiveConfiguration.GetEffective(AnthropicRuntimeConfig.FromConfiguration(_configuration), settings);
         if (!string.IsNullOrWhiteSpace(anthropic.ModelId))
         {
             var key = await _secrets.GetAsync(AiSecretKeys.AnthropicApiKey, ct).ConfigureAwait(false);
@@ -48,7 +52,7 @@ public sealed class ConfiguredAiRuntimeCatalog : IAiRuntimeCatalog
             }
         }
 
-        var foundry = AzureAiFoundryRuntimeConfig.FromConfiguration(_configuration);
+        var foundry = AiRuntimeEffectiveConfiguration.GetEffective(AzureAiFoundryRuntimeConfig.FromConfiguration(_configuration), settings);
         if (!string.IsNullOrWhiteSpace(foundry.Endpoint) && !string.IsNullOrWhiteSpace(foundry.ModelId))
         {
             var key = await _secrets.GetAsync(AiSecretKeys.AzureAiFoundryApiKey, ct).ConfigureAwait(false);

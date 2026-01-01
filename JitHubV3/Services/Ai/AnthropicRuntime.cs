@@ -9,15 +9,22 @@ public sealed class AnthropicRuntime : IAiRuntime
     private readonly HttpClient _http;
     private readonly ISecretStore _secrets;
     private readonly IAiModelStore _modelStore;
+    private readonly IAiRuntimeSettingsStore _settingsStore;
     private readonly AnthropicRuntimeConfig _config;
 
     public string RuntimeId => "anthropic";
 
-    public AnthropicRuntime(HttpClient http, ISecretStore secrets, IAiModelStore modelStore, AnthropicRuntimeConfig config)
+    public AnthropicRuntime(
+        HttpClient http,
+        ISecretStore secrets,
+        IAiModelStore modelStore,
+        IAiRuntimeSettingsStore settingsStore,
+        AnthropicRuntimeConfig config)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _secrets = secrets ?? throw new ArgumentNullException(nameof(secrets));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
+        _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
         _config = config ?? throw new ArgumentNullException(nameof(config));
     }
 
@@ -30,7 +37,10 @@ public sealed class AnthropicRuntime : IAiRuntime
 
         ct.ThrowIfCancellationRequested();
 
-        var modelId = await TryGetSelectedModelIdAsync(ct).ConfigureAwait(false) ?? _config.ModelId;
+        var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
+        var cfg = AiRuntimeEffectiveConfiguration.GetEffective(_config, settings);
+
+        var modelId = await TryGetSelectedModelIdAsync(ct).ConfigureAwait(false) ?? cfg.ModelId;
         if (string.IsNullOrWhiteSpace(modelId))
         {
             return null;
@@ -47,8 +57,8 @@ public sealed class AnthropicRuntime : IAiRuntime
         var payload = new
         {
             model = modelId,
-            max_tokens = _config.MaxOutputTokens,
-            temperature = _config.Temperature,
+            max_tokens = cfg.MaxOutputTokens,
+            temperature = cfg.Temperature,
             system,
             messages = new[]
             {
@@ -62,13 +72,14 @@ public sealed class AnthropicRuntime : IAiRuntime
 
         var json = JsonSerializer.Serialize(payload);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _config.MessagesPath)
+        var uri = new Uri(new Uri(cfg.Endpoint), cfg.MessagesPath);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, uri)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json"),
         };
 
         httpRequest.Headers.TryAddWithoutValidation("x-api-key", apiKey);
-        httpRequest.Headers.TryAddWithoutValidation("anthropic-version", _config.AnthropicVersion);
+        httpRequest.Headers.TryAddWithoutValidation("anthropic-version", cfg.AnthropicVersion);
 
         using var response = await _http.SendAsync(httpRequest, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)

@@ -10,15 +10,22 @@ public sealed class OpenAiRuntime : IAiRuntime
     private readonly HttpClient _http;
     private readonly ISecretStore _secrets;
     private readonly IAiModelStore _modelStore;
+    private readonly IAiRuntimeSettingsStore _settingsStore;
     private readonly OpenAiRuntimeConfig _config;
 
     public string RuntimeId => "openai";
 
-    public OpenAiRuntime(HttpClient http, ISecretStore secrets, IAiModelStore modelStore, OpenAiRuntimeConfig config)
+    public OpenAiRuntime(
+        HttpClient http,
+        ISecretStore secrets,
+        IAiModelStore modelStore,
+        IAiRuntimeSettingsStore settingsStore,
+        OpenAiRuntimeConfig config)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _secrets = secrets ?? throw new ArgumentNullException(nameof(secrets));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
+        _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
         _config = config ?? throw new ArgumentNullException(nameof(config));
     }
 
@@ -31,7 +38,10 @@ public sealed class OpenAiRuntime : IAiRuntime
 
         ct.ThrowIfCancellationRequested();
 
-        var modelId = await TryGetSelectedModelIdAsync(ct).ConfigureAwait(false) ?? _config.ModelId;
+        var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
+        var cfg = AiRuntimeEffectiveConfiguration.GetEffective(_config, settings);
+
+        var modelId = await TryGetSelectedModelIdAsync(ct).ConfigureAwait(false) ?? cfg.ModelId;
         if (string.IsNullOrWhiteSpace(modelId))
         {
             return null;
@@ -53,17 +63,18 @@ public sealed class OpenAiRuntime : IAiRuntime
                 new { role = "system", content = system },
                 new { role = "user", content = request.Input ?? string.Empty },
             },
-            ["max_tokens"] = _config.MaxOutputTokens,
-            ["temperature"] = _config.Temperature,
+            ["max_tokens"] = cfg.MaxOutputTokens,
+            ["temperature"] = cfg.Temperature,
         };
 
-        if (_config.UseJsonObjectMode)
+        if (cfg.UseJsonObjectMode)
         {
             payload["response_format"] = new { type = "json_object" };
         }
 
         var json = JsonSerializer.Serialize(payload);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, _config.ChatCompletionsPath)
+        var uri = new Uri(new Uri(cfg.Endpoint), cfg.ChatCompletionsPath);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, uri)
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json"),
         };
