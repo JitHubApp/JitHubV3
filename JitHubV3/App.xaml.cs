@@ -156,9 +156,11 @@ public partial class App : Application
                     services.AddSingleton<IAiLocalModelInventoryStore>(sp => new JsonFileAiLocalModelInventoryStore());
                     services.AddSingleton(sp => AiLocalModelDefinitionsConfiguration.FromConfiguration(context.Configuration));
                     services.AddSingleton<IAiLocalModelCatalog>(sp =>
-                        new LocalAiModelCatalog(
-                            sp.GetRequiredService<IReadOnlyList<AiLocalModelDefinition>>(),
-                            sp.GetRequiredService<IAiLocalModelInventoryStore>()));
+                        new FoundryLocalModelCatalogDecorator(
+                            new LocalAiModelCatalog(
+                                sp.GetRequiredService<IReadOnlyList<AiLocalModelDefinition>>(),
+                                sp.GetRequiredService<IAiLocalModelInventoryStore>()),
+                            sp.GetRequiredService<ILocalFoundryClient>()));
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
                         new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
 
@@ -188,6 +190,16 @@ public partial class App : Application
                         var http = string.IsNullOrWhiteSpace(cfg.Endpoint) ? new HttpClient() : new HttpClient { BaseAddress = new Uri(cfg.Endpoint) };
                         return new AzureAiFoundryRuntime(http, sp.GetRequiredService<ISecretStore>(), sp.GetRequiredService<IAiModelStore>(), cfg);
                     });
+
+                    // Local Foundry runtime (best-effort local execution). Falls back to a conservative heuristic when Foundry is not present.
+                    services.AddSingleton<IAiRuntime>(sp =>
+                    {
+                        return new LocalFoundryRuntime(
+                            sp.GetRequiredService<IAiModelStore>(),
+                            sp.GetRequiredService<ILocalFoundryClient>());
+                    });
+
+                    services.AddSingleton<ILocalFoundryClient>(_ => new LocalFoundryCliClient());
 
                     services.AddSingleton<StatusBarViewModel>();
 
