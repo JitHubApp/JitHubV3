@@ -180,8 +180,6 @@ public partial class App : Application
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
                         new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
 
-                    services.AddSingleton<IAiModelPickerOptionsProvider, AiModelPickerOptionsProvider>();
-
                     services.AddSingleton<ModelOrApiPickerViewModel>();
 
                     services.AddSingleton(sp => OpenAiRuntimeConfig.FromConfiguration(context.Configuration));

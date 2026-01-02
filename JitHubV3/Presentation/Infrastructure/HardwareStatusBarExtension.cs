@@ -11,7 +11,9 @@ public sealed class HardwareStatusBarExtension : IStatusBarExtension
         _capabilities = capabilities ?? throw new ArgumentNullException(nameof(capabilities));
     }
 
+#pragma warning disable CS0067
     public event EventHandler? Changed;
+#pragma warning restore CS0067
 
     public IReadOnlyList<StatusBarSegment> Segments
         => new[]

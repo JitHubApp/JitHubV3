@@ -88,7 +88,6 @@
     <Compile Include="..\JitHubV3\Services\Ai\IAiModelDownloadQueue.cs" Link="Ai\IAiModelDownloadQueue.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloadQueue.cs" Link="Ai\AiModelDownloadQueue.cs" />
 
-    <Compile Include="..\JitHubV3\Services\Ai\AiModelPickerOptionsProvider.cs" Link="Ai\AiModelPickerOptionsProvider.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiLocalModelDefinitionsConfiguration.cs" Link="Ai\AiLocalModelDefinitionsConfiguration.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\IAiStatusEventBus.cs" Link="Ai\IAiStatusEventBus.cs" />

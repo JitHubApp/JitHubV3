@@ -2,7 +2,7 @@ using JitHubV3.Services.Ai;
 
 namespace JitHubV3.Presentation;
 
-public sealed class AiDownloadStatusBarExtension : IStatusBarExtension
+public sealed class AiDownloadStatusBarExtension : IStatusBarExtension, IDisposable
 {
     private readonly IDisposable _subscription;
 
@@ -17,6 +17,11 @@ public sealed class AiDownloadStatusBarExtension : IStatusBarExtension
         }
 
         _subscription = events.Subscribe(OnEvent);
+    }
+
+    public void Dispose()
+    {
+        _subscription.Dispose();
     }
 
     public event EventHandler? Changed;

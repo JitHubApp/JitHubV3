@@ -2,7 +2,7 @@ using JitHubV3.Services.Ai;
 
 namespace JitHubV3.Presentation;
 
-public sealed class AiStatusBarExtension : IStatusBarExtension
+public sealed class AiStatusBarExtension : IStatusBarExtension, IDisposable
 {
     private readonly IAiEnablementStore _enablement;
     private readonly IAiModelStore _modelStore;
@@ -27,6 +27,11 @@ public sealed class AiStatusBarExtension : IStatusBarExtension
         _subscription = events.Subscribe(OnEvent);
 
         _ = InitializeAsync();
+    }
+
+    public void Dispose()
+    {
+        _subscription.Dispose();
     }
 
     public event EventHandler? Changed;

@@ -24,11 +24,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     private readonly StatusBarViewModel _statusBar;
     private readonly IReadOnlyList<IDashboardCardProvider> _cardProviders;
 
-    private readonly IAiModelPickerOptionsProvider _aiModelOptions;
-    private readonly IAiModelStore _aiModelStore;
     private readonly IAiEnablementStore _aiEnablementStore;
-    private readonly IAiModelDownloadQueue _aiModelDownloads;
-    private readonly IAiStatusEventPublisher _aiEvents;
 
     private CancellationTokenSource? _activeCts;
     private CancellationTokenSource? _cardsCts;
@@ -41,8 +37,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     public ObservableCollection<RepositorySummary> Repositories { get; } = new();
 
     public ObservableCollection<DashboardCardModel> Cards { get; } = new();
-
-    public ObservableCollection<AiModelPickerOption> AiModelOptions { get; } = new();
 
     public ModelOrApiPickerViewModel AiModelPicker { get; }
 
@@ -60,71 +54,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             _ = PersistAiEnablementAsync(value);
         }
     }
-
-
-    private AiModelPickerOption? _selectedAiModel;
-    public AiModelPickerOption? SelectedAiModel
-    {
-        get => _selectedAiModel;
-        set
-        {
-            if (!SetProperty(ref _selectedAiModel, value))
-            {
-                return;
-            }
-
-            _ = PersistAiSelectionAsync(value);
-
-            DownloadSelectedAiModelCommand.NotifyCanExecuteChanged();
-            CancelAiModelDownloadCommand.NotifyCanExecuteChanged();
-
-            OnPropertyChanged(nameof(CanDownloadSelectedAiModel));
-            OnPropertyChanged(nameof(CanCancelAiModelDownload));
-        }
-    }
-
-    public bool CanDownloadSelectedAiModel
-        => SelectedAiModel is { IsLocal: true, IsDownloaded: false }
-           && SelectedAiModel.DownloadUri is not null
-           && !IsSubmittingCompose;
-
-    public bool CanCancelAiModelDownload
-        => _activeAiDownload is not null
-           && !_activeAiDownload.Task.IsCompleted;
-
-    private bool _isAiModelDownloadVisible;
-    public bool IsAiModelDownloadVisible
-    {
-        get => _isAiModelDownloadVisible;
-        set => SetProperty(ref _isAiModelDownloadVisible, value);
-    }
-
-    private bool _isAiModelDownloadIndeterminate;
-    public bool IsAiModelDownloadIndeterminate
-    {
-        get => _isAiModelDownloadIndeterminate;
-        set => SetProperty(ref _isAiModelDownloadIndeterminate, value);
-    }
-
-    private double _aiModelDownloadProgressPercent;
-    public double AiModelDownloadProgressPercent
-    {
-        get => _aiModelDownloadProgressPercent;
-        set => SetProperty(ref _aiModelDownloadProgressPercent, value);
-    }
-
-    private string? _aiModelDownloadStatusText;
-    public string? AiModelDownloadStatusText
-    {
-        get => _aiModelDownloadStatusText;
-        set => SetProperty(ref _aiModelDownloadStatusText, value);
-    }
-
-    private AiModelDownloadHandle? _activeAiDownload;
-    private IDisposable? _activeAiDownloadSubscription;
-
-    public IAsyncRelayCommand DownloadSelectedAiModelCommand { get; }
-    public IRelayCommand CancelAiModelDownloadCommand { get; }
 
     public IRelayCommand OpenAiModelPickerCommand { get; }
 
@@ -208,11 +137,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         StatusBarViewModel statusBar,
         ModelOrApiPickerViewModel aiModelPicker,
         IEnumerable<IDashboardCardProvider> cardProviders,
-        IAiModelPickerOptionsProvider aiModelOptions,
-        IAiModelStore aiModelStore,
-        IAiEnablementStore aiEnablementStore,
-        IAiModelDownloadQueue aiModelDownloads,
-        IAiStatusEventPublisher aiEvents)
+        IAiEnablementStore aiEnablementStore)
     {
         _logger = logger;
         _dispatcher = dispatcher;
@@ -226,19 +151,12 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
             .ThenBy(p => p.ProviderId, StringComparer.Ordinal)
             .ToArray();
 
-        _aiModelOptions = aiModelOptions;
-        _aiModelStore = aiModelStore;
         _aiEnablementStore = aiEnablementStore;
-        _aiModelDownloads = aiModelDownloads;
-        _aiEvents = aiEvents;
 
         AiModelPicker = aiModelPicker ?? throw new ArgumentNullException(nameof(aiModelPicker));
 
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
         SubmitComposeCommand = new AsyncRelayCommand(SubmitComposeAsync, CanSubmitCompose);
-
-        DownloadSelectedAiModelCommand = new AsyncRelayCommand(DownloadSelectedAiModelAsync, () => CanDownloadSelectedAiModel);
-        CancelAiModelDownloadCommand = new RelayCommand(CancelAiModelDownload, () => CanCancelAiModelDownload);
 
         OpenAiModelPickerCommand = new RelayCommand(() => AiModelPicker.IsOpen = true);
     }
@@ -248,12 +166,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     public async Task ActivateAsync()
     {
         Deactivate();
-
-                DownloadSelectedAiModelCommand.NotifyCanExecuteChanged();
-                CancelAiModelDownloadCommand.NotifyCanExecuteChanged();
-
-                OnPropertyChanged(nameof(CanDownloadSelectedAiModel));
-                OnPropertyChanged(nameof(CanCancelAiModelDownload));
         _activeCts = new CancellationTokenSource();
 
         Context.PropertyChanged += OnContextPropertyChanged;
@@ -268,7 +180,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _ = RefreshCardsAsync(RefreshMode.CacheOnly, _activeCts.Token);
 
         _ = LoadAiEnablementAsync(_activeCts.Token);
-        _ = LoadAiModelOptionsAsync(_activeCts.Token);
 
         await LoadReposAsync(_activeCts.Token);
     }
@@ -307,59 +218,6 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         }
     }
 
-    private async Task LoadAiModelOptionsAsync(CancellationToken ct)
-    {
-        try
-        {
-            var options = await _aiModelOptions.GetOptionsAsync(ct).ConfigureAwait(false);
-            var selection = await _aiModelStore.GetSelectionAsync(ct).ConfigureAwait(false);
-
-            await _dispatcher.ExecuteAsync(() =>
-            {
-                AiModelOptions.Clear();
-                foreach (var opt in options)
-                {
-                    AiModelOptions.Add(opt);
-                }
-
-                if (selection is not null)
-                {
-                    SelectedAiModel = options.FirstOrDefault(o =>
-                        string.Equals(o.RuntimeId, selection.RuntimeId, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(o.ModelId, selection.ModelId, StringComparison.OrdinalIgnoreCase));
-                }
-
-                SelectedAiModel ??= AiModelOptions.FirstOrDefault();
-            });
-        }
-        catch (OperationCanceledException)
-        {
-            // ignore
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to load AI model picker options");
-        }
-    }
-
-    private async Task PersistAiSelectionAsync(AiModelPickerOption? option)
-    {
-        if (option is null)
-        {
-            return;
-        }
-
-        try
-        {
-            // Persist selection; runtimes/orchestrator resolve from store.
-            await _aiModelStore.SetSelectionAsync(new AiModelSelection(option.RuntimeId, option.ModelId), CancellationToken.None);
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
     public void Deactivate()
     {
         Context.PropertyChanged -= OnContextPropertyChanged;
@@ -379,108 +237,10 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _subscription?.Dispose();
         _subscription = null;
 
-        _activeAiDownloadSubscription?.Dispose();
-        _activeAiDownloadSubscription = null;
-        _activeAiDownload = null;
-        IsAiModelDownloadVisible = false;
-        AiModelDownloadStatusText = null;
-        AiModelDownloadProgressPercent = 0;
-        IsAiModelDownloadIndeterminate = false;
-
         Interlocked.Exchange(ref _loadGate, 0);
         IsLoadingRepos = false;
         IsLoadingCards = false;
         IsSubmittingCompose = false;
-    }
-
-    private async Task DownloadSelectedAiModelAsync()
-    {
-        var opt = SelectedAiModel;
-        if (opt is null || !opt.IsLocal || opt.IsDownloaded || opt.DownloadUri is null)
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(opt.InstallPath))
-        {
-            return;
-        }
-
-        _activeAiDownloadSubscription?.Dispose();
-        _activeAiDownloadSubscription = null;
-        _activeAiDownload = null;
-
-        IsAiModelDownloadVisible = true;
-        AiModelDownloadStatusText = "Downloading…";
-        AiModelDownloadProgressPercent = 0;
-        IsAiModelDownloadIndeterminate = true;
-
-        OnPropertyChanged(nameof(CanDownloadSelectedAiModel));
-        OnPropertyChanged(nameof(CanCancelAiModelDownload));
-
-        var handle = _aiModelDownloads.Enqueue(new AiModelDownloadRequest(
-            ModelId: opt.ModelId,
-            RuntimeId: opt.RuntimeId,
-            SourceUri: opt.DownloadUri,
-            InstallPath: opt.InstallPath!,
-            ArtifactFileName: opt.ArtifactFileName,
-            ExpectedBytes: opt.ExpectedBytes,
-            ExpectedSha256: opt.ExpectedSha256));
-
-        _activeAiDownload = handle;
-        CancelAiModelDownloadCommand.NotifyCanExecuteChanged();
-        OnPropertyChanged(nameof(CanCancelAiModelDownload));
-
-        _activeAiDownloadSubscription = handle.Subscribe(p =>
-        {
-            _aiEvents.Publish(new AiDownloadProgressChanged(handle.Id, handle.Request, p));
-            _ = _dispatcher.ExecuteAsync(() =>
-            {
-                IsAiModelDownloadVisible = true;
-                IsAiModelDownloadIndeterminate = p.Progress is null;
-                AiModelDownloadProgressPercent = p.Progress is null ? 0 : Math.Round(p.Progress.Value * 100, 1);
-                AiModelDownloadStatusText = p.Status switch
-                {
-                    AiModelDownloadStatus.Queued => "Queued…",
-                    AiModelDownloadStatus.Downloading => "Downloading…",
-                    AiModelDownloadStatus.Completed => "Downloaded",
-                    AiModelDownloadStatus.Canceled => "Canceled",
-                    AiModelDownloadStatus.Failed => "Download failed",
-                    _ => "",
-                };
-
-                CancelAiModelDownloadCommand.NotifyCanExecuteChanged();
-                DownloadSelectedAiModelCommand.NotifyCanExecuteChanged();
-
-                OnPropertyChanged(nameof(CanDownloadSelectedAiModel));
-                OnPropertyChanged(nameof(CanCancelAiModelDownload));
-            });
-        });
-
-        try
-        {
-            await handle.Task.ConfigureAwait(false);
-
-            // Refresh options so the model flips to "downloaded".
-            var ct = _activeCts?.Token ?? CancellationToken.None;
-            _ = LoadAiModelOptionsAsync(ct);
-        }
-        catch
-        {
-            // ignore
-        }
-    }
-
-    private void CancelAiModelDownload()
-    {
-        if (_activeAiDownload is null)
-        {
-            return;
-        }
-
-        _aiModelDownloads.Cancel(_activeAiDownload.Id);
-
-        OnPropertyChanged(nameof(CanCancelAiModelDownload));
     }
 
     private bool CanSubmitCompose()
