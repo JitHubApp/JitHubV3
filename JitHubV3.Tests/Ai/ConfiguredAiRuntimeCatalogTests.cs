@@ -1,6 +1,7 @@
 using FluentAssertions;
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
+using JitHubV3.Services.Platform;
 
 namespace JitHubV3.Tests.Ai;
 
@@ -13,7 +14,7 @@ public sealed class ConfiguredAiRuntimeCatalogTests
         var secrets = new TestSecretStore();
         var settingsStore = new TestAiRuntimeSettingsStore();
 
-        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore);
+        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore, new TestCapabilities());
 
         var available = await catalog.GetAvailableRuntimesAsync(CancellationToken.None);
 
@@ -31,7 +32,7 @@ public sealed class ConfiguredAiRuntimeCatalogTests
 
         var settingsStore = new TestAiRuntimeSettingsStore();
 
-        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore);
+        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore, new TestCapabilities());
 
         var available = await catalog.GetAvailableRuntimesAsync(CancellationToken.None);
 
@@ -50,7 +51,7 @@ public sealed class ConfiguredAiRuntimeCatalogTests
             Settings = new AiRuntimeSettings(OpenAi: new OpenAiRuntimeSettings(ModelId: "gpt-override"))
         };
 
-        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore);
+        var catalog = new ConfiguredAiRuntimeCatalog(config, secrets, settingsStore, new TestCapabilities());
 
         var available = await catalog.GetAvailableRuntimesAsync(CancellationToken.None);
 
@@ -131,5 +132,12 @@ public sealed class ConfiguredAiRuntimeCatalogTests
                 public void Dispose() { }
             }
         }
+    }
+
+    private sealed class TestCapabilities : IPlatformCapabilities
+    {
+        public bool SupportsSecureSecretStore => true;
+        public bool SupportsLocalFoundryDetection => false;
+        public bool SupportsHardwareAccelerationIntrospection => false;
     }
 }

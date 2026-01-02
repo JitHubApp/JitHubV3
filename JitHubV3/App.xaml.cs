@@ -148,6 +148,7 @@ public partial class App : Application
 
                     services.AddSingleton<IGitHubTokenProvider, UnoTokenCacheGitHubTokenProvider>();
                     services.AddSingleton<ISecretStore, PlatformSecretStore>();
+                    services.AddSingleton<JitHubV3.Services.Platform.IPlatformCapabilities, JitHubV3.Services.Platform.PlatformCapabilities>();
 
                     services.AddSingleton<IAiRuntimeCatalog, ConfiguredAiRuntimeCatalog>();
                     services.AddSingleton<IAiRuntimeDescriptorCatalog, DefaultAiRuntimeDescriptorCatalog>();

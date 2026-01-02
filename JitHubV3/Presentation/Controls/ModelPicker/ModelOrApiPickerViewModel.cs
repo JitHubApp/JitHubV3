@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
+using JitHubV3.Services.Platform;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
@@ -8,9 +9,9 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 {
     private readonly IAiModelStore _modelStore;
     private readonly LocalModelsPickerViewModel _localModels;
-    private readonly OpenAiPickerViewModel _openAi;
-    private readonly AnthropicPickerViewModel _anthropic;
-    private readonly AzureAiFoundryPickerViewModel _foundry;
+    private readonly OpenAiPickerViewModel? _openAi;
+    private readonly AnthropicPickerViewModel? _anthropic;
+    private readonly AzureAiFoundryPickerViewModel? _foundry;
 
     public ObservableCollection<ModelPickerCategoryItem> Categories { get; } = new();
 
@@ -71,6 +72,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
     public IRelayCommand CancelCommand { get; }
 
     public ModelOrApiPickerViewModel(
+        IPlatformCapabilities capabilities,
         IAiLocalModelCatalog localCatalog,
         IAiModelDownloadQueue downloads,
         IAiModelStore modelStore,
@@ -82,16 +84,24 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         AnthropicRuntimeConfig anthropic,
         AzureAiFoundryRuntimeConfig foundry)
     {
+        if (capabilities is null) throw new ArgumentNullException(nameof(capabilities));
+
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
         _localModels = new LocalModelsPickerViewModel(localCatalog, downloads, modelStore, events, localDefinitions);
-        _openAi = new OpenAiPickerViewModel(settingsStore, secrets, modelStore, openAi);
-        _anthropic = new AnthropicPickerViewModel(settingsStore, secrets, modelStore, anthropic);
-        _foundry = new AzureAiFoundryPickerViewModel(settingsStore, secrets, modelStore, foundry);
+        if (capabilities.SupportsSecureSecretStore)
+        {
+            _openAi = new OpenAiPickerViewModel(settingsStore, secrets, modelStore, openAi);
+            _anthropic = new AnthropicPickerViewModel(settingsStore, secrets, modelStore, anthropic);
+            _foundry = new AzureAiFoundryPickerViewModel(settingsStore, secrets, modelStore, foundry);
+        }
 
         Categories.Add(new ModelPickerCategoryItem(Id: "local-models", DisplayName: "Local models"));
-        Categories.Add(new ModelPickerCategoryItem(Id: "openai", DisplayName: "OpenAI"));
-        Categories.Add(new ModelPickerCategoryItem(Id: "anthropic", DisplayName: "Anthropic"));
-        Categories.Add(new ModelPickerCategoryItem(Id: "azure-ai-foundry", DisplayName: "Azure AI Foundry"));
+        if (capabilities.SupportsSecureSecretStore)
+        {
+            Categories.Add(new ModelPickerCategoryItem(Id: "openai", DisplayName: "OpenAI"));
+            Categories.Add(new ModelPickerCategoryItem(Id: "anthropic", DisplayName: "Anthropic"));
+            Categories.Add(new ModelPickerCategoryItem(Id: "azure-ai-foundry", DisplayName: "Azure AI Foundry"));
+        }
 
         SelectedCategory = Categories.FirstOrDefault();
         UpdateActiveCategory();

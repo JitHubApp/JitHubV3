@@ -1,4 +1,5 @@
 using JitHub.GitHub.Abstractions.Security;
+using JitHubV3.Services.Platform;
 using Microsoft.Extensions.Configuration;
 
 namespace JitHubV3.Services.Ai;
@@ -8,17 +9,29 @@ public sealed class ConfiguredAiRuntimeCatalog : IAiRuntimeCatalog
     private readonly IConfiguration _configuration;
     private readonly ISecretStore _secrets;
     private readonly IAiRuntimeSettingsStore _settingsStore;
+    private readonly IPlatformCapabilities _capabilities;
 
-    public ConfiguredAiRuntimeCatalog(IConfiguration configuration, ISecretStore secrets, IAiRuntimeSettingsStore settingsStore)
+    public ConfiguredAiRuntimeCatalog(
+        IConfiguration configuration,
+        ISecretStore secrets,
+        IAiRuntimeSettingsStore settingsStore,
+        IPlatformCapabilities capabilities)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _secrets = secrets ?? throw new ArgumentNullException(nameof(secrets));
         _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
+        _capabilities = capabilities ?? throw new ArgumentNullException(nameof(capabilities));
     }
 
     public async Task<IReadOnlyList<AiRuntimeDescriptor>> GetAvailableRuntimesAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
+
+        // If we can't store/retrieve API keys securely, treat API runtimes as unavailable.
+        if (!_capabilities.SupportsSecureSecretStore)
+        {
+            return Array.Empty<AiRuntimeDescriptor>();
+        }
 
         var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
 
