@@ -77,7 +77,7 @@ public sealed partial class OpenAiPickerViewModel : PickerCategoryViewModel
             var model = (ModelId ?? string.Empty).Trim();
             if (model.Length == 0)
             {
-                return "Selected: OpenAI · (model required)";
+                return "No model selected";
             }
 
             return HasApiKey() ? $"Selected: OpenAI · {model}" : $"Selected: OpenAI · {model} (API key required)";
@@ -100,7 +100,17 @@ public sealed partial class OpenAiPickerViewModel : PickerCategoryViewModel
         var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
         var effective = AiRuntimeEffectiveConfiguration.GetEffective(_baseConfig, settings);
 
-        ModelId = effective.ModelId;
+        var modelId = effective.ModelId;
+        if (string.IsNullOrWhiteSpace(modelId))
+        {
+            var selection = await _modelStore.GetSelectionAsync(ct).ConfigureAwait(false);
+            if (selection is not null && string.Equals(selection.RuntimeId, "openai", StringComparison.OrdinalIgnoreCase))
+            {
+                modelId = selection.ModelId;
+            }
+        }
+
+        ModelId = modelId;
 
         var stored = await _secrets.GetAsync(AiSecretKeys.OpenAiApiKey, ct).ConfigureAwait(false);
         HasStoredApiKey = !string.IsNullOrWhiteSpace(stored);

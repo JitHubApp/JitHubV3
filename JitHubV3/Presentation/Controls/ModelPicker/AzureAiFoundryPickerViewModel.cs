@@ -109,14 +109,9 @@ public sealed partial class AzureAiFoundryPickerViewModel : PickerCategoryViewMo
             var endpoint = (Endpoint ?? string.Empty).Trim();
             var model = (ModelId ?? string.Empty).Trim();
 
-            if (endpoint.Length == 0)
+            if (endpoint.Length == 0 || model.Length == 0)
             {
-                return "Selected: Azure AI Foundry · (endpoint required)";
-            }
-
-            if (model.Length == 0)
-            {
-                return "Selected: Azure AI Foundry · (model required)";
+                return "No model selected";
             }
 
             if (!Uri.TryCreate(endpoint, UriKind.Absolute, out _))
@@ -157,8 +152,18 @@ public sealed partial class AzureAiFoundryPickerViewModel : PickerCategoryViewMo
         var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
         var effective = AiRuntimeEffectiveConfiguration.GetEffective(_baseConfig, settings);
 
+        var modelId = effective.ModelId;
+        if (string.IsNullOrWhiteSpace(modelId))
+        {
+            var selection = await _modelStore.GetSelectionAsync(ct).ConfigureAwait(false);
+            if (selection is not null && string.Equals(selection.RuntimeId, "azure-ai-foundry", StringComparison.OrdinalIgnoreCase))
+            {
+                modelId = selection.ModelId;
+            }
+        }
+
         Endpoint = effective.Endpoint;
-        ModelId = effective.ModelId;
+        ModelId = modelId;
         ApiKeyHeaderName = effective.ApiKeyHeaderName;
 
         var stored = await _secrets.GetAsync(AiSecretKeys.AzureAiFoundryApiKey, ct).ConfigureAwait(false);

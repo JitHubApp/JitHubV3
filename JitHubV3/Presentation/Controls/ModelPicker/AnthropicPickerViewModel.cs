@@ -77,7 +77,7 @@ public sealed partial class AnthropicPickerViewModel : PickerCategoryViewModel
             var model = (ModelId ?? string.Empty).Trim();
             if (model.Length == 0)
             {
-                return "Selected: Anthropic · (model required)";
+                return "No model selected";
             }
 
             return HasApiKey() ? $"Selected: Anthropic · {model}" : $"Selected: Anthropic · {model} (API key required)";
@@ -100,7 +100,17 @@ public sealed partial class AnthropicPickerViewModel : PickerCategoryViewModel
         var settings = await _settingsStore.GetAsync(ct).ConfigureAwait(false);
         var effective = AiRuntimeEffectiveConfiguration.GetEffective(_baseConfig, settings);
 
-        ModelId = effective.ModelId;
+        var modelId = effective.ModelId;
+        if (string.IsNullOrWhiteSpace(modelId))
+        {
+            var selection = await _modelStore.GetSelectionAsync(ct).ConfigureAwait(false);
+            if (selection is not null && string.Equals(selection.RuntimeId, "anthropic", StringComparison.OrdinalIgnoreCase))
+            {
+                modelId = selection.ModelId;
+            }
+        }
+
+        ModelId = modelId;
 
         var stored = await _secrets.GetAsync(AiSecretKeys.AnthropicApiKey, ct).ConfigureAwait(false);
         HasStoredApiKey = !string.IsNullOrWhiteSpace(stored);

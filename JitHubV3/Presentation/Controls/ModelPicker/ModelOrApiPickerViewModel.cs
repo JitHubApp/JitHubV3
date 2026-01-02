@@ -6,6 +6,7 @@ namespace JitHubV3.Presentation.Controls.ModelPicker;
 
 public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 {
+    private readonly IAiModelStore _modelStore;
     private readonly LocalModelsPickerViewModel _localModels;
     private readonly OpenAiPickerViewModel _openAi;
     private readonly AnthropicPickerViewModel _anthropic;
@@ -44,7 +45,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         }
     }
 
-    public string FooterSummary => ActiveCategory?.FooterSummary ?? "Selected: (none)";
+    public string FooterSummary => ActiveCategory?.FooterSummary ?? "No model selected";
 
     public bool CanApply => ActiveCategory?.CanApply ?? false;
 
@@ -61,7 +62,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
             if (_isOpen)
             {
-                _ = RefreshActiveAsync(CancellationToken.None);
+                _ = OpenAsync();
             }
         }
     }
@@ -80,6 +81,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         AnthropicRuntimeConfig anthropic,
         AzureAiFoundryRuntimeConfig foundry)
     {
+        _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
         _localModels = new LocalModelsPickerViewModel(localCatalog, downloads, modelStore, localDefinitions);
         _openAi = new OpenAiPickerViewModel(settingsStore, secrets, modelStore, openAi);
         _anthropic = new AnthropicPickerViewModel(settingsStore, secrets, modelStore, anthropic);
@@ -95,6 +97,38 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);
         CancelCommand = new RelayCommand(() => IsOpen = false);
+    }
+
+    private async Task OpenAsync()
+    {
+        try
+        {
+            var selection = await _modelStore.GetSelectionAsync(CancellationToken.None).ConfigureAwait(false);
+            var categoryId = selection?.RuntimeId switch
+            {
+                null => null,
+                "local-foundry" => "local-models",
+                "openai" => "openai",
+                "anthropic" => "anthropic",
+                "azure-ai-foundry" => "azure-ai-foundry",
+                _ => null,
+            };
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+            {
+                var match = Categories.FirstOrDefault(c => string.Equals(c.Id, categoryId, StringComparison.Ordinal));
+                if (match is not null)
+                {
+                    SelectedCategory = match;
+                }
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        await RefreshActiveAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     private void UpdateActiveCategory()

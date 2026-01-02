@@ -32,6 +32,19 @@ public sealed class ProviderPickerViewModelTests
     }
 
     [Test]
+    public void OpenAi_FooterSummary_is_no_model_selected_when_empty()
+    {
+        var vm = new OpenAiPickerViewModel(
+            new FakeRuntimeSettingsStore(new AiRuntimeSettings()),
+            new FakeSecretStore(),
+            new FakeModelStore(),
+            baseConfig: new OpenAiRuntimeConfig());
+
+        vm.ModelId = null;
+        vm.FooterSummary.Should().Be("No model selected");
+    }
+
+    [Test]
     public async Task OpenAi_ApplyAsync_persists_model_override_and_selection_and_stores_key_if_provided()
     {
         var settingsStore = new FakeRuntimeSettingsStore(new AiRuntimeSettings());
@@ -161,6 +174,30 @@ public sealed class ProviderPickerViewModelTests
         vm.ApiKey.Should().BeNull();
     }
 
+    [Test]
+    public async Task Foundry_RefreshAsync_prefers_selection_modelid_when_effective_is_empty()
+    {
+        var settingsStore = new FakeRuntimeSettingsStore(new AiRuntimeSettings(
+            AzureAiFoundry: new AzureAiFoundryRuntimeSettings(
+                Endpoint: "https://e/",
+                ModelId: null,
+                ApiKeyHeaderName: "api-key")));
+
+        var secrets = new FakeSecretStore();
+
+        var modelStore = new FakeModelStore(selection: new AiModelSelection(RuntimeId: "azure-ai-foundry", ModelId: "from-selection"));
+
+        var vm = new AzureAiFoundryPickerViewModel(
+            settingsStore,
+            secrets,
+            modelStore,
+            baseConfig: new AzureAiFoundryRuntimeConfig { ApiKeyHeaderName = "api-key" });
+
+        await vm.RefreshAsync(CancellationToken.None);
+
+        vm.ModelId.Should().Be("from-selection");
+    }
+
     private sealed class FakeRuntimeSettingsStore : IAiRuntimeSettingsStore
     {
         private AiRuntimeSettings _settings;
@@ -212,10 +249,14 @@ public sealed class ProviderPickerViewModelTests
 
     private sealed class FakeModelStore : IAiModelStore
     {
+        private readonly AiModelSelection? _selection;
+
+        public FakeModelStore(AiModelSelection? selection = null) => _selection = selection;
+
         public AiModelSelection? LastSetSelection { get; private set; }
 
         public ValueTask<AiModelSelection?> GetSelectionAsync(CancellationToken ct)
-            => ValueTask.FromResult<AiModelSelection?>(null);
+            => ValueTask.FromResult(_selection);
 
         public ValueTask SetSelectionAsync(AiModelSelection? selection, CancellationToken ct)
         {

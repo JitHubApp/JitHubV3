@@ -59,7 +59,7 @@ public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
             var item = SelectedItem;
             if (item is null)
             {
-                return "Selected: (none)";
+                return "No model selected";
             }
 
             return item.IsDownloaded
