@@ -205,6 +205,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         ComposeSearch.IComposeSearchStateStore composeState,
         ICacheEventBus events,
         StatusBarViewModel statusBar,
+        ModelOrApiPickerViewModel aiModelPicker,
         IEnumerable<IDashboardCardProvider> cardProviders,
         IAiModelPickerOptionsProvider aiModelOptions,
         IAiModelStore aiModelStore,
@@ -228,7 +229,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _aiEnablementStore = aiEnablementStore;
         _aiModelDownloads = aiModelDownloads;
 
-        AiModelPicker = new ModelOrApiPickerViewModel();
+        AiModelPicker = aiModelPicker ?? throw new ArgumentNullException(nameof(aiModelPicker));
 
         SelectRepoCommand = new RelayCommand<RepositorySummary?>(SelectRepo);
         SubmitComposeCommand = new AsyncRelayCommand(SubmitComposeAsync, CanSubmitCompose);

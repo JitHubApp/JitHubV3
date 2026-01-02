@@ -14,6 +14,179 @@
   <Grid x:Name="Root"
         Visibility="{Binding IsOpen}">
 
+    <Grid.Resources>
+      <local:StoredKeyTextConverter x:Key="StoredKeyTextConverter" />
+
+      <!-- Local Models -->
+      <DataTemplate x:Key="LocalModelsTemplate" x:DataType="local:LocalModelsPickerViewModel">
+        <Grid RowSpacing="{StaticResource DashboardSpacingS}">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <TextBlock x:Uid="ModelPicker.LocalModels.Title"
+                     Text="Local models"
+                     Style="{ThemeResource BodyStrongTextBlockStyle}"
+                     TextWrapping="Wrap" />
+
+          <ListView Grid.Row="1"
+                    ItemsSource="{x:Bind Items}"
+                    SelectedItem="{x:Bind SelectedItem, Mode=TwoWay}"
+                    SelectionMode="Single"
+                    AutomationProperties.Name="Local models">
+            <ListView.ItemTemplate>
+              <DataTemplate x:DataType="local:LocalModelOptionViewModel">
+                <Grid ColumnSpacing="{StaticResource DashboardSpacingS}"
+                      RowSpacing="{StaticResource DashboardSpacingXS}"
+                      Padding="{StaticResource DashboardEdgePadding}">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+
+                  <TextBlock Grid.Row="0"
+                             Grid.Column="0"
+                             Text="{x:Bind DisplayNameOrId}"
+                             TextTrimming="CharacterEllipsis"
+                             TextWrapping="NoWrap" />
+
+                  <TextBlock Grid.Row="1"
+                             Grid.Column="0"
+                             Text="{x:Bind StatusText}"
+                             Opacity="0.72"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+
+                  <ProgressBar Grid.Row="2"
+                               Grid.Column="0"
+                               Height="6"
+                               Minimum="0"
+                               Maximum="100"
+                               Value="{x:Bind ProgressPercent}"
+                               IsIndeterminate="{x:Bind IsProgressIndeterminate}"
+                               Visibility="{Binding CanCancel}" />
+
+                  <StackPanel Grid.Row="0"
+                              Grid.RowSpan="3"
+                              Grid.Column="1"
+                              Orientation="Horizontal"
+                              Spacing="{StaticResource DashboardSpacingXS}"
+                              VerticalAlignment="Center">
+                    <Button x:Uid="ModelPicker.LocalModels.Download"
+                            Content="Download"
+                            MinHeight="44"
+                            Command="{x:Bind DownloadCommand}"
+                            IsEnabled="{Binding CanDownload}" />
+
+                    <Button x:Uid="ModelPicker.LocalModels.Cancel"
+                            Content="Cancel"
+                            MinHeight="44"
+                            Command="{x:Bind CancelCommand}"
+                            IsEnabled="{Binding CanCancel}"
+                            Visibility="{Binding CanCancel}" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ListView.ItemTemplate>
+          </ListView>
+        </Grid>
+      </DataTemplate>
+
+      <!-- OpenAI -->
+      <DataTemplate x:Key="OpenAiTemplate" x:DataType="local:OpenAiPickerViewModel">
+        <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+          <TextBlock x:Uid="ModelPicker.OpenAi.Title"
+                     Text="OpenAI"
+                     Style="{ThemeResource BodyStrongTextBlockStyle}"
+                     TextWrapping="Wrap" />
+
+          <TextBox x:Uid="ModelPicker.OpenAi.ModelId"
+                   Header="Model"
+                   Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="e.g. gpt-4o-mini" />
+
+          <TextBox x:Uid="ModelPicker.OpenAi.ApiKey"
+                   Header="API key"
+                   Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="Paste API key (not displayed after Apply)" />
+
+          <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
+                     Opacity="0.72"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </DataTemplate>
+
+      <!-- Anthropic -->
+      <DataTemplate x:Key="AnthropicTemplate" x:DataType="local:AnthropicPickerViewModel">
+        <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+          <TextBlock x:Uid="ModelPicker.Anthropic.Title"
+                     Text="Anthropic"
+                     Style="{ThemeResource BodyStrongTextBlockStyle}"
+                     TextWrapping="Wrap" />
+
+          <TextBox x:Uid="ModelPicker.Anthropic.ModelId"
+                   Header="Model"
+                   Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="e.g. claude-3-5-sonnet-latest" />
+
+          <TextBox x:Uid="ModelPicker.Anthropic.ApiKey"
+                   Header="API key"
+                   Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="Paste API key (not displayed after Apply)" />
+
+          <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
+                     Opacity="0.72"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </DataTemplate>
+
+      <!-- Azure AI Foundry -->
+      <DataTemplate x:Key="FoundryTemplate" x:DataType="local:AzureAiFoundryPickerViewModel">
+        <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+          <TextBlock x:Uid="ModelPicker.Foundry.Title"
+                     Text="Azure AI Foundry"
+                     Style="{ThemeResource BodyStrongTextBlockStyle}"
+                     TextWrapping="Wrap" />
+
+          <TextBox x:Uid="ModelPicker.Foundry.Endpoint"
+                   Header="Endpoint"
+                   Text="{x:Bind Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="https://..." />
+
+          <TextBox x:Uid="ModelPicker.Foundry.ModelId"
+                   Header="Model"
+                   Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="Model deployment name" />
+
+          <TextBox x:Uid="ModelPicker.Foundry.ApiKeyHeader"
+                   Header="API key header name"
+                   Text="{x:Bind ApiKeyHeaderName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="api-key" />
+
+          <TextBox x:Uid="ModelPicker.Foundry.ApiKey"
+                   Header="API key"
+                   Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   PlaceholderText="Paste API key (not displayed after Apply)" />
+
+          <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
+                     Opacity="0.72"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </DataTemplate>
+
+      <local:PickerCategoryTemplateSelector x:Key="PickerCategoryTemplateSelector"
+                                            LocalModelsTemplate="{StaticResource LocalModelsTemplate}"
+                                            OpenAiTemplate="{StaticResource OpenAiTemplate}"
+                                            AnthropicTemplate="{StaticResource AnthropicTemplate}"
+                                            FoundryTemplate="{StaticResource FoundryTemplate}" />
+    </Grid.Resources>
+
     <!-- Smoke layer + tap-to-close surface -->
     <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
             Opacity="0.72" />
@@ -105,23 +278,8 @@
                   BorderThickness="1"
                   CornerRadius="{StaticResource DashboardRadiusM}"
                   Padding="{StaticResource DashboardEdgePadding}">
-            <StackPanel Spacing="{StaticResource DashboardSpacingXS}">
-              <TextBlock x:Uid="ModelPickerOverlay.PanelTitle"
-                         Text="Choose a runtime/model"
-                         Style="{ThemeResource BodyStrongTextBlockStyle}"
-                         TextWrapping="Wrap" />
-
-              <TextBlock x:Uid="ModelPickerOverlay.PanelBody"
-                         Text="This is the Phase 2 shell. Phase 3+ will populate runtimes, models, and download state."
-                         Style="{ThemeResource BodyTextBlockStyle}"
-                         Opacity="0.72"
-                         TextWrapping="Wrap" />
-
-              <TextBlock Text="{Binding SelectedCategory.DisplayName}"
-                         Style="{ThemeResource BodyTextBlockStyle}"
-                         Opacity="0.72"
-                         TextWrapping="Wrap" />
-            </StackPanel>
+            <ContentControl Content="{Binding ActiveCategory}"
+                            ContentTemplateSelector="{StaticResource PickerCategoryTemplateSelector}" />
           </Border>
         </Grid>
 
@@ -136,7 +294,7 @@
           </Grid.ColumnDefinitions>
 
           <TextBlock x:Uid="ModelPickerOverlay.FooterSummary"
-                     Text="Selected: (none)"
+                     Text="{Binding FooterSummary}"
                      Style="{ThemeResource BodyTextBlockStyle}"
                      Opacity="0.72"
                      TextWrapping="NoWrap"
@@ -152,7 +310,8 @@
                   Grid.Column="2"
                   Content="Apply"
                   MinHeight="44"
-                  Command="{Binding ApplyCommand}" />
+              Command="{Binding ApplyCommand}"
+              IsEnabled="{Binding CanApply}" />
         </Grid>
 
       </Grid>

@@ -1,4 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using JitHubV3.Services.Ai;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
@@ -204,6 +212,29 @@ public sealed partial class LocalModelOptionViewModel : ObservableObject
 
     public string DisplayNameOrId => string.IsNullOrWhiteSpace(DisplayName) ? ModelId : DisplayName!;
 
+    public string StatusText
+    {
+        get
+        {
+            if (IsDownloaded)
+            {
+                return "Downloaded";
+            }
+
+            return DownloadStatus switch
+            {
+                AiModelDownloadStatus.Queued => "Queued",
+                AiModelDownloadStatus.Downloading => IsProgressIndeterminate
+                    ? "Downloading…"
+                    : $"Downloading… {ProgressPercent:0.#}%",
+                AiModelDownloadStatus.Completed => "Downloaded",
+                AiModelDownloadStatus.Canceled => "Canceled",
+                AiModelDownloadStatus.Failed => "Failed",
+                _ => "",
+            };
+        }
+    }
+
     public string InstallPath { get; }
 
     public Uri? DownloadUri { get; }
@@ -287,6 +318,7 @@ public sealed partial class LocalModelOptionViewModel : ObservableObject
         _handle = handle;
         OnPropertyChanged(nameof(CanDownload));
         OnPropertyChanged(nameof(CanCancel));
+        OnPropertyChanged(nameof(StatusText));
         DownloadCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
     }
@@ -348,6 +380,7 @@ public sealed partial class LocalModelOptionViewModel : ObservableObject
 
         OnPropertyChanged(nameof(CanDownload));
         OnPropertyChanged(nameof(CanCancel));
+        OnPropertyChanged(nameof(StatusText));
 
         DownloadCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();

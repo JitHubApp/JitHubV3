@@ -8,6 +8,7 @@ using JitHub.GitHub.Abstractions.Polling;
 using JitHub.GitHub.Octokit;
 using JitHubV3.Presentation.ComposeSearch;
 using JitHubV3.Services.Ai;
+using JitHubV3.Presentation.Controls.ModelPicker;
 
 namespace JitHubV3;
 
@@ -168,6 +169,8 @@ public partial class App : Application
                         new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
 
                     services.AddSingleton<IAiModelPickerOptionsProvider, AiModelPickerOptionsProvider>();
+
+                    services.AddSingleton<ModelOrApiPickerViewModel>();
 
                     services.AddSingleton(sp => OpenAiRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AnthropicRuntimeConfig.FromConfiguration(context.Configuration));
