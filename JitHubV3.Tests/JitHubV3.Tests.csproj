@@ -94,5 +94,12 @@
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\OpenAiPickerViewModel.cs" Link="Presentation\ModelPicker\OpenAiPickerViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AnthropicPickerViewModel.cs" Link="Presentation\ModelPicker\AnthropicPickerViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AzureAiFoundryPickerViewModel.cs" Link="Presentation\ModelPicker\AzureAiFoundryPickerViewModel.cs" />
+
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\DataFreshnessState.cs" Link="Presentation\Infrastructure\DataFreshnessState.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarViewModel.cs" Link="Presentation\Infrastructure\StatusBarViewModel.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarSegment.cs" Link="Presentation\Infrastructure\StatusBarSegment.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\IStatusBarExtension.cs" Link="Presentation\Infrastructure\IStatusBarExtension.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\CoreStatusBarExtension.cs" Link="Presentation\Infrastructure\CoreStatusBarExtension.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarComposer.cs" Link="Presentation\Infrastructure\StatusBarComposer.cs" />
   </ItemGroup>
 </Project>

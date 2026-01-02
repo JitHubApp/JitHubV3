@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace JitHubV3.Presentation;
 
 public sealed partial class StatusBarViewModel : ObservableObject
@@ -9,6 +11,15 @@ public sealed partial class StatusBarViewModel : ObservableObject
     private bool _isRefreshing;
     private DataFreshnessState _freshness = DataFreshnessState.Unknown;
     private DateTimeOffset? _lastUpdatedAt;
+
+    public StatusBarViewModel()
+    {
+        Segments.CollectionChanged += (_, __) =>
+        {
+            OnPropertyChanged(nameof(HasSegments));
+            OnPropertyChanged(nameof(ShowMessageFallback));
+        };
+    }
 
     public void AttachToCurrentThread()
     {
@@ -31,6 +42,12 @@ public sealed partial class StatusBarViewModel : ObservableObject
         get => _message;
         set => SetProperty(ref _message, value);
     }
+
+    public ObservableCollection<StatusBarSegment> Segments { get; } = new();
+
+    public bool HasSegments => Segments.Count > 0;
+
+    public bool ShowMessageFallback => !HasSegments;
 
     public bool IsBusy
     {
@@ -102,6 +119,24 @@ public sealed partial class StatusBarViewModel : ObservableObject
         ui.Post(_ => ApplySet(message, isBusy, isRefreshing, freshness, lastUpdatedAt), null);
     }
 
+    public void SetSegments(IReadOnlyList<StatusBarSegment> segments)
+    {
+        var ui = _uiContext;
+        if (ui is null)
+        {
+            AttachToCurrentThread();
+            ui = _uiContext;
+        }
+
+        if (ui is null || ReferenceEquals(SynchronizationContext.Current, ui))
+        {
+            ApplySetSegments(segments);
+            return;
+        }
+
+        ui.Post(_ => ApplySetSegments(segments), null);
+    }
+
     private void ApplySet(
         string? message,
         bool? isBusy,
@@ -135,6 +170,16 @@ public sealed partial class StatusBarViewModel : ObservableObject
         }
     }
 
+    private void ApplySetSegments(IReadOnlyList<StatusBarSegment> segments)
+    {
+        Segments.Clear();
+
+        for (var i = 0; i < segments.Count; i++)
+        {
+            Segments.Add(segments[i]);
+        }
+    }
+
     public void Clear()
     {
         var ui = _uiContext;
@@ -147,6 +192,7 @@ public sealed partial class StatusBarViewModel : ObservableObject
         if (ui is null || ReferenceEquals(SynchronizationContext.Current, ui))
         {
             Message = null;
+            Segments.Clear();
             IsBusy = false;
             IsRefreshing = false;
             Freshness = DataFreshnessState.Unknown;
@@ -157,6 +203,7 @@ public sealed partial class StatusBarViewModel : ObservableObject
         ui.Post(_ =>
         {
             Message = null;
+            Segments.Clear();
             IsBusy = false;
             IsRefreshing = false;
             Freshness = DataFreshnessState.Unknown;

@@ -221,6 +221,9 @@ public partial class App : Application
 
                     services.AddSingleton<StatusBarViewModel>();
 
+                    services.AddSingleton<IStatusBarExtension, CoreStatusBarExtension>();
+                    services.AddSingleton<StatusBarComposer>();
+
                     services.AddSingleton<IComposeSearchStateStore, ComposeSearchStateStore>();
                     services.AddSingleton<IComposeSearchCardFactory, ComposeSearchCardFactory>();
                     services.AddSingleton<IComposeSearchOrchestrator, ComposeSearchOrchestrator>();

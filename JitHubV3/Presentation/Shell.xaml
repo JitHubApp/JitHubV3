@@ -25,9 +25,27 @@
               Padding="{StaticResource ShellStatusBarPadding}"
               Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               Visibility="Collapsed">
-        <TextBlock Text="{Binding StatusBar.Message}"
-                   TextWrapping="NoWrap"
-                   TextTrimming="CharacterEllipsis" />
+        <Grid>
+          <ItemsRepeater ItemsSource="{Binding StatusBar.Segments}"
+                         Visibility="{Binding StatusBar.HasSegments}">
+            <ItemsRepeater.Layout>
+              <StackLayout Orientation="Horizontal" />
+            </ItemsRepeater.Layout>
+            <ItemsRepeater.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Text}"
+                           Margin="0,0,12,0"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+              </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
+          </ItemsRepeater>
+
+          <TextBlock Text="{Binding StatusBar.Message}"
+                     Visibility="{Binding StatusBar.ShowMessageFallback}"
+                     TextWrapping="NoWrap"
+                     TextTrimming="CharacterEllipsis" />
+        </Grid>
       </Border>
 
       <utu:ExtendedSplashScreen x:Name="Splash"
@@ -62,9 +80,27 @@
               Padding="{StaticResource ShellStatusBarPadding}"
               Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
               Visibility="Collapsed">
-        <TextBlock Text="{Binding StatusBar.Message}"
-                   TextWrapping="NoWrap"
-                   TextTrimming="CharacterEllipsis" />
+        <Grid>
+          <ItemsRepeater ItemsSource="{Binding StatusBar.Segments}"
+                         Visibility="{Binding StatusBar.HasSegments}">
+            <ItemsRepeater.Layout>
+              <StackLayout Orientation="Horizontal" />
+            </ItemsRepeater.Layout>
+            <ItemsRepeater.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding Text}"
+                           Margin="0,0,12,0"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+              </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
+          </ItemsRepeater>
+
+          <TextBlock Text="{Binding StatusBar.Message}"
+                     Visibility="{Binding StatusBar.ShowMessageFallback}"
+                     TextWrapping="NoWrap"
+                     TextTrimming="CharacterEllipsis" />
+        </Grid>
       </Border>
     </Grid>
   </Border>
