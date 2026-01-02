@@ -233,6 +233,9 @@ public partial class App : Application
                     services.AddSingleton<StatusBarViewModel>();
 
                     services.AddSingleton<IStatusBarExtension, CoreStatusBarExtension>();
+                    services.AddSingleton<IStatusBarExtension, AiStatusBarExtension>();
+                    services.AddSingleton<IStatusBarExtension, AiDownloadStatusBarExtension>();
+                    services.AddSingleton<IStatusBarExtension, HardwareStatusBarExtension>();
                     services.AddSingleton<StatusBarComposer>();
 
                     services.AddSingleton<IComposeSearchStateStore, ComposeSearchStateStore>();

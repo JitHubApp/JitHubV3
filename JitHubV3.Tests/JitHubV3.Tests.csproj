@@ -105,6 +105,9 @@
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarSegment.cs" Link="Presentation\Infrastructure\StatusBarSegment.cs" />
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\IStatusBarExtension.cs" Link="Presentation\Infrastructure\IStatusBarExtension.cs" />
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\CoreStatusBarExtension.cs" Link="Presentation\Infrastructure\CoreStatusBarExtension.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\AiStatusBarExtension.cs" Link="Presentation\Infrastructure\AiStatusBarExtension.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\AiDownloadStatusBarExtension.cs" Link="Presentation\Infrastructure\AiDownloadStatusBarExtension.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Infrastructure\HardwareStatusBarExtension.cs" Link="Presentation\Infrastructure\HardwareStatusBarExtension.cs" />
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarComposer.cs" Link="Presentation\Infrastructure\StatusBarComposer.cs" />
   </ItemGroup>
 </Project>
