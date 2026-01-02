@@ -151,8 +151,19 @@ public partial class App : Application
 
                     services.AddSingleton<IAiRuntimeCatalog, ConfiguredAiRuntimeCatalog>();
                     services.AddSingleton<IAiRuntimeDescriptorCatalog, DefaultAiRuntimeDescriptorCatalog>();
-                    services.AddSingleton<IAiModelStore>(sp => new JsonFileAiModelStore());
-                    services.AddSingleton<IAiEnablementStore>(sp => new JsonFileAiEnablementStore());
+
+                    services.AddSingleton<AiStatusEventBus>();
+                    services.AddSingleton<IAiStatusEventBus>(sp => sp.GetRequiredService<AiStatusEventBus>());
+                    services.AddSingleton<IAiStatusEventPublisher>(sp => sp.GetRequiredService<AiStatusEventBus>());
+
+                    services.AddSingleton<IAiModelStore>(sp =>
+                        new AiModelStoreEventingDecorator(
+                            new JsonFileAiModelStore(),
+                            sp.GetRequiredService<IAiStatusEventPublisher>()));
+                    services.AddSingleton<IAiEnablementStore>(sp =>
+                        new AiEnablementStoreEventingDecorator(
+                            new JsonFileAiEnablementStore(),
+                            sp.GetRequiredService<IAiStatusEventPublisher>()));
                     services.AddSingleton<IAiRuntimeSettingsStore>(sp => new JsonFileAiRuntimeSettingsStore());
                     services.AddSingleton(sp => AiSettings.FromConfiguration(context.Configuration));
                     services.AddSingleton<IAiRuntimeResolver, AiRuntimeResolver>();

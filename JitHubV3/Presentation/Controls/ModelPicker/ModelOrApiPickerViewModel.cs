@@ -74,6 +74,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         IAiLocalModelCatalog localCatalog,
         IAiModelDownloadQueue downloads,
         IAiModelStore modelStore,
+        IAiStatusEventPublisher events,
         IReadOnlyList<AiLocalModelDefinition> localDefinitions,
         IAiRuntimeSettingsStore settingsStore,
         ISecretStore secrets,
@@ -82,7 +83,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         AzureAiFoundryRuntimeConfig foundry)
     {
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
-        _localModels = new LocalModelsPickerViewModel(localCatalog, downloads, modelStore, localDefinitions);
+        _localModels = new LocalModelsPickerViewModel(localCatalog, downloads, modelStore, events, localDefinitions);
         _openAi = new OpenAiPickerViewModel(settingsStore, secrets, modelStore, openAi);
         _anthropic = new AnthropicPickerViewModel(settingsStore, secrets, modelStore, anthropic);
         _foundry = new AzureAiFoundryPickerViewModel(settingsStore, secrets, modelStore, foundry);

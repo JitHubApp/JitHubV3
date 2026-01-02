@@ -35,7 +35,9 @@ public sealed class LocalModelsPickerViewModelTests
                 ExpectedSha256: null),
         };
 
-        var vm = new LocalModelsPickerViewModel(catalog, downloads, modelStore, definitions);
+        var events = new RecordingAiStatusEventPublisher();
+
+        var vm = new LocalModelsPickerViewModel(catalog, downloads, modelStore, events, definitions);
 
         await vm.RefreshAsync(CancellationToken.None);
 
@@ -63,10 +65,13 @@ public sealed class LocalModelsPickerViewModelTests
         var downloads = new FakeDownloadQueue();
         var modelStore = new FakeModelStore(selection: null);
 
+        var events = new RecordingAiStatusEventPublisher();
+
         var vm = new LocalModelsPickerViewModel(
             catalog,
             downloads,
             modelStore,
+            events,
             definitions: Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
@@ -95,10 +100,13 @@ public sealed class LocalModelsPickerViewModelTests
         var downloads = new FakeDownloadQueue();
         var modelStore = new FakeModelStore(selection: null);
 
+        var events = new RecordingAiStatusEventPublisher();
+
         var vm = new LocalModelsPickerViewModel(
             catalog,
             downloads,
             modelStore,
+            events,
             definitions: Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
@@ -127,6 +135,8 @@ public sealed class LocalModelsPickerViewModelTests
         var downloads = new FakeDownloadQueue();
         var modelStore = new FakeModelStore(selection: null);
 
+        var events = new RecordingAiStatusEventPublisher();
+
         var handle = downloads.Enqueue(new AiModelDownloadRequest(
             ModelId: "m1",
             RuntimeId: "local-foundry",
@@ -138,6 +148,7 @@ public sealed class LocalModelsPickerViewModelTests
             catalog,
             downloads,
             modelStore,
+            events,
             definitions: Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
@@ -154,6 +165,15 @@ public sealed class LocalModelsPickerViewModelTests
         downloads.Publish(handle, status: AiModelDownloadStatus.Completed, progress: 1.0);
         item.IsDownloaded.Should().BeTrue();
         item.StatusText.Should().Be("Downloaded");
+
+        events.Events.OfType<AiDownloadProgressChanged>().Should().NotBeEmpty();
+    }
+
+    private sealed class RecordingAiStatusEventPublisher : IAiStatusEventPublisher
+    {
+        public List<AiStatusEvent> Events { get; } = new();
+
+        public void Publish(AiStatusEvent evt) => Events.Add(evt);
     }
 
     private sealed class FakeLocalModelCatalog : IAiLocalModelCatalog

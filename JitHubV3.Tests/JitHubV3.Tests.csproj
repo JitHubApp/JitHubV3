@@ -89,6 +89,11 @@
     <Compile Include="..\JitHubV3\Services\Ai\AiModelPickerOptionsProvider.cs" Link="Ai\AiModelPickerOptionsProvider.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiLocalModelDefinitionsConfiguration.cs" Link="Ai\AiLocalModelDefinitionsConfiguration.cs" />
 
+    <Compile Include="..\JitHubV3\Services\Ai\IAiStatusEventBus.cs" Link="Ai\IAiStatusEventBus.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiStatusEvents.cs" Link="Ai\AiStatusEvents.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiStatusEventBus.cs" Link="Ai\AiStatusEventBus.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiStatusEventingDecorators.cs" Link="Ai\AiStatusEventingDecorators.cs" />
+
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerCategoryViewModel.cs" Link="Presentation\ModelPicker\PickerCategoryViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\LocalModelsPickerViewModel.cs" Link="Presentation\ModelPicker\LocalModelsPickerViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\OpenAiPickerViewModel.cs" Link="Presentation\ModelPicker\OpenAiPickerViewModel.cs" />

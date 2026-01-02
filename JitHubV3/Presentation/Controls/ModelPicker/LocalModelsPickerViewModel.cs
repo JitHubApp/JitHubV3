@@ -15,6 +15,7 @@ public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
     private readonly IAiLocalModelCatalog _catalog;
     private readonly IAiModelDownloadQueue _downloads;
     private readonly IAiModelStore _modelStore;
+    private readonly IAiStatusEventPublisher _events;
     private readonly IReadOnlyList<AiLocalModelDefinition> _definitions;
 
     private readonly Dictionary<Guid, IDisposable> _subscriptionsByDownloadId = new();
@@ -42,11 +43,13 @@ public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
         IAiLocalModelCatalog catalog,
         IAiModelDownloadQueue downloads,
         IAiModelStore modelStore,
+        IAiStatusEventPublisher events,
         IReadOnlyList<AiLocalModelDefinition> definitions)
     {
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _downloads = downloads ?? throw new ArgumentNullException(nameof(downloads));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
+        _events = events ?? throw new ArgumentNullException(nameof(events));
         _definitions = definitions ?? Array.Empty<AiLocalModelDefinition>();
 
         _downloads.DownloadsChanged += OnDownloadsChanged;
@@ -175,6 +178,7 @@ public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
 
             _subscriptionsByDownloadId[handle.Id] = handle.Subscribe(p =>
             {
+                _events.Publish(new AiDownloadProgressChanged(handle.Id, handle.Request, p));
                 item.ApplyProgress(p);
                 OnPropertyChanged(nameof(CanApply));
                 OnPropertyChanged(nameof(FooterSummary));

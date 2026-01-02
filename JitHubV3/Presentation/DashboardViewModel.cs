@@ -28,6 +28,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
     private readonly IAiModelStore _aiModelStore;
     private readonly IAiEnablementStore _aiEnablementStore;
     private readonly IAiModelDownloadQueue _aiModelDownloads;
+    private readonly IAiStatusEventPublisher _aiEvents;
 
     private CancellationTokenSource? _activeCts;
     private CancellationTokenSource? _cardsCts;
@@ -210,7 +211,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         IAiModelPickerOptionsProvider aiModelOptions,
         IAiModelStore aiModelStore,
         IAiEnablementStore aiEnablementStore,
-        IAiModelDownloadQueue aiModelDownloads)
+        IAiModelDownloadQueue aiModelDownloads,
+        IAiStatusEventPublisher aiEvents)
     {
         _logger = logger;
         _dispatcher = dispatcher;
@@ -228,6 +230,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
         _aiModelStore = aiModelStore;
         _aiEnablementStore = aiEnablementStore;
         _aiModelDownloads = aiModelDownloads;
+        _aiEvents = aiEvents;
 
         AiModelPicker = aiModelPicker ?? throw new ArgumentNullException(nameof(aiModelPicker));
 
@@ -430,6 +433,7 @@ public sealed partial class DashboardViewModel : ObservableObject, IActivatableV
 
         _activeAiDownloadSubscription = handle.Subscribe(p =>
         {
+            _aiEvents.Publish(new AiDownloadProgressChanged(handle.Id, handle.Request, p));
             _ = _dispatcher.ExecuteAsync(() =>
             {
                 IsAiModelDownloadVisible = true;
