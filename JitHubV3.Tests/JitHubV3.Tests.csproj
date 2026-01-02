@@ -91,5 +91,8 @@
 
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerCategoryViewModel.cs" Link="Presentation\ModelPicker\PickerCategoryViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\LocalModelsPickerViewModel.cs" Link="Presentation\ModelPicker\LocalModelsPickerViewModel.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\OpenAiPickerViewModel.cs" Link="Presentation\ModelPicker\OpenAiPickerViewModel.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AnthropicPickerViewModel.cs" Link="Presentation\ModelPicker\AnthropicPickerViewModel.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AzureAiFoundryPickerViewModel.cs" Link="Presentation\ModelPicker\AzureAiFoundryPickerViewModel.cs" />
   </ItemGroup>
 </Project>
