@@ -1,5 +1,6 @@
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
+using JitHubV3.Services.Ai.ModelPicker;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
@@ -216,4 +217,33 @@ public sealed partial class AzureAiFoundryPickerViewModel : PickerCategoryViewMo
 
     private bool HasApiKey()
         => HasStoredApiKey || !string.IsNullOrWhiteSpace(ApiKey);
+
+    public override IReadOnlyList<PickerSelectedModel> GetSelectedModels()
+    {
+        var endpoint = (Endpoint ?? string.Empty).Trim();
+        var model = (ModelId ?? string.Empty).Trim();
+        if (endpoint.Length == 0 || model.Length == 0)
+        {
+            return Array.Empty<PickerSelectedModel>();
+        }
+
+        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out _))
+        {
+            return Array.Empty<PickerSelectedModel>();
+        }
+
+        return new[]
+        {
+            new PickerSelectedModel(
+                SlotId: "default",
+                RuntimeId: "azure-ai-foundry",
+                ModelId: model,
+                DisplayName: model)
+        };
+    }
+
+    public override void RemoveSelectedModel(PickerSelectedModel model)
+    {
+        ModelId = null;
+    }
 }

@@ -1,5 +1,6 @@
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
+using JitHubV3.Services.Ai.ModelPicker;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
@@ -147,4 +148,27 @@ public sealed partial class AnthropicPickerViewModel : PickerCategoryViewModel
 
     private bool HasApiKey()
         => HasStoredApiKey || !string.IsNullOrWhiteSpace(ApiKey);
+
+    public override IReadOnlyList<PickerSelectedModel> GetSelectedModels()
+    {
+        var model = (ModelId ?? string.Empty).Trim();
+        if (model.Length == 0)
+        {
+            return Array.Empty<PickerSelectedModel>();
+        }
+
+        return new[]
+        {
+            new PickerSelectedModel(
+                SlotId: "default",
+                RuntimeId: "anthropic",
+                ModelId: model,
+                DisplayName: model)
+        };
+    }
+
+    public override void RemoveSelectedModel(PickerSelectedModel model)
+    {
+        ModelId = null;
+    }
 }

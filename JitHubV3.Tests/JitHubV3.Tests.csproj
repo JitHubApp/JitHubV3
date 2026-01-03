@@ -101,6 +101,13 @@
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AnthropicPickerViewModel.cs" Link="Presentation\ModelPicker\AnthropicPickerViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AzureAiFoundryPickerViewModel.cs" Link="Presentation\ModelPicker\AzureAiFoundryPickerViewModel.cs" />
 
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\IModelPickerService.cs" Link="Ai\ModelPicker\IModelPickerService.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerInvocation.cs" Link="Ai\ModelPicker\ModelPickerInvocation.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerResult.cs" Link="Ai\ModelPicker\ModelPickerResult.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerSlot.cs" Link="Ai\ModelPicker\ModelPickerSlot.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\PickerPrimaryAction.cs" Link="Ai\ModelPicker\PickerPrimaryAction.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\PickerSelectedModel.cs" Link="Ai\ModelPicker\PickerSelectedModel.cs" />
+
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\DataFreshnessState.cs" Link="Presentation\Infrastructure\DataFreshnessState.cs" />
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarViewModel.cs" Link="Presentation\Infrastructure\StatusBarViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarSegment.cs" Link="Presentation\Infrastructure\StatusBarSegment.cs" />

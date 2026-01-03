@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="using:JitHubV3.Presentation.Controls.ModelPicker"
+             xmlns:ai="using:JitHubV3.Services.Ai.ModelPicker"
              mc:Ignorable="d">
 
   <VisualStateManager.VisualStateGroups>
@@ -347,12 +348,53 @@
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
 
-          <TextBlock x:Uid="ModelPickerOverlay.FooterSummary"
-                     Text="{Binding FooterSummary}"
-                     Style="{ThemeResource BodyTextBlockStyle}"
-                     Opacity="0.72"
-                     TextWrapping="NoWrap"
-                     TextTrimming="CharacterEllipsis" />
+          <StackPanel Grid.Column="0"
+                      Spacing="{StaticResource DashboardSpacingXS}"
+                      VerticalAlignment="Center">
+            <TextBlock x:Uid="ModelPickerOverlay.Footer.ModelsSelectedLabel"
+                       Text="Models selected for this sample"
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Opacity="0.72"
+                       TextWrapping="NoWrap"
+                       TextTrimming="CharacterEllipsis" />
+
+            <ItemsRepeater ItemsSource="{Binding SelectedModelChips}">
+              <ItemsRepeater.Layout>
+                <StackLayout Orientation="Horizontal" Spacing="{StaticResource DashboardSpacingS}" />
+              </ItemsRepeater.Layout>
+
+              <ItemsRepeater.ItemTemplate>
+                <DataTemplate x:DataType="local:SelectedModelChipViewModel">
+                  <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                          BorderThickness="1"
+                          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                          CornerRadius="{StaticResource DashboardRadiusS}"
+                          Padding="{StaticResource DashboardRepoItemPadding}">
+                    <Grid ColumnSpacing="{StaticResource DashboardSpacingS}"
+                          VerticalAlignment="Center">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+
+                      <TextBlock Text="{x:Bind DisplayNameOrId}"
+                                 TextWrapping="NoWrap"
+                                 TextTrimming="CharacterEllipsis" />
+
+                      <Button Grid.Column="1"
+                              MinWidth="44"
+                              MinHeight="44"
+                              Background="Transparent"
+                              AutomationProperties.Name="Remove"
+                              Command="{x:Bind RemoveCommand}">
+                        <SymbolIcon Symbol="Cancel" />
+                      </Button>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+          </StackPanel>
 
             <Button x:Name="FooterCancelButton"
               x:Uid="ModelPickerOverlay.Cancel"
@@ -363,7 +405,7 @@
 
           <Button x:Uid="ModelPickerOverlay.Apply"
                   Grid.Column="2"
-                  Content="Apply"
+              Content="{Binding PrimaryActionText}"
                   MinHeight="44"
               Command="{Binding ApplyCommand}"
               IsEnabled="{Binding CanApply}" />

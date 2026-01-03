@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
@@ -30,6 +31,14 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         Slots: Array.Empty<ModelPickerSlot>(),
         PersistSelection: true);
 
+    private INotifyPropertyChanged? _activeCategoryChanged;
+
+    public ObservableCollection<PickerSelectedModel> SelectedModels { get; } = new();
+
+    public ObservableCollection<SelectedModelChipViewModel> SelectedModelChips { get; } = new();
+
+    public string PrimaryActionText => _invocation.PrimaryAction == PickerPrimaryAction.RunSample ? "Run sample" : "Apply";
+
     public ObservableCollection<ModelPickerCategoryItem> Categories { get; } = new();
 
     private ModelPickerCategoryItem? _selectedCategory;
@@ -53,10 +62,29 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         get => _activeCategory;
         private set
         {
+            if (ReferenceEquals(_activeCategory, value))
+            {
+                return;
+            }
+
+            if (_activeCategoryChanged is not null)
+            {
+                _activeCategoryChanged.PropertyChanged -= OnActiveCategoryPropertyChanged;
+                _activeCategoryChanged = null;
+            }
+
             if (!SetProperty(ref _activeCategory, value))
             {
                 return;
             }
+
+            _activeCategoryChanged = value;
+            if (_activeCategoryChanged is not null)
+            {
+                _activeCategoryChanged.PropertyChanged += OnActiveCategoryPropertyChanged;
+            }
+
+            RefreshSelectedModelsFromActive();
 
             OnPropertyChanged(nameof(FooterSummary));
             OnPropertyChanged(nameof(CanApply));
@@ -116,7 +144,11 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
     public void SetInvocation(ModelPickerInvocation invocation)
     {
         _invocation = invocation ?? throw new ArgumentNullException(nameof(invocation));
+        OnPropertyChanged(nameof(PrimaryActionText));
     }
+
+    public IReadOnlyList<PickerSelectedModel> GetSelectedModelsSnapshot()
+        => SelectedModels.ToArray();
 
     private async Task OpenAsync(ModelPickerInvocation invocation)
     {
@@ -283,6 +315,8 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         var active = ActiveCategory;
         if (active is null)
         {
+            SelectedModels.Clear();
+            SelectedModelChips.Clear();
             return;
         }
 
@@ -297,7 +331,29 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
         OnPropertyChanged(nameof(FooterSummary));
         OnPropertyChanged(nameof(CanApply));
+        RefreshSelectedModelsFromActive();
         ApplyCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnActiveCategoryPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        RefreshSelectedModelsFromActive();
+        OnPropertyChanged(nameof(CanApply));
+        ApplyCommand.NotifyCanExecuteChanged();
+    }
+
+    private void RefreshSelectedModelsFromActive()
+    {
+        var active = ActiveCategory;
+        var selected = active?.GetSelectedModels() ?? Array.Empty<PickerSelectedModel>();
+
+        SelectedModels.Clear();
+        SelectedModelChips.Clear();
+        foreach (var s in selected)
+        {
+            SelectedModels.Add(s);
+            SelectedModelChips.Add(new SelectedModelChipViewModel(s, RemoveSelectedModel));
+        }
     }
 
     private async Task ApplyAsync()
@@ -312,14 +368,43 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
         try
         {
-            await active.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+            // Phase 5.3 (gap report section 2.3): if invoked in a context where selections
+            // should not be persisted, avoid mutating the global selection store.
+            if (_invocation.PersistSelection)
+            {
+                await active.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+            }
         }
         catch
         {
             // ignore
         }
 
+        RefreshSelectedModelsFromActive();
+
         LastCloseReason = ModelPickerCloseReason.Confirmed;
         IsOpen = false;
+    }
+
+    public IRelayCommand<PickerSelectedModel> RemoveSelectedModelCommand => _removeSelectedModelCommand ??= new RelayCommand<PickerSelectedModel>(RemoveSelectedModel);
+    private IRelayCommand<PickerSelectedModel>? _removeSelectedModelCommand;
+
+    private void RemoveSelectedModel(PickerSelectedModel? model)
+    {
+        if (model is null)
+        {
+            return;
+        }
+
+        var active = ActiveCategory;
+        if (active is null)
+        {
+            return;
+        }
+
+        active.RemoveSelectedModel(model);
+        RefreshSelectedModelsFromActive();
+        OnPropertyChanged(nameof(CanApply));
+        ApplyCommand.NotifyCanExecuteChanged();
     }
 }

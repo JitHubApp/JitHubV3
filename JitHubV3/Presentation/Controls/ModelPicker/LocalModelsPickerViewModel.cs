@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using JitHubV3.Services.Ai;
+using JitHubV3.Services.Ai.ModelPicker;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
@@ -138,6 +139,29 @@ public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
 
         OnPropertyChanged(nameof(FooterSummary));
         OnPropertyChanged(nameof(CanApply));
+    }
+
+    public override IReadOnlyList<PickerSelectedModel> GetSelectedModels()
+    {
+        var item = SelectedItem;
+        if (item is null)
+        {
+            return Array.Empty<PickerSelectedModel>();
+        }
+
+        return new[]
+        {
+            new PickerSelectedModel(
+                SlotId: "default",
+                RuntimeId: item.RuntimeId,
+                ModelId: item.ModelId,
+                DisplayName: item.DisplayNameOrId)
+        };
+    }
+
+    public override void RemoveSelectedModel(PickerSelectedModel model)
+    {
+        SelectedItem = null;
     }
 
     public override async Task ApplyAsync(CancellationToken ct)

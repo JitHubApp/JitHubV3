@@ -43,20 +43,7 @@ public sealed class ModelPickerService : IModelPickerService
         {
             try
             {
-                // Today we can only return a single persisted selection at best.
-                var selection = await _modelStore.GetSelectionAsync(CancellationToken.None).ConfigureAwait(false);
-
-                var slotId = invocation.Slots.FirstOrDefault()?.SlotId ?? "default";
-                var selectedModels = selection is null
-                    ? Array.Empty<PickerSelectedModel>()
-                    : new[]
-                    {
-                        new PickerSelectedModel(
-                            SlotId: slotId,
-                            RuntimeId: selection.RuntimeId,
-                            ModelId: selection.ModelId,
-                            DisplayName: null)
-                    };
+                var selectedModels = _picker.GetSelectedModelsSnapshot();
 
                 // Phase 2: overlay/VM now tracks close reason so confirm vs cancel is reliable.
                 var wasConfirmed = _picker.LastCloseReason == ModelPickerCloseReason.Confirmed;
