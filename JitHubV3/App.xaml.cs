@@ -182,6 +182,14 @@ public partial class App : Application
 
                     services.AddSingleton<ModelOrApiPickerViewModel>();
 
+                    // Phase 1 (gap report sections 5.1 + 5.2): invocation contract + definition registry scaffolding.
+                    services.AddSingleton<JitHubV3.Services.Ai.ModelPicker.IModelPickerService, JitHubV3.Services.Ai.ModelPicker.ModelPickerService>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinitionRegistry, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.PickerDefinitionRegistry>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.LocalModelsPickerDefinition>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.OpenAiPickerDefinition>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.AnthropicPickerDefinition>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.AzureAiFoundryPickerDefinition>();
+
                     services.AddSingleton(sp => OpenAiRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AnthropicRuntimeConfig.FromConfiguration(context.Configuration));
                     services.AddSingleton(sp => AzureAiFoundryRuntimeConfig.FromConfiguration(context.Configuration));
