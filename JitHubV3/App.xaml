@@ -30,6 +30,15 @@
       <SolidColorBrush x:Key="DashboardCardTintBrushCaution" Color="{ThemeResource SystemFillColorCautionBackground}" Opacity="0.28" />
       <SolidColorBrush x:Key="DashboardCardTintBrushCritical" Color="{ThemeResource SystemFillColorCriticalBackground}" Opacity="0.28" />
 
+      <!--
+           Phase 4.2 (gap report 3.3/4.3): CardGradient2Brush parity.
+           Theme-derived approximation (no hard-coded colors).
+      -->
+      <LinearGradientBrush x:Key="CardGradient2Brush" StartPoint="0,0" EndPoint="1,1" Opacity="0.32">
+        <GradientStop Color="{ThemeResource SystemFillColorNeutralBackground}" Offset="0" />
+        <GradientStop Color="{ThemeResource SystemFillColorAttentionBackground}" Offset="1" />
+      </LinearGradientBrush>
+
     </ResourceDictionary>
   </Application.Resources>
 

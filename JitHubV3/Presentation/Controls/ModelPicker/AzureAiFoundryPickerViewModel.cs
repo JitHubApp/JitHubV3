@@ -5,6 +5,8 @@ namespace JitHubV3.Presentation.Controls.ModelPicker;
 
 public sealed partial class AzureAiFoundryPickerViewModel : PickerCategoryViewModel
 {
+    public override string TemplateKey => "FoundryTemplate";
+
     private readonly IAiRuntimeSettingsStore _settingsStore;
     private readonly ISecretStore _secrets;
     private readonly IAiModelStore _modelStore;

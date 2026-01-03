@@ -180,6 +180,12 @@ public partial class App : Application
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
                         new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
 
+                    // Picker pane VMs are resolved on-demand via definition.PaneViewModelType.
+                    services.AddSingleton<LocalModelsPickerViewModel>();
+                    services.AddSingleton<OpenAiPickerViewModel>();
+                    services.AddSingleton<AnthropicPickerViewModel>();
+                    services.AddSingleton<AzureAiFoundryPickerViewModel>();
+
                     services.AddSingleton<ModelOrApiPickerViewModel>();
 
                     // Phase 1 (gap report sections 5.1 + 5.2): invocation contract + definition registry scaffolding.

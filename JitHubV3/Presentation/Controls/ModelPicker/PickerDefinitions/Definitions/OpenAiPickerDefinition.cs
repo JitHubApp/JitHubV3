@@ -18,6 +18,8 @@ public sealed class OpenAiPickerDefinition : IPickerDefinition
 
     public Uri? IconUri => null;
 
+    public Type PaneViewModelType => typeof(OpenAiPickerViewModel);
+
     public ValueTask<bool> IsAvailableAsync(CancellationToken ct)
         => ValueTask.FromResult(_capabilities.SupportsSecureSecretStore);
 

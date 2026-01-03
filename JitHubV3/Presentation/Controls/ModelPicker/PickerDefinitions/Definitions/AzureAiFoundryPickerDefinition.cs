@@ -18,6 +18,8 @@ public sealed class AzureAiFoundryPickerDefinition : IPickerDefinition
 
     public Uri? IconUri => null;
 
+    public Type PaneViewModelType => typeof(AzureAiFoundryPickerViewModel);
+
     public ValueTask<bool> IsAvailableAsync(CancellationToken ct)
         => ValueTask.FromResult(_capabilities.SupportsSecureSecretStore);
 

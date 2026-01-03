@@ -215,6 +215,8 @@
                                             OpenAiTemplate="{StaticResource OpenAiTemplate}"
                                             AnthropicTemplate="{StaticResource AnthropicTemplate}"
                                             FoundryTemplate="{StaticResource FoundryTemplate}" />
+
+      <local:PickerPaneTemplateSelector x:Key="PickerPaneTemplateSelector" />
     </Grid.Resources>
 
     <!-- Smoke layer + tap-to-close surface -->
@@ -325,13 +327,13 @@
 
           <!-- Right panel placeholder (Phase 3+ fills this with real picker content) -->
           <Border Grid.Column="1"
-                  Background="{ThemeResource LayerFillColorDefaultBrush}"
+              Background="{StaticResource CardGradient2Brush}"
                   BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                   BorderThickness="1"
                   CornerRadius="{StaticResource DashboardRadiusM}"
                   Padding="{StaticResource DashboardEdgePadding}">
             <ContentControl Content="{Binding ActiveCategory}"
-                            ContentTemplateSelector="{StaticResource PickerCategoryTemplateSelector}" />
+                    ContentTemplateSelector="{StaticResource PickerPaneTemplateSelector}" />
           </Border>
         </Grid>
 

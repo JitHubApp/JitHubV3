@@ -12,6 +12,8 @@ namespace JitHubV3.Presentation.Controls.ModelPicker;
 
 public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
 {
+    public override string TemplateKey => "LocalModelsTemplate";
+
     private readonly IAiLocalModelCatalog _catalog;
     private readonly IAiModelDownloadQueue _downloads;
     private readonly IAiModelStore _modelStore;

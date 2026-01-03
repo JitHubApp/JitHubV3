@@ -80,6 +80,7 @@ public sealed class ModelPickerService : IModelPickerService
         });
 
         _picker.PropertyChanged += Handler;
+        _picker.SetInvocation(invocation);
         _picker.IsOpen = true;
 
         return await tcs.Task.ConfigureAwait(false);

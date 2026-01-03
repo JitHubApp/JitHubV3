@@ -1,5 +1,6 @@
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
+using System.Collections.Specialized;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,6 +12,7 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
     private DependencyObject? _lastFocusedElement;
     private ModelOrApiPickerViewModel? _vm;
     private bool _isAnimating;
+    private INotifyCollectionChanged? _categoriesChanged;
 
     public event EventHandler? Closed;
     public event EventHandler? Confirmed;
@@ -69,6 +71,9 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
         if (_vm is not null)
         {
             _vm.PropertyChanged += OnViewModelPropertyChanged;
+
+            _categoriesChanged = _vm.Categories;
+            _categoriesChanged.CollectionChanged += OnCategoriesChanged;
         }
 
         UpdateSidePaneState();
@@ -82,12 +87,20 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
 
     private void DetachFromViewModel()
     {
+        if (_categoriesChanged is not null)
+        {
+            _categoriesChanged.CollectionChanged -= OnCategoriesChanged;
+            _categoriesChanged = null;
+        }
+
         if (_vm is not null)
         {
             _vm.PropertyChanged -= OnViewModelPropertyChanged;
             _vm = null;
         }
     }
+
+    private void OnCategoriesChanged(object? sender, NotifyCollectionChangedEventArgs e) => UpdateSidePaneState();
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

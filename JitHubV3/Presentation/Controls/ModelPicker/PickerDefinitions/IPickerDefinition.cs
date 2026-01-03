@@ -8,6 +8,10 @@ public interface IPickerDefinition
     string DisplayName { get; }
     Uri? IconUri { get; }
 
+    // Phase 4.1: which picker pane to host when this definition is selected.
+    // The host resolves this type via DI and uses existing DataTemplates to render it.
+    Type PaneViewModelType { get; }
+
     // Gap report section 2.2: conditional availability (platform/runtime).
     ValueTask<bool> IsAvailableAsync(CancellationToken ct);
 

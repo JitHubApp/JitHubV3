@@ -5,6 +5,8 @@ namespace JitHubV3.Presentation.Controls.ModelPicker;
 
 public sealed partial class OpenAiPickerViewModel : PickerCategoryViewModel
 {
+    public override string TemplateKey => "OpenAiTemplate";
+
     private readonly IAiRuntimeSettingsStore _settingsStore;
     private readonly ISecretStore _secrets;
     private readonly IAiModelStore _modelStore;

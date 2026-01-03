@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
+using Microsoft.Extensions.DependencyInjection;
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
+using JitHubV3.Services.Ai.ModelPicker;
+using JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions;
 using JitHubV3.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
@@ -15,11 +18,17 @@ public enum ModelPickerCloseReason
 
 public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 {
+    private readonly IPickerDefinitionRegistry _registry;
+    private readonly IServiceProvider _services;
     private readonly IAiModelStore _modelStore;
-    private readonly LocalModelsPickerViewModel _localModels;
-    private readonly OpenAiPickerViewModel? _openAi;
-    private readonly AnthropicPickerViewModel? _anthropic;
-    private readonly AzureAiFoundryPickerViewModel? _foundry;
+
+    private readonly Dictionary<string, IPickerDefinition> _definitionsById = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PickerCategoryViewModel> _paneCacheById = new(StringComparer.Ordinal);
+
+    private ModelPickerInvocation _invocation = new(
+        PickerPrimaryAction.Apply,
+        Slots: Array.Empty<ModelPickerSlot>(),
+        PersistSelection: true);
 
     public ObservableCollection<ModelPickerCategoryItem> Categories { get; } = new();
 
@@ -79,7 +88,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             if (_isOpen)
             {
                 LastCloseReason = ModelPickerCloseReason.Unknown;
-                _ = OpenAsync();
+                _ = OpenAsync(_invocation);
             }
         }
     }
@@ -88,36 +97,13 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
     public IRelayCommand CancelCommand { get; }
 
     public ModelOrApiPickerViewModel(
-        IPlatformCapabilities capabilities,
-        IAiLocalModelCatalog localCatalog,
-        IAiModelDownloadQueue downloads,
-        IAiModelStore modelStore,
-        IAiStatusEventPublisher events,
-        IReadOnlyList<AiLocalModelDefinition> localDefinitions,
-        IAiRuntimeSettingsStore settingsStore,
-        ISecretStore secrets,
-        OpenAiRuntimeConfig openAi,
-        AnthropicRuntimeConfig anthropic,
-        AzureAiFoundryRuntimeConfig foundry)
+        IPickerDefinitionRegistry registry,
+        IServiceProvider services,
+        IAiModelStore modelStore)
     {
-        if (capabilities is null) throw new ArgumentNullException(nameof(capabilities));
-
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        _services = services ?? throw new ArgumentNullException(nameof(services));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
-        _localModels = new LocalModelsPickerViewModel(localCatalog, downloads, modelStore, events, localDefinitions);
-        if (capabilities.SupportsSecureSecretStore)
-        {
-            _openAi = new OpenAiPickerViewModel(settingsStore, secrets, modelStore, openAi);
-            _anthropic = new AnthropicPickerViewModel(settingsStore, secrets, modelStore, anthropic);
-            _foundry = new AzureAiFoundryPickerViewModel(settingsStore, secrets, modelStore, foundry);
-        }
-
-        Categories.Add(new ModelPickerCategoryItem(Id: "local-models", DisplayName: "Local models", IconSymbol: Symbol.Library));
-        if (capabilities.SupportsSecureSecretStore)
-        {
-            Categories.Add(new ModelPickerCategoryItem(Id: "openai", DisplayName: "OpenAI", IconSymbol: Symbol.Message));
-            Categories.Add(new ModelPickerCategoryItem(Id: "anthropic", DisplayName: "Anthropic", IconSymbol: Symbol.Contact));
-            Categories.Add(new ModelPickerCategoryItem(Id: "azure-ai-foundry", DisplayName: "Azure AI Foundry", IconSymbol: Symbol.Setting));
-        }
 
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);
         CancelCommand = new RelayCommand(() =>
@@ -125,14 +111,19 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             LastCloseReason = ModelPickerCloseReason.Canceled;
             IsOpen = false;
         });
-
-        SelectedCategory = Categories.FirstOrDefault();
     }
 
-    private async Task OpenAsync()
+    public void SetInvocation(ModelPickerInvocation invocation)
+    {
+        _invocation = invocation ?? throw new ArgumentNullException(nameof(invocation));
+    }
+
+    private async Task OpenAsync(ModelPickerInvocation invocation)
     {
         try
         {
+            await RefreshCategoriesAsync(invocation, CancellationToken.None).ConfigureAwait(false);
+
             var selection = await _modelStore.GetSelectionAsync(CancellationToken.None).ConfigureAwait(false);
             var categoryId = selection?.RuntimeId switch
             {
@@ -158,19 +149,17 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             // ignore
         }
 
+        if (SelectedCategory is null)
+        {
+            SelectedCategory = Categories.FirstOrDefault();
+        }
+
         await RefreshActiveAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     private void UpdateActiveCategory()
     {
-        ActiveCategory = SelectedCategory?.Id switch
-        {
-            "local-models" => _localModels,
-            "openai" => _openAi,
-            "anthropic" => _anthropic,
-            "azure-ai-foundry" => _foundry,
-            _ => null,
-        };
+        ActiveCategory = SelectedCategory is null ? null : GetPaneForCategoryId(SelectedCategory.Id);
 
         ApplyCommand.NotifyCanExecuteChanged();
 
@@ -178,6 +167,115 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         {
             _ = RefreshActiveAsync(CancellationToken.None);
         }
+    }
+
+    private async Task RefreshCategoriesAsync(ModelPickerInvocation invocation, CancellationToken ct)
+    {
+        var available = await _registry.GetAvailableAsync(invocation, ct).ConfigureAwait(false);
+
+        Categories.Clear();
+        _definitionsById.Clear();
+
+        foreach (var def in _registry.GetAll())
+        {
+            if (string.IsNullOrWhiteSpace(def.Id))
+            {
+                continue;
+            }
+
+            _definitionsById[def.Id] = def;
+        }
+
+        foreach (var d in available)
+        {
+            if (!HasPaneForCategoryId(d.Id))
+            {
+                continue;
+            }
+
+            Categories.Add(new ModelPickerCategoryItem(
+                Id: d.Id,
+                DisplayName: d.DisplayName,
+                IconSymbol: GetIconSymbolForCategoryId(d.Id)));
+        }
+
+        if (Categories.Count == 0)
+        {
+            ActiveCategory = null;
+            SelectedCategory = null;
+            ApplyCommand.NotifyCanExecuteChanged();
+            return;
+        }
+
+        if (SelectedCategory is null || Categories.All(c => !string.Equals(c.Id, SelectedCategory.Id, StringComparison.Ordinal)))
+        {
+            SelectedCategory = Categories.FirstOrDefault();
+        }
+    }
+
+    private PickerCategoryViewModel? GetPaneForCategoryId(string categoryId)
+    {
+        if (string.IsNullOrWhiteSpace(categoryId))
+        {
+            return null;
+        }
+
+        if (_paneCacheById.TryGetValue(categoryId, out var cached))
+        {
+            return cached;
+        }
+
+        if (!_definitionsById.TryGetValue(categoryId, out var def))
+        {
+            return null;
+        }
+
+        var paneType = def.PaneViewModelType;
+        if (paneType is null || !typeof(PickerCategoryViewModel).IsAssignableFrom(paneType))
+        {
+            return null;
+        }
+
+        var pane = _services.GetService(paneType) as PickerCategoryViewModel;
+        if (pane is null)
+        {
+            return null;
+        }
+
+        _paneCacheById[categoryId] = pane;
+        return pane;
+    }
+
+    private bool HasPaneForCategoryId(string categoryId)
+    {
+        if (_definitionsById.TryGetValue(categoryId, out var def))
+        {
+            var t = def.PaneViewModelType;
+            return t is not null && typeof(PickerCategoryViewModel).IsAssignableFrom(t);
+        }
+
+        // Fallback for first RefreshCategoriesAsync call ordering.
+        // If a definition exists and can produce a pane, we'll accept it.
+        var def2 = _registry.GetAll().FirstOrDefault(d => string.Equals(d.Id, categoryId, StringComparison.Ordinal));
+        if (def2 is null)
+        {
+            return false;
+        }
+
+        var paneType = def2.PaneViewModelType;
+        return paneType is not null && typeof(PickerCategoryViewModel).IsAssignableFrom(paneType);
+    }
+
+    private static Symbol GetIconSymbolForCategoryId(string categoryId)
+    {
+        return categoryId switch
+        {
+            "local-models" => Symbol.Library,
+            "openai" => Symbol.Message,
+            "anthropic" => Symbol.Contact,
+            "azure-ai-foundry" => Symbol.Setting,
+            _ => Symbol.Tag,
+        };
     }
 
     private async Task RefreshActiveAsync(CancellationToken ct)
