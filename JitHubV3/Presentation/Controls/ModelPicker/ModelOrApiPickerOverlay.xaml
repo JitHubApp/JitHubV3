@@ -8,14 +8,32 @@
 
   <!--
     DataContext: ModelOrApiPickerViewModel
-    The root Visibility is bound to IsOpen (bool -> Visibility is supported).
+    Phase 2 (gap report 2.1): the overlay manages open/close lifecycle in code-behind
+    to support focus and show/hide animations.
   -->
 
   <Grid x:Name="Root"
-        Visibility="{Binding IsOpen}">
+        Visibility="Collapsed">
 
     <Grid.Resources>
       <local:StoredKeyTextConverter x:Key="StoredKeyTextConverter" />
+
+      <!-- Phase 2 (gap report 2.1): simple show/hide animations -->
+      <Storyboard x:Key="ShowOverlayStoryboard">
+        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Root" Storyboard.TargetProperty="Visibility">
+          <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
+        </ObjectAnimationUsingKeyFrames>
+
+        <DoubleAnimation Storyboard.TargetName="SmokeLayer" Storyboard.TargetProperty="Opacity" To="0.72" Duration="0:0:0.18" />
+        <DoubleAnimation Storyboard.TargetName="Dialog" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.22" />
+        <DoubleAnimation Storyboard.TargetName="DialogTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.26" />
+      </Storyboard>
+
+      <Storyboard x:Key="HideOverlayStoryboard">
+        <DoubleAnimation Storyboard.TargetName="SmokeLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14" />
+        <DoubleAnimation Storyboard.TargetName="Dialog" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14" />
+        <DoubleAnimation Storyboard.TargetName="DialogTranslate" Storyboard.TargetProperty="Y" To="24" Duration="0:0:0.14" />
+      </Storyboard>
 
       <!-- Local Models -->
       <DataTemplate x:Key="LocalModelsTemplate" x:DataType="local:LocalModelsPickerViewModel">
@@ -188,13 +206,15 @@
     </Grid.Resources>
 
     <!-- Smoke layer + tap-to-close surface -->
-    <Border Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-            Opacity="0.72" />
+        <Border x:Name="SmokeLayer"
+          Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+          Opacity="0" />
 
     <Button x:Name="DismissButton"
             Background="Transparent"
             BorderThickness="0"
             Command="{Binding CancelCommand}"
+          IsTabStop="False"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             AutomationProperties.Name="Close AI model picker" />
@@ -206,17 +226,22 @@
             MaxWidth="900"
             MaxHeight="720"
             Margin="{StaticResource DashboardEdgePadding}"
+            Opacity="0"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
             CornerRadius="{StaticResource DashboardRadiusL}"
             Padding="{StaticResource DashboardComposePadding}">
+      <Border.RenderTransform>
+        <TranslateTransform x:Name="DialogTranslate" Y="24" />
+      </Border.RenderTransform>
       <Border.Shadow>
         <ThemeShadow />
       </Border.Shadow>
 
-      <Grid RowSpacing="{StaticResource DashboardSpacingS}"
-            ColumnSpacing="{StaticResource DashboardSpacingS}">
+      <Grid x:Name="DialogContentRoot"
+        RowSpacing="{StaticResource DashboardSpacingS}"
+        ColumnSpacing="{StaticResource DashboardSpacingS}">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
@@ -236,7 +261,8 @@
                      Style="{ThemeResource TitleTextBlockStyle}"
                      TextWrapping="Wrap" />
 
-          <Button x:Uid="ModelPickerOverlay.Close"
+            <Button x:Name="HeaderCloseButton"
+              x:Uid="ModelPickerOverlay.Close"
                   Grid.Column="1"
                   MinWidth="44"
                   MinHeight="44"
@@ -300,7 +326,8 @@
                      TextWrapping="NoWrap"
                      TextTrimming="CharacterEllipsis" />
 
-          <Button x:Uid="ModelPickerOverlay.Cancel"
+            <Button x:Name="FooterCancelButton"
+              x:Uid="ModelPickerOverlay.Cancel"
                   Grid.Column="1"
                   Content="Cancel"
                   MinHeight="44"

@@ -58,10 +58,8 @@ public sealed class ModelPickerService : IModelPickerService
                             DisplayName: null)
                     };
 
-                // NOTE: We cannot reliably detect confirm vs cancel yet without Phase 2+ wiring.
-                // For now, treat close as not confirmed unless PersistSelection is true.
-                // This is intentionally conservative until we add explicit close semantics.
-                var wasConfirmed = invocation.PersistSelection;
+                // Phase 2: overlay/VM now tracks close reason so confirm vs cancel is reliable.
+                var wasConfirmed = _picker.LastCloseReason == ModelPickerCloseReason.Confirmed;
 
                 tcs.TrySetResult(new ModelPickerResult(wasConfirmed, selectedModels));
             }

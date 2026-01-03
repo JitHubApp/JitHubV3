@@ -5,6 +5,13 @@ using JitHubV3.Services.Platform;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
+public enum ModelPickerCloseReason
+{
+    Unknown = 0,
+    Confirmed = 1,
+    Canceled = 2,
+}
+
 public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 {
     private readonly IAiModelStore _modelStore;
@@ -50,6 +57,13 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
     public bool CanApply => ActiveCategory?.CanApply ?? false;
 
+    private ModelPickerCloseReason _lastCloseReason;
+    public ModelPickerCloseReason LastCloseReason
+    {
+        get => _lastCloseReason;
+        private set => SetProperty(ref _lastCloseReason, value);
+    }
+
     private bool _isOpen;
     public bool IsOpen
     {
@@ -63,6 +77,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
             if (_isOpen)
             {
+                LastCloseReason = ModelPickerCloseReason.Unknown;
                 _ = OpenAsync();
             }
         }
@@ -104,7 +119,11 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         }
 
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);
-        CancelCommand = new RelayCommand(() => IsOpen = false);
+        CancelCommand = new RelayCommand(() =>
+        {
+            LastCloseReason = ModelPickerCloseReason.Canceled;
+            IsOpen = false;
+        });
 
         SelectedCategory = Categories.FirstOrDefault();
     }
@@ -187,6 +206,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
         var active = ActiveCategory;
         if (active is null)
         {
+            LastCloseReason = ModelPickerCloseReason.Confirmed;
             IsOpen = false;
             return;
         }
@@ -200,6 +220,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             // ignore
         }
 
+        LastCloseReason = ModelPickerCloseReason.Confirmed;
         IsOpen = false;
     }
 }
