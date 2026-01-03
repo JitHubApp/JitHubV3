@@ -103,11 +103,10 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             Categories.Add(new ModelPickerCategoryItem(Id: "azure-ai-foundry", DisplayName: "Azure AI Foundry"));
         }
 
-        SelectedCategory = Categories.FirstOrDefault();
-        UpdateActiveCategory();
-
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);
         CancelCommand = new RelayCommand(() => IsOpen = false);
+
+        SelectedCategory = Categories.FirstOrDefault();
     }
 
     private async Task OpenAsync()
