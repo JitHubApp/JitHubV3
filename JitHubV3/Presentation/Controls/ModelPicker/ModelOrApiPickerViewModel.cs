@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
 using JitHubV3.Services.Platform;
+using Microsoft.UI.Xaml.Controls;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
@@ -110,12 +111,12 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             _foundry = new AzureAiFoundryPickerViewModel(settingsStore, secrets, modelStore, foundry);
         }
 
-        Categories.Add(new ModelPickerCategoryItem(Id: "local-models", DisplayName: "Local models"));
+        Categories.Add(new ModelPickerCategoryItem(Id: "local-models", DisplayName: "Local models", IconSymbol: Symbol.Library));
         if (capabilities.SupportsSecureSecretStore)
         {
-            Categories.Add(new ModelPickerCategoryItem(Id: "openai", DisplayName: "OpenAI"));
-            Categories.Add(new ModelPickerCategoryItem(Id: "anthropic", DisplayName: "Anthropic"));
-            Categories.Add(new ModelPickerCategoryItem(Id: "azure-ai-foundry", DisplayName: "Azure AI Foundry"));
+            Categories.Add(new ModelPickerCategoryItem(Id: "openai", DisplayName: "OpenAI", IconSymbol: Symbol.Message));
+            Categories.Add(new ModelPickerCategoryItem(Id: "anthropic", DisplayName: "Anthropic", IconSymbol: Symbol.Contact));
+            Categories.Add(new ModelPickerCategoryItem(Id: "azure-ai-foundry", DisplayName: "Azure AI Foundry", IconSymbol: Symbol.Setting));
         }
 
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);

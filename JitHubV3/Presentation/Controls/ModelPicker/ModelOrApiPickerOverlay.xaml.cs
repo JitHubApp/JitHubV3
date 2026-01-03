@@ -28,6 +28,7 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         AttachToViewModel();
+        UpdateSidePaneState();
         if (_vm is { IsOpen: true })
         {
             BeginOpen();
@@ -69,6 +70,14 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
         {
             _vm.PropertyChanged += OnViewModelPropertyChanged;
         }
+
+        UpdateSidePaneState();
+    }
+
+    private void UpdateSidePaneState()
+    {
+        var showSidePane = _vm?.Categories.Count > 1;
+        _ = VisualStateManager.GoToState(this, showSidePane ? "SidePaneVisible" : "SidePaneCollapsed", true);
     }
 
     private void DetachFromViewModel()
@@ -111,6 +120,8 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
 
         _isAnimating = true;
         Root.IsHitTestVisible = true;
+
+        UpdateSidePaneState();
 
         var xamlRoot = XamlRoot ?? Root.XamlRoot;
         _lastFocusedElement = xamlRoot is null

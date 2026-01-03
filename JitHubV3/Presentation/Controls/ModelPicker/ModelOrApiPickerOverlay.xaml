@@ -6,6 +6,18 @@
              xmlns:local="using:JitHubV3.Presentation.Controls.ModelPicker"
              mc:Ignorable="d">
 
+  <VisualStateManager.VisualStateGroups>
+    <VisualStateGroup x:Name="SidePaneStates">
+      <VisualState x:Name="SidePaneVisible" />
+      <VisualState x:Name="SidePaneCollapsed">
+        <VisualState.Setters>
+          <Setter Target="SidePaneColumn.Width" Value="0" />
+          <Setter Target="CategoryList.Visibility" Value="Collapsed" />
+        </VisualState.Setters>
+      </VisualState>
+    </VisualStateGroup>
+  </VisualStateManager.VisualStateGroups>
+
   <!--
     DataContext: ModelOrApiPickerViewModel
     Phase 2 (gap report 2.1): the overlay manages open/close lifecycle in code-behind
@@ -277,7 +289,7 @@
         <Grid Grid.Row="1"
               ColumnSpacing="{StaticResource DashboardSpacingL}">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" />
+            <ColumnDefinition x:Name="SidePaneColumn" Width="240" />
             <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
 
@@ -290,9 +302,23 @@
                     AutomationProperties.Name="Categories">
             <ListView.ItemTemplate>
               <DataTemplate x:DataType="local:ModelPickerCategoryItem">
-                <TextBlock Text="{x:Bind DisplayName}"
-                           TextWrapping="NoWrap"
-                           TextTrimming="CharacterEllipsis" />
+                <Grid MinHeight="44"
+                      Padding="{StaticResource DashboardSpacingS}"
+                      ColumnSpacing="{StaticResource DashboardSpacingS}">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+
+                  <SymbolIcon Width="20"
+                              Height="20"
+                              Symbol="{x:Bind IconSymbol}" />
+
+                  <TextBlock Grid.Column="1"
+                             Text="{x:Bind DisplayName}"
+                             TextWrapping="NoWrap"
+                             TextTrimming="CharacterEllipsis" />
+                </Grid>
               </DataTemplate>
             </ListView.ItemTemplate>
           </ListView>
