@@ -131,84 +131,174 @@
 
       <!-- OpenAI -->
       <DataTemplate x:Key="OpenAiTemplate" x:DataType="local:OpenAiPickerViewModel">
-        <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-          <TextBlock x:Uid="ModelPicker.OpenAi.Title"
-                     Text="OpenAI"
-                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                     TextWrapping="Wrap" />
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock x:Uid="ModelPicker.OpenAi.Title"
+                       Text="OpenAI"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
 
-          <TextBox x:Uid="ModelPicker.OpenAi.ModelId"
-                   Header="Model"
-                   Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="e.g. gpt-4o-mini" />
+            <TextBox x:Uid="ModelPicker.OpenAi.ModelId"
+                     Header="Model"
+                     Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="e.g. gpt-4o-mini" />
 
-          <TextBox x:Uid="ModelPicker.OpenAi.ApiKey"
-                   Header="API key"
-                   Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="Paste API key (not displayed after Apply)" />
+            <TextBox x:Uid="ModelPicker.OpenAi.ApiKey"
+                     Header="API key"
+                     Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="Paste API key (not displayed after Apply)" />
 
-          <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
-                     Opacity="0.72"
-                     TextWrapping="Wrap" />
-        </StackPanel>
+            <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
       </DataTemplate>
 
       <!-- Anthropic -->
       <DataTemplate x:Key="AnthropicTemplate" x:DataType="local:AnthropicPickerViewModel">
-        <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-          <TextBlock x:Uid="ModelPicker.Anthropic.Title"
-                     Text="Anthropic"
-                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                     TextWrapping="Wrap" />
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock x:Uid="ModelPicker.Anthropic.Title"
+                       Text="Anthropic"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
 
-          <TextBox x:Uid="ModelPicker.Anthropic.ModelId"
-                   Header="Model"
-                   Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="e.g. claude-3-5-sonnet-latest" />
+            <TextBox x:Uid="ModelPicker.Anthropic.ModelId"
+                     Header="Model"
+                     Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="e.g. claude-3-5-sonnet-latest" />
 
-          <TextBox x:Uid="ModelPicker.Anthropic.ApiKey"
-                   Header="API key"
-                   Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="Paste API key (not displayed after Apply)" />
+            <TextBox x:Uid="ModelPicker.Anthropic.ApiKey"
+                     Header="API key"
+                     Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="Paste API key (not displayed after Apply)" />
 
-          <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
-                     Opacity="0.72"
-                     TextWrapping="Wrap" />
-        </StackPanel>
+            <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
       </DataTemplate>
 
       <!-- Azure AI Foundry -->
       <DataTemplate x:Key="FoundryTemplate" x:DataType="local:AzureAiFoundryPickerViewModel">
-        <StackPanel Spacing="{StaticResource DashboardSpacingS}">
-          <TextBlock x:Uid="ModelPicker.Foundry.Title"
-                     Text="Azure AI Foundry"
-                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                     TextWrapping="Wrap" />
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock x:Uid="ModelPicker.Foundry.Title"
+                       Text="Azure AI Foundry"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
 
-          <TextBox x:Uid="ModelPicker.Foundry.Endpoint"
-                   Header="Endpoint"
-                   Text="{x:Bind Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="https://..." />
+            <TextBox x:Uid="ModelPicker.Foundry.Endpoint"
+                     Header="Endpoint"
+                     Text="{x:Bind Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="https://..." />
 
-          <TextBox x:Uid="ModelPicker.Foundry.ModelId"
-                   Header="Model"
-                   Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="Model deployment name" />
+            <TextBox x:Uid="ModelPicker.Foundry.ModelId"
+                     Header="Model"
+                     Text="{x:Bind ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="Model deployment name" />
 
-          <TextBox x:Uid="ModelPicker.Foundry.ApiKeyHeader"
-                   Header="API key header name"
-                   Text="{x:Bind ApiKeyHeaderName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="api-key" />
+            <TextBox x:Uid="ModelPicker.Foundry.ApiKeyHeader"
+                     Header="API key header name"
+                     Text="{x:Bind ApiKeyHeaderName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="api-key" />
 
-          <TextBox x:Uid="ModelPicker.Foundry.ApiKey"
-                   Header="API key"
-                   Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                   PlaceholderText="Paste API key (not displayed after Apply)" />
+            <TextBox x:Uid="ModelPicker.Foundry.ApiKey"
+                     Header="API key"
+                     Text="{x:Bind ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="Paste API key (not displayed after Apply)" />
 
-          <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
-                     Opacity="0.72"
-                     TextWrapping="Wrap" />
-        </StackPanel>
+            <TextBlock Text="{x:Bind HasStoredApiKey, Converter={StaticResource StoredKeyTextConverter}}"
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </DataTemplate>
+
+      <!-- Windows AI APIs (Phase 6 stub) -->
+      <DataTemplate x:Key="WinAiApisTemplate" x:DataType="local:WinAiApisPickerViewModel">
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock Text="Windows AI APIs"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="This picker is not implemented yet in JitHubV3."
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </DataTemplate>
+
+      <!-- Custom models / ONNX (Phase 6 stub) -->
+      <DataTemplate x:Key="OnnxTemplate" x:DataType="local:OnnxPickerViewModel">
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock Text="Custom models"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="This picker is a placeholder. Local/ONNX parity is implemented in later phases (Phase 7)."
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </DataTemplate>
+
+      <!-- Ollama (Phase 6 stub) -->
+      <DataTemplate x:Key="OllamaTemplate" x:DataType="local:OllamaPickerViewModel">
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock Text="Ollama"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="Ollama support is not implemented yet in JitHubV3."
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </DataTemplate>
+
+      <!-- Lemonade (Phase 6 stub) -->
+      <DataTemplate x:Key="LemonadeTemplate" x:DataType="local:LemonadePickerViewModel">
+        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource DashboardRadiusM}"
+                Padding="{StaticResource DashboardEdgePadding}">
+          <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+            <TextBlock Text="Lemonade"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="Lemonade support is not implemented yet in JitHubV3."
+                       Opacity="0.72"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
       </DataTemplate>
 
       <local:PickerCategoryTemplateSelector x:Key="PickerCategoryTemplateSelector"

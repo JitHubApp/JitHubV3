@@ -182,7 +182,11 @@ public partial class App : Application
 
                     // Picker pane VMs are resolved on-demand via definition.PaneViewModelType.
                     services.AddSingleton<LocalModelsPickerViewModel>();
+                    services.AddSingleton<WinAiApisPickerViewModel>();
+                    services.AddSingleton<OnnxPickerViewModel>();
+                    services.AddSingleton<OllamaPickerViewModel>();
                     services.AddSingleton<OpenAiPickerViewModel>();
+                    services.AddSingleton<LemonadePickerViewModel>();
                     services.AddSingleton<AnthropicPickerViewModel>();
                     services.AddSingleton<AzureAiFoundryPickerViewModel>();
 
@@ -191,8 +195,18 @@ public partial class App : Application
                     // Phase 1 (gap report sections 5.1 + 5.2): invocation contract + definition registry scaffolding.
                     services.AddSingleton<JitHubV3.Services.Ai.ModelPicker.IModelPickerService, JitHubV3.Services.Ai.ModelPicker.ModelPickerService>();
                     services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinitionRegistry, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.PickerDefinitionRegistry>();
+
+                    // Phase 6 (gap report section 2.4): additional provider availability probes.
+                    services.AddSingleton<JitHubV3.Services.Ai.ExternalProviders.IOllamaProbe, JitHubV3.Services.Ai.ExternalProviders.OllamaProbe>();
+                    services.AddSingleton<JitHubV3.Services.Ai.ExternalProviders.ILemonadeProbe, JitHubV3.Services.Ai.ExternalProviders.LemonadeProbe>();
+
+                    // Phase 6 (gap report section 2.4): missing pickers and availability-gated providers.
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.WinAiApisPickerDefinition>();
                     services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.LocalModelsPickerDefinition>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.OnnxPickerDefinition>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.OllamaPickerDefinition>();
                     services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.OpenAiPickerDefinition>();
+                    services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.LemonadePickerDefinition>();
                     services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.AnthropicPickerDefinition>();
                     services.AddSingleton<JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.IPickerDefinition, JitHubV3.Presentation.Controls.ModelPicker.PickerDefinitions.Definitions.AzureAiFoundryPickerDefinition>();
 

@@ -302,8 +302,12 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
     {
         return categoryId switch
         {
+            "winai" => Symbol.World,
             "local-models" => Symbol.Library,
+            "onnx" => Symbol.Document,
+            "ollama" => Symbol.Sync,
             "openai" => Symbol.Message,
+            "lemonade" => Symbol.Emoji,
             "anthropic" => Symbol.Contact,
             "azure-ai-foundry" => Symbol.Setting,
             _ => Symbol.Tag,
