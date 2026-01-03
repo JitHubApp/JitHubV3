@@ -26,6 +26,8 @@ public static class AiLocalModelDefinitionsConfiguration
             var expectedBytes = TryReadLong(child["ExpectedBytes"]);
             var downloadUri = child["DownloadUri"];
             var expectedSha256 = child["ExpectedSha256"];
+            var modelCardUri = child["ModelCardUri"];
+            var licenseUri = child["LicenseUri"];
 
             items.Add(new AiLocalModelDefinition(
                 ModelId: modelId,
@@ -35,7 +37,9 @@ public static class AiLocalModelDefinitionsConfiguration
                 DownloadUri: downloadUri,
                 ArtifactFileName: child["ArtifactFileName"],
                 ExpectedBytes: expectedBytes,
-                ExpectedSha256: expectedSha256));
+                ExpectedSha256: expectedSha256,
+                ModelCardUri: modelCardUri,
+                LicenseUri: licenseUri));
         }
 
         return items;

@@ -36,20 +36,6 @@ internal sealed class OAuthRedirectPolicy : IOAuthRedirectPolicy
             return null;
         }
 
-        // Desktop loopback redirects (used by the app for local callback capture).
-        // Allow only loopback and only a fixed callback path to avoid open-redirect issues.
-        if (uri.IsLoopback)
-        {
-            if (string.IsNullOrWhiteSpace(uri.Fragment)
-                && (string.Equals(uri.AbsolutePath, "/oauth2/callback", StringComparison.Ordinal)
-                    || string.Equals(uri.AbsolutePath, "/oauth2/callback/", StringComparison.Ordinal)))
-            {
-                return uri;
-            }
-
-            return null;
-        }
-
         // Disallow fragments for HTTP(S) redirects; caller may append query params (handoffCode).
         if (!string.IsNullOrWhiteSpace(uri.Fragment))
         {
@@ -58,7 +44,31 @@ internal sealed class OAuthRedirectPolicy : IOAuthRedirectPolicy
 
         var options = _options.Value;
         var origin = uri.GetLeftPart(UriPartial.Authority);
-        if (!options.AllowedRedirectOrigins.Any(o => string.Equals(o, origin, StringComparison.OrdinalIgnoreCase)))
+        var isAllowlistedOrigin = options.AllowedRedirectOrigins.Any(o => string.Equals(o, origin, StringComparison.OrdinalIgnoreCase));
+
+        // Desktop loopback redirects (used by the app for local callback capture).
+        // Allow only loopback and only a fixed callback path to avoid open-redirect issues.
+        if (uri.IsLoopback)
+        {
+            // If the origin is explicitly allowlisted (e.g., localhost:5000 for WebAssembly), apply the normal
+            // allowlist validation rules even though it's loopback.
+            if (isAllowlistedOrigin)
+            {
+                if (options.AllowedRedirectPaths is { Length: > 0 })
+                {
+                    return options.AllowedRedirectPaths.Any(p => string.Equals(p, uri.AbsolutePath, StringComparison.Ordinal)) ? uri : null;
+                }
+
+                return uri;
+            }
+
+            return (string.Equals(uri.AbsolutePath, "/oauth2/callback", StringComparison.Ordinal)
+                || string.Equals(uri.AbsolutePath, "/oauth2/callback/", StringComparison.Ordinal))
+                ? uri
+                : null;
+        }
+
+        if (!isAllowlistedOrigin)
         {
             return null;
         }

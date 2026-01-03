@@ -79,10 +79,13 @@
     <Compile Include="..\JitHubV3\Services\Ai\ILocalFoundryClient.cs" Link="Ai\ILocalFoundryClient.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\AiLocalModels.cs" Link="Ai\AiLocalModels.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelDefinitionStore.cs" Link="Ai\IAiLocalModelDefinitionStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelInventoryStore.cs" Link="Ai\IAiLocalModelInventoryStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\JsonFileAiLocalModelInventoryStore.cs" Link="Ai\JsonFileAiLocalModelInventoryStore.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiLocalModelCatalog.cs" Link="Ai\IAiLocalModelCatalog.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\LocalAiModelCatalog.cs" Link="Ai\LocalAiModelCatalog.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\ILocalModelShellActions.cs" Link="Ai\ILocalModelShellActions.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloads.cs" Link="Ai\AiModelDownloads.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\IAiModelDownloadQueue.cs" Link="Ai\IAiModelDownloadQueue.cs" />

@@ -32,18 +32,25 @@ public sealed class LocalModelsPickerViewModelTests
                 DownloadUri: "https://example.invalid/phi3.bin",
                 ArtifactFileName: "phi3.bin",
                 ExpectedBytes: 123,
-                ExpectedSha256: null),
+                ExpectedSha256: null,
+                ModelCardUri: null,
+                LicenseUri: null),
         };
 
         var events = new RecordingAiStatusEventPublisher();
 
-        var vm = new LocalModelsPickerViewModel(catalog, downloads, modelStore, events, definitions);
+        var inventory = new InMemoryInventoryStore();
+        var definitionStore = new InMemoryDefinitionStore();
+        var shell = new NoopShellActions();
+
+        var vm = new LocalModelsPickerViewModel(catalog, downloads, modelStore, inventory, definitionStore, shell, events, definitions);
 
         await vm.RefreshAsync(CancellationToken.None);
 
-        vm.Items.Should().HaveCount(1);
-        vm.Items[0].ModelId.Should().Be("phi3");
-        vm.Items[0].IsDownloaded.Should().BeTrue();
+        var items = vm.Groups.SelectMany(g => g.Items).ToArray();
+        items.Should().HaveCount(1);
+        items[0].ModelId.Should().Be("phi3");
+        items[0].IsDownloaded.Should().BeTrue();
         vm.SelectedItem.Should().NotBeNull();
         vm.SelectedItem!.ModelId.Should().Be("phi3");
         vm.CanApply.Should().BeTrue();
@@ -67,15 +74,22 @@ public sealed class LocalModelsPickerViewModelTests
 
         var events = new RecordingAiStatusEventPublisher();
 
+        var inventory = new InMemoryInventoryStore();
+        var definitionStore = new InMemoryDefinitionStore();
+        var shell = new NoopShellActions();
+
         var vm = new LocalModelsPickerViewModel(
             catalog,
             downloads,
             modelStore,
+            inventory,
+            definitionStore,
+            shell,
             events,
             definitions: Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
-        vm.SelectedItem = vm.Items.Single();
+        vm.SelectedItem = vm.Groups.SelectMany(g => g.Items).Single();
 
         vm.CanApply.Should().BeFalse();
 
@@ -102,15 +116,22 @@ public sealed class LocalModelsPickerViewModelTests
 
         var events = new RecordingAiStatusEventPublisher();
 
+        var inventory = new InMemoryInventoryStore();
+        var definitionStore = new InMemoryDefinitionStore();
+        var shell = new NoopShellActions();
+
         var vm = new LocalModelsPickerViewModel(
             catalog,
             downloads,
             modelStore,
+            inventory,
+            definitionStore,
+            shell,
             events,
             definitions: Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
-        vm.SelectedItem = vm.Items.Single();
+        vm.SelectedItem = vm.Groups.SelectMany(g => g.Items).Single();
 
         vm.CanApply.Should().BeTrue();
 
@@ -137,6 +158,10 @@ public sealed class LocalModelsPickerViewModelTests
 
         var events = new RecordingAiStatusEventPublisher();
 
+        var inventory = new InMemoryInventoryStore();
+        var definitionStore = new InMemoryDefinitionStore();
+        var shell = new NoopShellActions();
+
         var handle = downloads.Enqueue(new AiModelDownloadRequest(
             ModelId: "m1",
             RuntimeId: "local-foundry",
@@ -148,12 +173,15 @@ public sealed class LocalModelsPickerViewModelTests
             catalog,
             downloads,
             modelStore,
+            inventory,
+            definitionStore,
+            shell,
             events,
             definitions: Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
 
-        var item = vm.Items.Single();
+        var item = vm.Groups.SelectMany(g => g.Items).Single();
         item.CanCancel.Should().BeTrue();
 
         downloads.Publish(handle, status: AiModelDownloadStatus.Downloading, progress: 0.5);
@@ -184,6 +212,43 @@ public sealed class LocalModelsPickerViewModelTests
 
         public ValueTask<IReadOnlyList<AiLocalModelCatalogItem>> GetCatalogAsync(CancellationToken ct)
             => ValueTask.FromResult(_items);
+    }
+
+    private sealed class InMemoryInventoryStore : IAiLocalModelInventoryStore
+    {
+        public IReadOnlyList<AiLocalModelInventoryEntry> Inventory { get; set; } = Array.Empty<AiLocalModelInventoryEntry>();
+
+        public ValueTask<IReadOnlyList<AiLocalModelInventoryEntry>> GetInventoryAsync(CancellationToken ct)
+            => ValueTask.FromResult(Inventory);
+
+        public ValueTask SetInventoryAsync(IReadOnlyList<AiLocalModelInventoryEntry> inventory, CancellationToken ct)
+        {
+            Inventory = inventory;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class InMemoryDefinitionStore : IAiLocalModelDefinitionStore
+    {
+        public IReadOnlyList<AiLocalModelDefinition> Definitions { get; set; } = Array.Empty<AiLocalModelDefinition>();
+
+        public ValueTask<IReadOnlyList<AiLocalModelDefinition>> GetDefinitionsAsync(CancellationToken ct)
+            => ValueTask.FromResult(Definitions);
+
+        public ValueTask SetDefinitionsAsync(IReadOnlyList<AiLocalModelDefinition> definitions, CancellationToken ct)
+        {
+            Definitions = definitions;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class NoopShellActions : ILocalModelShellActions
+    {
+        public Task LaunchUriAsync(Uri uri) => Task.CompletedTask;
+
+        public Task CopyTextAsync(string text) => Task.CompletedTask;
+
+        public Task OpenFolderAsync(string folderPath) => Task.CompletedTask;
     }
 
     private sealed class FakeModelStore : IAiModelStore

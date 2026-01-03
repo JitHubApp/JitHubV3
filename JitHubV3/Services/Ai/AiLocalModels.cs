@@ -8,7 +8,9 @@ public sealed record AiLocalModelDefinition(
     string? DownloadUri = null,
     string? ArtifactFileName = null,
     long? ExpectedBytes = null,
-    string? ExpectedSha256 = null);
+    string? ExpectedSha256 = null,
+    string? ModelCardUri = null,
+    string? LicenseUri = null);
 
 public sealed record AiLocalModelInventoryEntry(
     string ModelId,

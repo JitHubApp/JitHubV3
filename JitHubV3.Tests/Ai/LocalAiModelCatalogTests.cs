@@ -39,6 +39,7 @@ public sealed class LocalAiModelCatalogTests
 
         var catalog = new LocalAiModelCatalog(
             defs,
+            definitionStore: null,
             inv,
             folderName => $"C:/base/{folderName}");
 

@@ -171,10 +171,13 @@ public partial class App : Application
 
                     services.AddSingleton<IAiLocalModelInventoryStore>(sp => new JsonFileAiLocalModelInventoryStore());
                     services.AddSingleton(sp => AiLocalModelDefinitionsConfiguration.FromConfiguration(context.Configuration));
+                    services.AddSingleton<IAiLocalModelDefinitionStore>(sp => new JsonFileAiLocalModelDefinitionStore());
+                    services.AddSingleton<ILocalModelShellActions, LocalModelShellActions>();
                     services.AddSingleton<IAiLocalModelCatalog>(sp =>
                         new FoundryLocalModelCatalogDecorator(
                             new LocalAiModelCatalog(
                                 sp.GetRequiredService<IReadOnlyList<AiLocalModelDefinition>>(),
+                                sp.GetRequiredService<IAiLocalModelDefinitionStore>(),
                                 sp.GetRequiredService<IAiLocalModelInventoryStore>()),
                             sp.GetRequiredService<ILocalFoundryClient>()));
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>

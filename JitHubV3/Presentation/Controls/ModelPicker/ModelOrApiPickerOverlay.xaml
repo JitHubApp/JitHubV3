@@ -53,79 +53,259 @@
         <Grid RowSpacing="{StaticResource DashboardSpacingS}">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
           </Grid.RowDefinitions>
 
-          <TextBlock x:Uid="ModelPicker.LocalModels.Title"
-                     Text="Local models"
-                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                     TextWrapping="Wrap" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-          <ListView Grid.Row="1"
-                    ItemsSource="{x:Bind Items}"
-                    SelectedItem="{x:Bind SelectedItem, Mode=TwoWay}"
-                    SelectionMode="Single"
-                    AutomationProperties.Name="Local models">
-            <ListView.ItemTemplate>
-              <DataTemplate x:DataType="local:LocalModelOptionViewModel">
-                <Grid ColumnSpacing="{StaticResource DashboardSpacingS}"
-                      RowSpacing="{StaticResource DashboardSpacingXS}"
-                      Padding="{StaticResource DashboardEdgePadding}">
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                  </Grid.RowDefinitions>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
+            <TextBlock x:Uid="ModelPicker.LocalModels.Title"
+                       Text="Local models"
+                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                       TextWrapping="Wrap" />
 
-                  <TextBlock Grid.Row="0"
-                             Grid.Column="0"
-                             Text="{x:Bind DisplayNameOrId}"
-                             TextTrimming="CharacterEllipsis"
-                             TextWrapping="NoWrap" />
+            <Button x:Uid="ModelPicker.LocalModels.AddModel"
+                    Grid.Column="1"
+                    Content="Add model"
+                    MinHeight="44">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.AddViaUrl"
+                                  Text="Add via URL"
+                                  Command="{x:Bind ShowAddViaUrlCommand}" />
+                  <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.AddLocalPath"
+                                  Text="Add local path"
+                                  Command="{x:Bind ShowAddLocalPathCommand}" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+          </Grid>
 
-                  <TextBlock Grid.Row="1"
-                             Grid.Column="0"
-                             Text="{x:Bind StatusText}"
-                             Opacity="0.72"
-                             TextWrapping="NoWrap"
-                             TextTrimming="CharacterEllipsis" />
+          <Border Grid.Row="1"
+                  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  BorderThickness="1"
+                  CornerRadius="{StaticResource DashboardRadiusM}"
+                  Padding="{StaticResource DashboardEdgePadding}"
+                  Visibility="{x:Bind IsAddPanelVisible}">
+            <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+              <TextBlock x:Uid="ModelPicker.LocalModels.AddPanelTitle"
+                         Text="Add model"
+                         Style="{ThemeResource BodyStrongTextBlockStyle}"
+                         TextWrapping="Wrap" />
 
-                  <ProgressBar Grid.Row="2"
-                               Grid.Column="0"
-                               Height="6"
-                               Minimum="0"
-                               Maximum="100"
-                               Value="{x:Bind ProgressPercent}"
-                               IsIndeterminate="{x:Bind IsProgressIndeterminate}"
-                               Visibility="{Binding CanCancel}" />
+              <TextBox x:Uid="ModelPicker.LocalModels.AddModelId"
+                       Header="Model ID"
+                       Text="{x:Bind AddModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="e.g. my-model" />
 
-                  <StackPanel Grid.Row="0"
-                              Grid.RowSpan="3"
-                              Grid.Column="1"
-                              Orientation="Horizontal"
-                              Spacing="{StaticResource DashboardSpacingXS}"
-                              VerticalAlignment="Center">
-                    <Button x:Uid="ModelPicker.LocalModels.Download"
-                            Content="Download"
-                            MinHeight="44"
-                            Command="{x:Bind DownloadCommand}"
-                            IsEnabled="{Binding CanDownload}" />
+              <TextBox x:Uid="ModelPicker.LocalModels.AddDisplayName"
+                       Header="Display name (optional)"
+                       Text="{x:Bind AddDisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="e.g. My model" />
 
-                    <Button x:Uid="ModelPicker.LocalModels.Cancel"
-                            Content="Cancel"
-                            MinHeight="44"
-                            Command="{x:Bind CancelCommand}"
-                            IsEnabled="{Binding CanCancel}"
-                            Visibility="{Binding CanCancel}" />
-                  </StackPanel>
-                </Grid>
-              </DataTemplate>
-            </ListView.ItemTemplate>
-          </ListView>
+              <TextBox x:Uid="ModelPicker.LocalModels.AddDownloadUri"
+                       Header="Download URL"
+                       Text="{x:Bind AddDownloadUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="https://..."
+                       Visibility="{x:Bind IsAddViaUrl}" />
+
+              <TextBox x:Uid="ModelPicker.LocalModels.AddInstallPath"
+                       Header="Install path"
+                       Text="{x:Bind AddInstallPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="C:\\..."
+                       Visibility="{x:Bind IsAddLocalPath}" />
+
+              <TextBox x:Uid="ModelPicker.LocalModels.AddArtifactFileName"
+                       Header="Artifact file name (optional)"
+                       Text="{x:Bind AddArtifactFileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="e.g. model.bin"
+                       Visibility="{x:Bind IsAddViaUrl}" />
+
+              <TextBox x:Uid="ModelPicker.LocalModels.AddModelCardUri"
+                       Header="Model card URL (optional)"
+                       Text="{x:Bind AddModelCardUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="https://..." />
+
+              <TextBox x:Uid="ModelPicker.LocalModels.AddLicenseUri"
+                       Header="License URL (optional)"
+                       Text="{x:Bind AddLicenseUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                       PlaceholderText="https://..." />
+
+              <StackPanel Orientation="Horizontal"
+                          Spacing="{StaticResource DashboardSpacingXS}">
+                <Button x:Uid="ModelPicker.LocalModels.AddConfirm"
+                        Content="Add"
+                        MinHeight="44"
+                        Command="{x:Bind AddModelCommand}" />
+                <Button x:Uid="ModelPicker.LocalModels.AddCancel"
+                        Content="Cancel"
+                        MinHeight="44"
+                        Command="{x:Bind CancelAddModelCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Grid Grid.Row="2"
+                RowSpacing="{StaticResource DashboardSpacingS}">
+            <Grid.Resources>
+              <CollectionViewSource x:Key="LocalModelsGroupsSource"
+                                    IsSourceGrouped="True"
+                                    ItemsPath="Items"
+                                    Source="{x:Bind Groups, Mode=OneWay}" />
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource DashboardRadiusM}"
+                    Padding="{StaticResource DashboardEdgePadding}"
+                  Visibility="{x:Bind ShowEmptyState}">
+              <StackPanel Spacing="{StaticResource DashboardSpacingS}">
+                <TextBlock x:Uid="ModelPicker.LocalModels.EmptyTitle"
+                           Text="No models downloaded"
+                           Style="{ThemeResource BodyStrongTextBlockStyle}"
+                           TextWrapping="Wrap" />
+                <TextBlock x:Uid="ModelPicker.LocalModels.EmptyBody"
+                           Text="Download a model from the list, or add one."
+                           Opacity="0.72"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <ListView Grid.Row="1"
+                      ItemsSource="{Binding Source={StaticResource LocalModelsGroupsSource}}"
+                      SelectedItem="{x:Bind SelectedItem, Mode=TwoWay}"
+                      SelectionMode="Single"
+                      AutomationProperties.Name="Local models">
+
+              <ListView.GroupStyle>
+                <GroupStyle>
+                  <GroupStyle.HeaderTemplate>
+                    <DataTemplate x:DataType="local:LocalModelGroupViewModel">
+                      <TextBlock Text="{x:Bind Title}"
+                                 Style="{ThemeResource CaptionTextBlockStyle}"
+                                 Opacity="0.72"
+                                 Padding="{StaticResource DashboardEdgePadding}" />
+                    </DataTemplate>
+                  </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+              </ListView.GroupStyle>
+
+              <ListView.ItemTemplate>
+                <DataTemplate x:DataType="local:LocalModelOptionViewModel">
+                  <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                          BorderThickness="1"
+                          CornerRadius="{StaticResource DashboardRadiusM}"
+                          Margin="{StaticResource DashboardEdgePadding}"
+                          Padding="{StaticResource DashboardEdgePadding}">
+                    <Grid ColumnSpacing="{StaticResource DashboardSpacingS}"
+                          RowSpacing="{StaticResource DashboardSpacingXS}">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+
+                      <SymbolIcon Grid.Column="0"
+                                  Symbol="Library"
+                                  VerticalAlignment="Top" />
+
+                      <StackPanel Grid.Column="1"
+                                  Spacing="{StaticResource DashboardSpacingXS}">
+                        <TextBlock Text="{x:Bind DisplayNameOrId}"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap" />
+
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource DashboardSpacingXS}"
+                                    Opacity="0.72">
+                          <TextBlock Text="{x:Bind StatusText}"
+                                     TextWrapping="NoWrap"
+                                     TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="·"
+                                     Visibility="{x:Bind HasFileSize}" />
+                          <TextBlock Text="{x:Bind FileSizeText}"
+                                     Visibility="{x:Bind HasFileSize}"
+                                     TextWrapping="NoWrap"
+                                     TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <ProgressBar Height="6"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="{x:Bind ProgressPercent}"
+                                     IsIndeterminate="{x:Bind IsProgressIndeterminate}"
+                                     Visibility="{Binding CanCancel}" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="2"
+                                  Orientation="Horizontal"
+                                  Spacing="{StaticResource DashboardSpacingXS}"
+                                  VerticalAlignment="Top">
+                        <Button x:Uid="ModelPicker.LocalModels.Download"
+                                Content="Download"
+                                MinHeight="44"
+                                Command="{x:Bind DownloadCommand}"
+                          IsEnabled="{Binding CanDownload}"
+                          Visibility="{Binding CanDownload}" />
+
+                        <Button x:Uid="ModelPicker.LocalModels.Cancel"
+                                Content="Cancel"
+                                MinHeight="44"
+                                Command="{x:Bind CancelCommand}"
+                                IsEnabled="{Binding CanCancel}"
+                                Visibility="{Binding CanCancel}" />
+
+                        <Button x:Uid="ModelPicker.LocalModels.More"
+                                MinHeight="44"
+                                MinWidth="44">
+                          <Button.Content>
+                            <SymbolIcon Symbol="More" />
+                          </Button.Content>
+                          <Button.Flyout>
+                            <MenuFlyout>
+                              <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.ViewModelCard"
+                                              Text="View model card"
+                                              Command="{x:Bind ViewModelCardCommand}"
+                                              IsEnabled="{x:Bind CanViewModelCard}" />
+                              <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.ViewLicense"
+                                              Text="View license"
+                                              Command="{x:Bind ViewLicenseCommand}"
+                                              IsEnabled="{x:Bind CanViewLicense}" />
+                              <MenuFlyoutSeparator />
+                              <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.CopyAsPath"
+                                              Text="Copy as path"
+                                              Command="{x:Bind CopyPathCommand}"
+                                              IsEnabled="{x:Bind CanCopyPath}" />
+                              <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.OpenContainingFolder"
+                                              Text="Open containing folder"
+                                              Command="{x:Bind OpenContainingFolderCommand}"
+                                              IsEnabled="{x:Bind CanOpenContainingFolder}" />
+                              <MenuFlyoutItem x:Uid="ModelPicker.LocalModels.Delete"
+                                              Text="Delete"
+                                              Command="{x:Bind DeleteCommand}"
+                                              IsEnabled="{x:Bind CanDelete}" />
+                            </MenuFlyout>
+                          </Button.Flyout>
+                        </Button>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListView.ItemTemplate>
+            </ListView>
+          </Grid>
         </Grid>
       </DataTemplate>
 
