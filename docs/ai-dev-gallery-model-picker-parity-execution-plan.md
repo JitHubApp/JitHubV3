@@ -8,6 +8,36 @@
 
 ## Phase 0 — Freeze the parity target contract (prevents churn)
 
+### 0.0 Phase 0 decision record (must be locked before Phase 1+)
+This is the minimal set of decisions that must be explicitly locked to avoid rework later. Each decision is grounded in the gap report sections below.
+
+- **Primary action semantics** (gap report: “2.3 Footer: … primary action semantics” and “0) Quick read #1”)
+  - Status: **PENDING your choice**
+  - Options:
+    - **RunSample** (strict AI Dev Gallery parity)
+    - **Apply** (JitHubV3 global-selection semantics)
+    - **Hybrid** (both, via `ModelPickerInvocation.PrimaryAction`)
+
+- **Selection cardinality & persistence** (gap report: “2.3 Multi-selection…”, “6.1 Single selection vs multi selection”)
+  - Status: **PENDING your choice**
+  - Options:
+    - Internal multi-selection only (picker returns list; `IAiModelStore` remains single)
+    - Persistent multi-selection (extend store model)
+
+- **Gradient/colors parity policy** (gap report: “4.3 Gradients + custom colors”, “10) Notes on design constraints”)
+  - Status: **PENDING your choice**
+  - Options:
+    - Allow hard-coded gradient stops (strict visual parity)
+    - Theme-resource derived approximations (keeps current JitHubV3 constraints)
+
+**Phase 0 deliverable status**
+- Implemented the invocation/result contracts (referenced throughout this plan):
+  - `JitHubV3/Services/Ai/ModelPicker/ModelPickerInvocation.cs`
+  - `JitHubV3/Services/Ai/ModelPicker/ModelPickerSlot.cs`
+  - `JitHubV3/Services/Ai/ModelPicker/ModelPickerResult.cs`
+  - `JitHubV3/Services/Ai/ModelPicker/PickerSelectedModel.cs`
+  - `JitHubV3/Services/Ai/ModelPicker/PickerPrimaryAction.cs`
+
 ### 0.1 Decide semantic contract: “Apply” vs “Run sample”
 **Coverage (from gap report)**
 - Keep/align: “Define whether JitHubV3 should keep “Apply” semantics, OR adopt “Run sample” semantics in contexts where the picker is invoked.”
