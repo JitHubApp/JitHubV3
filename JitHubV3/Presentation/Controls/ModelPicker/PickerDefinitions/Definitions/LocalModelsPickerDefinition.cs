@@ -8,7 +8,7 @@ public sealed class LocalModelsPickerDefinition : IPickerDefinition
 
     public string DisplayName => "Foundry local";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/local.svg");
 
     public Type PaneViewModelType => typeof(LocalModelsPickerViewModel);
 

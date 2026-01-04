@@ -16,7 +16,7 @@ public sealed class AzureAiFoundryPickerDefinition : IPickerDefinition
 
     public string DisplayName => "Azure AI Foundry";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/cloud.svg");
 
     public Type PaneViewModelType => typeof(AzureAiFoundryPickerViewModel);
 

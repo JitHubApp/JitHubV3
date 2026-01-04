@@ -86,7 +86,13 @@ public sealed partial class LocalModelsPickerViewModel : PickerCategoryViewModel
     public bool IsAddPanelVisible
     {
         get => _isAddPanelVisible;
-        private set => SetProperty(ref _isAddPanelVisible, value);
+        private set
+        {
+            if (!SetProperty(ref _isAddPanelVisible, value))
+            {
+                return;
+            }
+        }
     }
 
     private AddModelMode _addMode;

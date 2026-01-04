@@ -233,7 +233,8 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
             Categories.Add(new ModelPickerCategoryItem(
                 Id: d.Id,
                 DisplayName: d.DisplayName,
-                IconSymbol: GetIconSymbolForCategoryId(d.Id)));
+                IconSymbol: GetIconSymbolForCategoryId(d.Id),
+                IconUri: d.IconUri));
         }
 
         if (Categories.Count == 0)

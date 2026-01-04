@@ -1,0 +1,47 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Phase 9.2 (gap report 4.2): Button style keys parity.
+    Visuals are theme-resource derived approximations (no hard-coded colors).
+  -->
+
+  <!-- Icon-only / subtle actions (e.g., close, "more" buttons) -->
+  <Style x:Key="SubtleButtonStyle"
+         TargetType="Button"
+      BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <!-- Low-emphasis buttons (outline-like) -->
+  <Style x:Key="TertiaryButtonStyle"
+         TargetType="Button"
+      BasedOn="{StaticResource DefaultButtonStyle}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="12,6" />
+  </Style>
+
+  <!-- Primary call-to-action -->
+  <Style x:Key="AccentButtonStyle"
+         TargetType="Button"
+      BasedOn="{StaticResource DefaultButtonStyle}">
+    <!--
+      IMPORTANT: do not BasedOn "AccentButtonStyle" here.
+      This dictionary defines a resource with that key, and referencing it would create
+      a circular BasedOn chain that can break WinUI's XAML compiler.
+    -->
+    <Setter Property="Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+    <Setter Property="BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+    <Setter Property="Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="12,6" />
+  </Style>
+
+</ResourceDictionary>

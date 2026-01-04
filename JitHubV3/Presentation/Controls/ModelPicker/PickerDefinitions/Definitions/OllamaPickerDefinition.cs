@@ -16,7 +16,7 @@ public sealed class OllamaPickerDefinition : IPickerDefinition
 
     public string DisplayName => "Ollama";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/local.svg");
 
     public Type PaneViewModelType => typeof(OllamaPickerViewModel);
 

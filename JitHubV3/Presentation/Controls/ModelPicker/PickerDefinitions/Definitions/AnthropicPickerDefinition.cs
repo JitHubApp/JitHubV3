@@ -16,7 +16,7 @@ public sealed class AnthropicPickerDefinition : IPickerDefinition
 
     public string DisplayName => "Anthropic";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/key.svg");
 
     public Type PaneViewModelType => typeof(AnthropicPickerViewModel);
 

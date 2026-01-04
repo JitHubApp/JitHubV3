@@ -8,7 +8,7 @@ public sealed class OnnxPickerDefinition : IPickerDefinition
 
     public string DisplayName => "Custom models";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/chip.svg");
 
     public Type PaneViewModelType => typeof(OnnxPickerViewModel);
 

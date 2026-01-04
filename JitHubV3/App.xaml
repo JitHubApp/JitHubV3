@@ -15,6 +15,12 @@
 
         <!-- Dashboard UI tokens (metrics only; no colors) -->
         <ResourceDictionary Source="ms-appx:///Presentation/Themes/Dashboard.xaml" />
+
+        <!-- Model picker UI tokens/styles (Phase 9) -->
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/ModelPicker/Buttons.xaml" />
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/ModelPicker/Overlay.xaml" />
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/ModelPicker/Chips.xaml" />
+        <ResourceDictionary Source="ms-appx:///Presentation/Themes/ModelPicker/List.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <!-- Add resources here -->

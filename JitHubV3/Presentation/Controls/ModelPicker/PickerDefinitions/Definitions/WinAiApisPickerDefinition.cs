@@ -8,7 +8,7 @@ public sealed class WinAiApisPickerDefinition : IPickerDefinition
 
     public string DisplayName => "Windows AI APIs";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/api.svg");
 
     public Type PaneViewModelType => typeof(WinAiApisPickerViewModel);
 

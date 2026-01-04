@@ -16,7 +16,7 @@ public sealed class LemonadePickerDefinition : IPickerDefinition
 
     public string DisplayName => "Lemonade";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/api.svg");
 
     public Type PaneViewModelType => typeof(LemonadePickerViewModel);
 

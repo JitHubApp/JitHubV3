@@ -16,7 +16,7 @@ public sealed class OpenAiPickerDefinition : IPickerDefinition
 
     public string DisplayName => "OpenAI";
 
-    public Uri? IconUri => null;
+    public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/key.svg");
 
     public Type PaneViewModelType => typeof(OpenAiPickerViewModel);
 
