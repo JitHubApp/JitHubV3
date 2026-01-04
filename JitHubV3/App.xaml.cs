@@ -180,8 +180,16 @@ public partial class App : Application
                                 sp.GetRequiredService<IAiLocalModelDefinitionStore>(),
                                 sp.GetRequiredService<IAiLocalModelInventoryStore>()),
                             sp.GetRequiredService<ILocalFoundryClient>()));
+
+                    services.AddSingleton<IAiModelDownloadNotificationService, NullAiModelDownloadNotificationService>();
+#if WINDOWS
+                    services.AddSingleton<IAiModelDownloadNotificationService, WindowsAiModelDownloadNotificationService>();
+#endif
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
-                        new AiModelDownloadQueue(new HttpClient(), sp.GetRequiredService<IAiLocalModelInventoryStore>()));
+                        new AiModelDownloadQueue(
+                            new HttpClient(),
+                            sp.GetRequiredService<IAiLocalModelInventoryStore>(),
+                            sp.GetRequiredService<IAiModelDownloadNotificationService>()));
 
                     // Picker pane VMs are resolved on-demand via definition.PaneViewModelType.
                     services.AddSingleton<LocalModelsPickerViewModel>();

@@ -1,0 +1,62 @@
+<UserControl
+    x:Class="JitHubV3.Presentation.Controls.ModelPicker.DownloadProgressList"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="using:JitHubV3.Presentation.Controls.ModelPicker"
+    mc:Ignorable="d">
+
+  <StackPanel Spacing="{StaticResource DashboardSpacingXS}"
+              Visibility="{Binding IsVisible}">
+
+    <TextBlock Text="Downloads"
+               Style="{ThemeResource CaptionTextBlockStyle}"
+               Opacity="0.72" />
+
+    <ItemsRepeater ItemsSource="{Binding Items}">
+      <ItemsRepeater.Layout>
+        <StackLayout Spacing="{StaticResource DashboardSpacingXS}" />
+      </ItemsRepeater.Layout>
+
+      <ItemsRepeater.ItemTemplate>
+        <DataTemplate x:DataType="local:DownloadProgressItemViewModel">
+          <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                  BorderThickness="1"
+                  CornerRadius="{StaticResource DashboardRadiusS}"
+                  Padding="{StaticResource DashboardRepoItemPadding}">
+            <StackPanel Spacing="{StaticResource DashboardSpacingXS}">
+              <Grid ColumnSpacing="{StaticResource DashboardSpacingS}">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{x:Bind ModelId}"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
+
+                <TextBlock Grid.Column="1"
+                           Text="{x:Bind StatusText}"
+                           Opacity="0.72"
+                           TextWrapping="NoWrap" />
+              </Grid>
+
+              <ProgressBar Height="6"
+                           Minimum="0"
+                           Maximum="100"
+                           IsIndeterminate="{x:Bind IsProgressIndeterminate}"
+                           Value="{x:Bind ProgressPercent}" />
+
+              <TextBlock Text="{x:Bind ErrorMessage}"
+                         Opacity="0.72"
+                         TextWrapping="Wrap"
+                         Visibility="{x:Bind HasErrorMessage}" />
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsRepeater.ItemTemplate>
+    </ItemsRepeater>
+  </StackPanel>
+</UserControl>

@@ -37,6 +37,8 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
 
     public ObservableCollection<SelectedModelChipViewModel> SelectedModelChips { get; } = new();
 
+    public DownloadProgressListViewModel DownloadProgressList { get; }
+
     public string PrimaryActionText => _invocation.PrimaryAction == PickerPrimaryAction.RunSample ? "Run sample" : "Apply";
 
     public ObservableCollection<ModelPickerCategoryItem> Categories { get; } = new();
@@ -127,11 +129,14 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject
     public ModelOrApiPickerViewModel(
         IPickerDefinitionRegistry registry,
         IServiceProvider services,
-        IAiModelStore modelStore)
+        IAiModelStore modelStore,
+        IAiModelDownloadQueue downloads)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _services = services ?? throw new ArgumentNullException(nameof(services));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
+
+        DownloadProgressList = new DownloadProgressListViewModel(downloads ?? throw new ArgumentNullException(nameof(downloads)));
 
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);
         CancelCommand = new RelayCommand(() =>

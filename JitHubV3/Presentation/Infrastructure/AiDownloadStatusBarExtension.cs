@@ -38,15 +38,19 @@ public sealed class AiDownloadStatusBarExtension : IStatusBarExtension, IDisposa
                 return Array.Empty<StatusBarSegment>();
             }
 
-            if (p.Status is not (AiModelDownloadStatus.Queued or AiModelDownloadStatus.Downloading))
+            if (p.Status is not (AiModelDownloadStatus.Queued or AiModelDownloadStatus.Downloading or AiModelDownloadStatus.Verifying))
             {
                 return Array.Empty<StatusBarSegment>();
             }
 
             var model = string.IsNullOrWhiteSpace(r.ModelId) ? "model" : r.ModelId;
-            var text = p.Progress is null
-                ? $"Downloading {model}…"
-                : $"Downloading {model} ({Math.Round(p.Progress.Value * 100, 1):0.#}%)";
+            var text = p.Status switch
+            {
+                AiModelDownloadStatus.Verifying => $"Verifying {model}…",
+                _ => p.Progress is null
+                    ? $"Downloading {model}…"
+                    : $"Downloading {model} ({Math.Round(p.Progress.Value * 100, 1):0.#}%)",
+            };
 
             return new[]
             {

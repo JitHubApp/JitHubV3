@@ -39,6 +39,12 @@ public sealed class AiDownloadStatusBarExtensionTests
         ext.Segments[0].Text.Should().Contain("Downloading m1");
         ext.Segments[0].Text.Should().Contain("50%");
 
+        var verifying = downloading with { Status = AiModelDownloadStatus.Verifying, Progress = 1.0 };
+        bus.Publish(new AiDownloadProgressChanged(verifying.DownloadId, request, verifying));
+
+        ext.Segments.Should().ContainSingle();
+        ext.Segments[0].Text.Should().Contain("Verifying m1");
+
         var completed = downloading with { Status = AiModelDownloadStatus.Completed, Progress = 1.0 };
         bus.Publish(new AiDownloadProgressChanged(completed.DownloadId, request, completed));
 

@@ -645,9 +645,11 @@ public sealed partial class LocalModelOptionViewModel : ObservableObject
                 AiModelDownloadStatus.Downloading => IsProgressIndeterminate
                     ? "Downloading…"
                     : $"Downloading… {ProgressPercent:0.#}%",
+                AiModelDownloadStatus.Verifying => "Verifying…",
                 AiModelDownloadStatus.Completed => "Downloaded",
                 AiModelDownloadStatus.Canceled => "Canceled",
                 AiModelDownloadStatus.Failed => "Failed",
+                AiModelDownloadStatus.VerificationFailed => "Verification failed",
                 _ => "",
             };
         }
@@ -964,7 +966,9 @@ public sealed partial class LocalModelOptionViewModel : ObservableObject
             _handle = null;
         }
 
-        if (p.Status == AiModelDownloadStatus.Canceled || p.Status == AiModelDownloadStatus.Failed)
+        if (p.Status == AiModelDownloadStatus.Canceled
+            || p.Status == AiModelDownloadStatus.Failed
+            || p.Status == AiModelDownloadStatus.VerificationFailed)
         {
             _handle = null;
         }

@@ -7,6 +7,8 @@ public enum AiModelDownloadStatus
     Completed = 2,
     Failed = 3,
     Canceled = 4,
+    Verifying = 5,
+    VerificationFailed = 6,
 }
 
 public sealed record AiModelDownloadRequest(

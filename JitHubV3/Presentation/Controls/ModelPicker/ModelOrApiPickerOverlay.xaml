@@ -603,8 +603,19 @@
                   BorderThickness="1"
                   CornerRadius="{StaticResource DashboardRadiusM}"
                   Padding="{StaticResource DashboardEdgePadding}">
-            <ContentControl Content="{Binding ActiveCategory}"
-                    ContentTemplateSelector="{StaticResource PickerPaneTemplateSelector}" />
+            <Grid RowSpacing="{StaticResource DashboardSpacingS}">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <ContentControl Grid.Row="0"
+                              Content="{Binding ActiveCategory}"
+                              ContentTemplateSelector="{StaticResource PickerPaneTemplateSelector}" />
+
+              <local:DownloadProgressList Grid.Row="1"
+                                          DataContext="{Binding DownloadProgressList}" />
+            </Grid>
           </Border>
         </Grid>
 

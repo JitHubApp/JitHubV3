@@ -14,11 +14,16 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
 
     private readonly HttpClient _http;
     private readonly IAiLocalModelInventoryStore _inventoryStore;
+    private readonly IAiModelDownloadNotificationService _notifications;
 
-    public AiModelDownloadQueue(HttpClient http, IAiLocalModelInventoryStore inventoryStore)
+    public AiModelDownloadQueue(
+        HttpClient http,
+        IAiLocalModelInventoryStore inventoryStore,
+        IAiModelDownloadNotificationService notifications)
     {
         _http = http;
         _inventoryStore = inventoryStore;
+        _notifications = notifications;
     }
 
     public event Action? DownloadsChanged;
@@ -45,12 +50,22 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
             throw new ArgumentException("InstallPath is required", nameof(request));
         }
 
-        var id = Guid.NewGuid();
-        var cts = new CancellationTokenSource();
-        var handle = new AiModelDownloadHandle(id, request, cts);
-
         lock (_gate)
         {
+            var existing = _queue.FirstOrDefault(h =>
+                string.Equals(h.Request.ModelId, request.ModelId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(h.Request.RuntimeId, request.RuntimeId, StringComparison.OrdinalIgnoreCase)
+                && h.Latest.Status is (AiModelDownloadStatus.Queued or AiModelDownloadStatus.Downloading or AiModelDownloadStatus.Verifying));
+
+            if (existing is not null)
+            {
+                return existing;
+            }
+
+            var id = Guid.NewGuid();
+            var cts = new CancellationTokenSource();
+            var handle = new AiModelDownloadHandle(id, request, cts);
+
             _queue.Add(handle);
             _byId.Add(handle.Id, handle);
 
@@ -58,10 +73,10 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
             {
                 _processingTask = Task.Run(ProcessQueueAsync);
             }
-        }
 
-        DownloadsChanged?.Invoke();
-        return handle;
+            DownloadsChanged?.Invoke();
+            return handle;
+        }
     }
 
     public IReadOnlyList<AiModelDownloadHandle> GetActiveDownloads()
@@ -118,20 +133,39 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
 
             try
             {
+                // Phase 8.2: fast-path / dedupe behavior.
+                // If the model is already present on disk and recorded in inventory, treat it as completed.
+                if (await IsAlreadyInstalledAsync(next.Request, next.Cancellation.Token).ConfigureAwait(false))
+                {
+                    next.Completion.TrySetResult(AiModelDownloadStatus.Completed);
+                    next.Publish(next.Latest with { Status = AiModelDownloadStatus.Completed, Progress = 1.0, ErrorMessage = null });
+                    continue;
+                }
                 await DownloadAsync(next).ConfigureAwait(false);
 
                 next.Completion.TrySetResult(AiModelDownloadStatus.Completed);
                 next.Publish(next.Latest with { Status = AiModelDownloadStatus.Completed, Progress = 1.0 });
+
+                _notifications.NotifyDownloadCompleted(next.Latest);
             }
             catch (OperationCanceledException)
             {
                 next.Completion.TrySetResult(AiModelDownloadStatus.Canceled);
                 next.Publish(next.Latest with { Status = AiModelDownloadStatus.Canceled, ErrorMessage = null });
             }
+            catch (AiModelDownloadVerificationException ex)
+            {
+                next.Completion.TrySetResult(AiModelDownloadStatus.VerificationFailed);
+                next.Publish(next.Latest with { Status = AiModelDownloadStatus.VerificationFailed, ErrorMessage = ex.Message });
+
+                _notifications.NotifyDownloadFailed(next.Latest);
+            }
             catch (Exception ex)
             {
                 next.Completion.TrySetResult(AiModelDownloadStatus.Failed);
                 next.Publish(next.Latest with { Status = AiModelDownloadStatus.Failed, ErrorMessage = ex.Message });
+
+                _notifications.NotifyDownloadFailed(next.Latest);
             }
             finally
             {
@@ -142,6 +176,45 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
 
                 DownloadsChanged?.Invoke();
             }
+        }
+    }
+
+    private async Task<bool> IsAlreadyInstalledAsync(AiModelDownloadRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var inventory = await _inventoryStore.GetInventoryAsync(ct).ConfigureAwait(false);
+            var match = inventory.FirstOrDefault(i =>
+                string.Equals(i.ModelId, request.ModelId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(i.RuntimeId, request.RuntimeId, StringComparison.OrdinalIgnoreCase));
+
+            if (match is null)
+            {
+                return false;
+            }
+
+            var installPath = match.InstallPath;
+            if (string.IsNullOrWhiteSpace(installPath) || !Directory.Exists(installPath))
+            {
+                return false;
+            }
+
+            var artifactName = string.IsNullOrWhiteSpace(request.ArtifactFileName)
+                ? GetDefaultArtifactFileName(request.SourceUri)
+                : request.ArtifactFileName!;
+
+            var artifactPath = Path.Combine(installPath, artifactName);
+            if (File.Exists(artifactPath))
+            {
+                return true;
+            }
+
+            // If the artifact file name isn't present (e.g., extracted ZIP), treat any non-empty directory as installed.
+            return Directory.EnumerateFileSystemEntries(installPath).Any();
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -191,12 +264,19 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
 
         if (!string.IsNullOrWhiteSpace(request.ExpectedSha256))
         {
+            handle.Publish(handle.Latest with { Status = AiModelDownloadStatus.Verifying, ErrorMessage = null });
             var actual = ComputeSha256Hex(finalPath);
             if (!string.Equals(NormalizeSha256Hex(actual), NormalizeSha256Hex(request.ExpectedSha256), StringComparison.OrdinalIgnoreCase))
             {
                 try { File.Delete(finalPath); } catch { /* ignore */ }
-                throw new InvalidOperationException("Downloaded artifact SHA256 does not match ExpectedSha256.");
+                throw new AiModelDownloadVerificationException("Verification failed: downloaded artifact SHA256 does not match ExpectedSha256.");
             }
+        }
+
+        if (string.Equals(Path.GetExtension(finalPath), ".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            // Consider extraction as part of the post-download verification phase.
+            handle.Publish(handle.Latest with { Status = AiModelDownloadStatus.Verifying, ErrorMessage = null });
         }
 
         if (string.Equals(Path.GetExtension(finalPath), ".zip", StringComparison.OrdinalIgnoreCase))
@@ -309,5 +389,12 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
             t = t.Substring("sha256:".Length).Trim();
         }
         return t;
+    }
+
+    private sealed class AiModelDownloadVerificationException : Exception
+    {
+        public AiModelDownloadVerificationException(string message) : base(message)
+        {
+        }
     }
 }

@@ -319,7 +319,7 @@ public sealed class LocalModelsPickerViewModelTests
 
             handle.Publish(p);
 
-            if (status is AiModelDownloadStatus.Completed or AiModelDownloadStatus.Failed or AiModelDownloadStatus.Canceled)
+            if (status is AiModelDownloadStatus.Completed or AiModelDownloadStatus.Failed or AiModelDownloadStatus.VerificationFailed or AiModelDownloadStatus.Canceled)
             {
                 handle.Completion.TrySetResult(status);
             }
