@@ -115,6 +115,12 @@
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerSlot.cs" Link="Ai\ModelPicker\ModelPickerSlot.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\PickerPrimaryAction.cs" Link="Ai\ModelPicker\PickerPrimaryAction.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\PickerSelectedModel.cs" Link="Ai\ModelPicker\PickerSelectedModel.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerSlotMatching.cs" Link="Ai\ModelPicker\ModelPickerSlotMatching.cs" />
+
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerDefinitions\IPickerDefinition.cs" Link="Presentation\ModelPicker\PickerDefinitions\IPickerDefinition.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerDefinitions\IPickerDefinitionRegistry.cs" Link="Presentation\ModelPicker\PickerDefinitions\IPickerDefinitionRegistry.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerDefinitions\PickerDefinitionDescriptor.cs" Link="Presentation\ModelPicker\PickerDefinitions\PickerDefinitionDescriptor.cs" />
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerDefinitions\PickerDefinitionRegistry.cs" Link="Presentation\ModelPicker\PickerDefinitions\PickerDefinitionRegistry.cs" />
 
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\DataFreshnessState.cs" Link="Presentation\Infrastructure\DataFreshnessState.cs" />
     <Compile Include="..\JitHubV3\Presentation\Infrastructure\StatusBarViewModel.cs" Link="Presentation\Infrastructure\StatusBarViewModel.cs" />

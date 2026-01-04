@@ -20,7 +20,11 @@ public sealed class WinAiApisPickerDefinition : IPickerDefinition
 
     public bool Supports(ModelPickerSlot slot)
     {
-        // Phase 1 scaffolding: no concrete type mapping yet.
-        return true;
+        return ModelPickerSlotMatching.Supports(
+            slot,
+            "winai",
+            "windows-ai",
+            "wcrapis",
+            "windows-ai-apis");
     }
 }

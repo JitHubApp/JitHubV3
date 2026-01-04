@@ -16,8 +16,11 @@ public sealed class LocalModelsPickerDefinition : IPickerDefinition
 
     public bool Supports(ModelPickerSlot slot)
     {
-        // Phase 1 scaffolding: required model types are not yet mapped.
-        // Treat local models as a general-purpose provider.
-        return true;
+        return ModelPickerSlotMatching.Supports(
+            slot,
+            "local-models",
+            "local",
+            "foundry-local",
+            "local-foundry");
     }
 }

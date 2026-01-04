@@ -16,7 +16,11 @@ public sealed class OnnxPickerDefinition : IPickerDefinition
 
     public bool Supports(ModelPickerSlot slot)
     {
-        // Phase 1 scaffolding: required model types are not yet mapped.
-        return true;
+        return ModelPickerSlotMatching.Supports(
+            slot,
+            "onnx",
+            "custom-models",
+            "custom-model",
+            "local-onnx");
     }
 }

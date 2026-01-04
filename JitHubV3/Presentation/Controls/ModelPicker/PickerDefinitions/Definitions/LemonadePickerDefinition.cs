@@ -25,7 +25,6 @@ public sealed class LemonadePickerDefinition : IPickerDefinition
 
     public bool Supports(ModelPickerSlot slot)
     {
-        // Phase 1 scaffolding: no concrete type mapping yet.
-        return true;
+        return ModelPickerSlotMatching.Supports(slot, "lemonade");
     }
 }
