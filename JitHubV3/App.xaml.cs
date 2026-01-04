@@ -185,12 +185,18 @@ public partial class App : Application
 #if WINDOWS
                     services.AddSingleton<IAiModelDownloadNotificationService, WindowsAiModelDownloadNotificationService>();
 #endif
+
+                    // Phase 1: Foundry Local provider stack (service + client + provider)
+                    services.AddSingleton<JitHubV3.Services.Ai.ExternalProviders.FoundryLocal.IFoundryLocalModelProvider>(sp =>
+                        new JitHubV3.Services.Ai.ExternalProviders.FoundryLocal.FoundryLocalModelProvider(new HttpClient()));
+
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
                         new AiModelDownloadQueueEventingDecorator(
                             new AiModelDownloadQueue(
                                 new HttpClient(),
                                 sp.GetRequiredService<IAiLocalModelInventoryStore>(),
-                                sp.GetRequiredService<IAiModelDownloadNotificationService>()),
+                                sp.GetRequiredService<IAiModelDownloadNotificationService>(),
+                                sp.GetRequiredService<JitHubV3.Services.Ai.ExternalProviders.FoundryLocal.IFoundryLocalModelProvider>()),
                             sp.GetRequiredService<IAiStatusEventPublisher>()));
 
                     // Picker pane VMs are resolved on-demand via definition.PaneViewModelType.

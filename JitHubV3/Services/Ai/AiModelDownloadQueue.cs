@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using JitHubV3.Services.Ai.ExternalProviders.FoundryLocal;
 
 namespace JitHubV3.Services.Ai;
 
@@ -15,15 +16,18 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
     private readonly HttpClient _http;
     private readonly IAiLocalModelInventoryStore _inventoryStore;
     private readonly IAiModelDownloadNotificationService _notifications;
+    private readonly IFoundryLocalModelProvider? _foundryLocal;
 
     public AiModelDownloadQueue(
         HttpClient http,
         IAiLocalModelInventoryStore inventoryStore,
-        IAiModelDownloadNotificationService notifications)
+        IAiModelDownloadNotificationService notifications,
+        IFoundryLocalModelProvider? foundryLocal = null)
     {
         _http = http;
         _inventoryStore = inventoryStore;
         _notifications = notifications;
+        _foundryLocal = foundryLocal;
     }
 
     public event Action? DownloadsChanged;
@@ -223,6 +227,12 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
         var request = handle.Request;
         var ct = handle.Cancellation.Token;
 
+        if (string.Equals(request.SourceUri.Scheme, "fl", StringComparison.OrdinalIgnoreCase))
+        {
+            await DownloadFoundryLocalAsync(handle).ConfigureAwait(false);
+            return;
+        }
+
         Directory.CreateDirectory(request.InstallPath);
 
         var artifactFileName = string.IsNullOrWhiteSpace(request.ArtifactFileName)
@@ -301,6 +311,79 @@ public sealed class AiModelDownloadQueue : IAiModelDownloadQueue
             ArtifactPath = finalPath,
             Progress = totalBytes is null ? handle.Latest.Progress : 1.0,
         });
+    }
+
+    private async Task DownloadFoundryLocalAsync(AiModelDownloadHandle handle)
+    {
+        var request = handle.Request;
+        var ct = handle.Cancellation.Token;
+
+        if (_foundryLocal is null)
+        {
+            throw new InvalidOperationException("Foundry Local download requested but no Foundry Local provider is registered.");
+        }
+
+        Directory.CreateDirectory(request.InstallPath);
+
+        var modelName = GetFoundryLocalModelName(request.SourceUri);
+        if (string.IsNullOrWhiteSpace(modelName))
+        {
+            throw new InvalidOperationException("Foundry Local download requested but the model name could not be parsed from the URL.");
+        }
+
+        var progress = new Progress<float>(p =>
+        {
+            handle.Publish(handle.Latest with
+            {
+                Status = AiModelDownloadStatus.Downloading,
+                Progress = Math.Clamp(p, 0.0f, 1.0f),
+                ErrorMessage = null,
+                InstallPath = request.InstallPath,
+            });
+        });
+
+        var ok = await _foundryLocal.DownloadModelByNameAsync(modelName, progress, ct).ConfigureAwait(false);
+        if (!ok)
+        {
+            throw new Exception("Foundry Local reported download failure.");
+        }
+
+        // Create a small marker file so inventory/dedupe semantics work without storing the full model locally.
+        var markerFileName = string.IsNullOrWhiteSpace(request.ArtifactFileName)
+            ? "foundry-local.marker"
+            : request.ArtifactFileName!;
+        var markerPath = Path.Combine(request.InstallPath, markerFileName);
+        await File.WriteAllTextAsync(markerPath, $"{request.RuntimeId}:{request.ModelId}", ct).ConfigureAwait(false);
+
+        // Persist the inventory entry as "downloaded".
+        var current = await _inventoryStore.GetInventoryAsync(ct).ConfigureAwait(false);
+        var updated = current
+            .Where(i => !string.Equals(i.ModelId, request.ModelId, StringComparison.OrdinalIgnoreCase))
+            .Concat(new[] { new AiLocalModelInventoryEntry(request.ModelId, request.RuntimeId, request.InstallPath) })
+            .ToArray();
+
+        await _inventoryStore.SetInventoryAsync(updated, ct).ConfigureAwait(false);
+
+        handle.Publish(handle.Latest with
+        {
+            Status = AiModelDownloadStatus.Completed,
+            Progress = 1.0,
+            InstallPath = request.InstallPath,
+            ArtifactPath = markerPath,
+            ErrorMessage = null,
+        });
+    }
+
+    private static string? GetFoundryLocalModelName(Uri uri)
+    {
+        // UrlPrefix is expected to be fl://{modelName}
+        if (!string.IsNullOrWhiteSpace(uri.Host))
+        {
+            return uri.Host;
+        }
+
+        var path = uri.AbsolutePath?.Trim('/') ?? string.Empty;
+        return string.IsNullOrWhiteSpace(path) ? null : path;
     }
 
     private static async Task CopyStreamWithProgressAsync(

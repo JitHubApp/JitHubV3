@@ -104,6 +104,8 @@
 
   <ItemGroup>
     <PackageReference Include="Octokit" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
   </ItemGroup>
 
   <ItemGroup>
