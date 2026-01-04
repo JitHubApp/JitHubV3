@@ -7,6 +7,8 @@ public sealed class PickerCategoryTemplateSelector : DataTemplateSelector
 {
     public DataTemplate? LocalModelsTemplate { get; set; }
 
+    public DataTemplate? FoundryLocalTemplate { get; set; }
+
     public DataTemplate? WinAiApisTemplate { get; set; }
 
     public DataTemplate? OnnxTemplate { get; set; }
@@ -31,6 +33,7 @@ public sealed class PickerCategoryTemplateSelector : DataTemplateSelector
         => item switch
         {
             LocalModelsPickerViewModel => LocalModelsTemplate,
+            FoundryLocalPickerViewModel => FoundryLocalTemplate,
             WinAiApisPickerViewModel => WinAiApisTemplate,
             OnnxPickerViewModel => OnnxTemplate,
             OllamaPickerViewModel => OllamaTemplate,

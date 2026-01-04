@@ -310,6 +310,11 @@
         </Grid>
       </DataTemplate>
 
+      <!-- Foundry Local (Phase 2 parity) -->
+      <DataTemplate x:Key="FoundryLocalTemplate" x:DataType="local:FoundryLocalPickerViewModel">
+        <local:FoundryLocalPickerView DataContext="{Binding}" />
+      </DataTemplate>
+
       <!-- OpenAI -->
       <DataTemplate x:Key="OpenAiTemplate" x:DataType="local:OpenAiPickerViewModel">
         <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -484,6 +489,7 @@
 
       <local:PickerCategoryTemplateSelector x:Key="PickerCategoryTemplateSelector"
                                             LocalModelsTemplate="{StaticResource LocalModelsTemplate}"
+                                            FoundryLocalTemplate="{StaticResource FoundryLocalTemplate}"
                                             WinAiApisTemplate="{StaticResource WinAiApisTemplate}"
                                             OnnxTemplate="{StaticResource OnnxTemplate}"
                                             OllamaTemplate="{StaticResource OllamaTemplate}"

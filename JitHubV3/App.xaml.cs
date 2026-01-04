@@ -201,6 +201,7 @@ public partial class App : Application
 
                     // Picker pane VMs are resolved on-demand via definition.PaneViewModelType.
                     services.AddSingleton<LocalModelsPickerViewModel>();
+                    services.AddSingleton<FoundryLocalPickerViewModel>();
                     services.AddSingleton<WinAiApisPickerViewModel>();
                     services.AddSingleton<OnnxPickerViewModel>();
                     services.AddSingleton<OllamaPickerViewModel>();

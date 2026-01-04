@@ -2,46 +2,9 @@
 // Licensed under the MIT License.
 
 using JitHubV3.Services.Ai.FoundryLocal;
-using Microsoft.Extensions.AI;
-using OpenAI;
-using System.ClientModel;
+
 
 namespace JitHubV3.Services.Ai.ExternalProviders.FoundryLocal;
-
-public interface IFoundryLocalModelProvider
-{
-    string UrlPrefix { get; }
-
-    /// <summary>
-    /// Foundry Local base URL (e.g., http://127.0.0.1:PORT) when available.
-    /// </summary>
-    string Url { get; }
-
-    Task<bool> IsAvailable(CancellationToken ct = default);
-
-    Task<IReadOnlyList<FoundryLocalModelDetails>> GetModelsAsync(bool ignoreCached = false, CancellationToken ct = default);
-
-    Task<IReadOnlyList<FoundryLocalModelDetails>> GetAllModelsInCatalogAsync(CancellationToken ct = default);
-
-    Task<bool> DownloadModelAsync(FoundryLocalModelDetails modelDetails, IProgress<float>? progress, CancellationToken ct = default);
-
-    Task<bool> DownloadModelByNameAsync(string modelName, IProgress<float>? progress, CancellationToken ct = default);
-
-    string? IChatClientImplementationNamespace { get; }
-
-    IChatClient? GetIChatClient(string url);
-
-    string? GetIChatClientString(string url);
-}
-
-public sealed partial record FoundryLocalModelDetails(
-    string Id,
-    string Name,
-    string Url,
-    string Description,
-    long? SizeBytes,
-    string? License,
-    object? ProviderModelDetails);
 
 public sealed class FoundryLocalModelProvider : IFoundryLocalModelProvider
 {
@@ -59,36 +22,7 @@ public sealed class FoundryLocalModelProvider : IFoundryLocalModelProvider
 
     public string UrlPrefix => "fl://";
 
-    public string? IChatClientImplementationNamespace { get; } = "OpenAI";
-
     public string Url => _url ?? string.Empty;
-
-    public IChatClient? GetIChatClient(string url)
-    {
-        var modelId = (url ?? string.Empty).Split('/').LastOrDefault();
-
-        if (string.IsNullOrWhiteSpace(modelId) || string.IsNullOrWhiteSpace(Url))
-        {
-            return null;
-        }
-
-        return new OpenAIClient(new ApiKeyCredential("none"), new OpenAIClientOptions
-        {
-            Endpoint = new Uri($"{Url}/v1")
-        }).GetChatClient(modelId).AsIChatClient();
-    }
-
-    public string? GetIChatClientString(string url)
-    {
-        var modelId = (url ?? string.Empty).Split('/').LastOrDefault();
-
-        if (string.IsNullOrWhiteSpace(modelId) || string.IsNullOrWhiteSpace(Url))
-        {
-            return null;
-        }
-
-        return $"new OpenAIClient(new ApiKeyCredential(\"none\"), new OpenAIClientOptions{{ Endpoint = new Uri(\"{Url}/v1\") }}).GetChatClient(\"{modelId}\").AsIChatClient()";
-    }
 
     public async Task<IReadOnlyList<FoundryLocalModelDetails>> GetModelsAsync(bool ignoreCached = false, CancellationToken ct = default)
     {

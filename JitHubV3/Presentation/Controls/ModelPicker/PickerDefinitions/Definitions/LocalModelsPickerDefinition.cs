@@ -10,7 +10,7 @@ public sealed class LocalModelsPickerDefinition : IPickerDefinition
 
     public Uri? IconUri => new("ms-appx:///Assets/ModelIcons/local.svg");
 
-    public Type PaneViewModelType => typeof(LocalModelsPickerViewModel);
+    public Type PaneViewModelType => typeof(FoundryLocalPickerViewModel);
 
     public ValueTask<bool> IsAvailableAsync(CancellationToken ct) => ValueTask.FromResult(true);
 
