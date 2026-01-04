@@ -37,13 +37,11 @@ public sealed class LocalModelsPickerViewModelTests
                 LicenseUri: null),
         };
 
-        var events = new RecordingAiStatusEventPublisher();
-
         var inventory = new InMemoryInventoryStore();
         var definitionStore = new InMemoryDefinitionStore();
         var shell = new NoopShellActions();
 
-        var vm = new LocalModelsPickerViewModel(catalog, downloads, modelStore, inventory, definitionStore, shell, events, definitions);
+        var vm = new LocalModelsPickerViewModel(catalog, downloads, modelStore, inventory, definitionStore, shell, definitions);
 
         await vm.RefreshAsync(CancellationToken.None);
 
@@ -72,8 +70,6 @@ public sealed class LocalModelsPickerViewModelTests
         var downloads = new FakeDownloadQueue();
         var modelStore = new FakeModelStore(selection: null);
 
-        var events = new RecordingAiStatusEventPublisher();
-
         var inventory = new InMemoryInventoryStore();
         var definitionStore = new InMemoryDefinitionStore();
         var shell = new NoopShellActions();
@@ -85,8 +81,7 @@ public sealed class LocalModelsPickerViewModelTests
             inventory,
             definitionStore,
             shell,
-            events,
-            definitions: Array.Empty<AiLocalModelDefinition>());
+            Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
         vm.SelectedItem = vm.Groups.SelectMany(g => g.Items).Single();
@@ -114,8 +109,6 @@ public sealed class LocalModelsPickerViewModelTests
         var downloads = new FakeDownloadQueue();
         var modelStore = new FakeModelStore(selection: null);
 
-        var events = new RecordingAiStatusEventPublisher();
-
         var inventory = new InMemoryInventoryStore();
         var definitionStore = new InMemoryDefinitionStore();
         var shell = new NoopShellActions();
@@ -127,8 +120,7 @@ public sealed class LocalModelsPickerViewModelTests
             inventory,
             definitionStore,
             shell,
-            events,
-            definitions: Array.Empty<AiLocalModelDefinition>());
+            Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
         vm.SelectedItem = vm.Groups.SelectMany(g => g.Items).Single();
@@ -156,8 +148,6 @@ public sealed class LocalModelsPickerViewModelTests
         var downloads = new FakeDownloadQueue();
         var modelStore = new FakeModelStore(selection: null);
 
-        var events = new RecordingAiStatusEventPublisher();
-
         var inventory = new InMemoryInventoryStore();
         var definitionStore = new InMemoryDefinitionStore();
         var shell = new NoopShellActions();
@@ -176,8 +166,7 @@ public sealed class LocalModelsPickerViewModelTests
             inventory,
             definitionStore,
             shell,
-            events,
-            definitions: Array.Empty<AiLocalModelDefinition>());
+            Array.Empty<AiLocalModelDefinition>());
 
         await vm.RefreshAsync(CancellationToken.None);
 
@@ -193,15 +182,6 @@ public sealed class LocalModelsPickerViewModelTests
         downloads.Publish(handle, status: AiModelDownloadStatus.Completed, progress: 1.0);
         item.IsDownloaded.Should().BeTrue();
         item.StatusText.Should().Be("Downloaded");
-
-        events.Events.OfType<AiDownloadProgressChanged>().Should().NotBeEmpty();
-    }
-
-    private sealed class RecordingAiStatusEventPublisher : IAiStatusEventPublisher
-    {
-        public List<AiStatusEvent> Events { get; } = new();
-
-        public void Publish(AiStatusEvent evt) => Events.Add(evt);
     }
 
     private sealed class FakeLocalModelCatalog : IAiLocalModelCatalog

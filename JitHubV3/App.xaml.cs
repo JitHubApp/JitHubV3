@@ -186,10 +186,12 @@ public partial class App : Application
                     services.AddSingleton<IAiModelDownloadNotificationService, WindowsAiModelDownloadNotificationService>();
 #endif
                     services.AddSingleton<IAiModelDownloadQueue>(sp =>
-                        new AiModelDownloadQueue(
-                            new HttpClient(),
-                            sp.GetRequiredService<IAiLocalModelInventoryStore>(),
-                            sp.GetRequiredService<IAiModelDownloadNotificationService>()));
+                        new AiModelDownloadQueueEventingDecorator(
+                            new AiModelDownloadQueue(
+                                new HttpClient(),
+                                sp.GetRequiredService<IAiLocalModelInventoryStore>(),
+                                sp.GetRequiredService<IAiModelDownloadNotificationService>()),
+                            sp.GetRequiredService<IAiStatusEventPublisher>()));
 
                     // Picker pane VMs are resolved on-demand via definition.PaneViewModelType.
                     services.AddSingleton<LocalModelsPickerViewModel>();
