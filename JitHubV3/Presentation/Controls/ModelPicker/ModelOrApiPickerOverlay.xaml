@@ -37,7 +37,7 @@
           <DiscreteObjectKeyFrame KeyTime="0" Value="Visible" />
         </ObjectAnimationUsingKeyFrames>
 
-        <DoubleAnimation Storyboard.TargetName="SmokeLayer" Storyboard.TargetProperty="Opacity" To="0.72" Duration="0:0:0.18" />
+        <DoubleAnimation Storyboard.TargetName="SmokeLayer" Storyboard.TargetProperty="Opacity" To="{StaticResource ModelPickerSmokeOpacity}" Duration="0:0:0.18" />
         <DoubleAnimation Storyboard.TargetName="Dialog" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.22" />
         <DoubleAnimation Storyboard.TargetName="DialogTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.26" />
       </Storyboard>
@@ -484,7 +484,11 @@
 
       <local:PickerCategoryTemplateSelector x:Key="PickerCategoryTemplateSelector"
                                             LocalModelsTemplate="{StaticResource LocalModelsTemplate}"
+                                            WinAiApisTemplate="{StaticResource WinAiApisTemplate}"
+                                            OnnxTemplate="{StaticResource OnnxTemplate}"
+                                            OllamaTemplate="{StaticResource OllamaTemplate}"
                                             OpenAiTemplate="{StaticResource OpenAiTemplate}"
+                                            LemonadeTemplate="{StaticResource LemonadeTemplate}"
                                             AnthropicTemplate="{StaticResource AnthropicTemplate}"
                                             FoundryTemplate="{StaticResource FoundryTemplate}" />
 
@@ -493,7 +497,7 @@
 
     <!-- Smoke layer + tap-to-close surface -->
         <Border x:Name="SmokeLayer"
-          Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+          Background="{StaticResource ModelPickerSmokeBrush}"
           Opacity="0" />
 
     <Button x:Name="DismissButton"
@@ -514,7 +518,7 @@
             MaxHeight="720"
             Margin="{StaticResource DashboardEdgePadding}"
             Opacity="0"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+          Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
             CornerRadius="{StaticResource DashboardRadiusL}"
@@ -579,8 +583,8 @@
                     AutomationProperties.Name="Categories">
             <ListView.ItemTemplate>
               <DataTemplate x:DataType="local:ModelPickerCategoryItem">
-                <Grid MinHeight="44"
-                      Padding="{StaticResource DashboardSpacingS}"
+                    <Grid MinHeight="44"
+                      Padding="{StaticResource DashboardRepoItemPadding}"
                       ColumnSpacing="{StaticResource DashboardSpacingS}"
                       AutomationProperties.Name="{x:Bind DisplayName}">
                   <Grid.ColumnDefinitions>
@@ -603,7 +607,7 @@
 
           <!-- Right panel placeholder (Phase 3+ fills this with real picker content) -->
           <Border Grid.Column="1"
-              Background="{StaticResource CardGradient2Brush}"
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                   BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                   BorderThickness="1"
                   CornerRadius="{StaticResource DashboardRadiusM}"
@@ -616,7 +620,7 @@
 
               <ContentControl Grid.Row="0"
                               Content="{Binding ActiveCategory}"
-                              ContentTemplateSelector="{StaticResource PickerPaneTemplateSelector}" />
+                              ContentTemplateSelector="{StaticResource PickerCategoryTemplateSelector}" />
 
               <local:DownloadProgressList Grid.Row="1"
                                           DataContext="{Binding DownloadProgressList}" />

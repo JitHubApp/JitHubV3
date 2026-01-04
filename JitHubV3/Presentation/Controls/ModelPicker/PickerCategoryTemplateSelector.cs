@@ -7,7 +7,15 @@ public sealed class PickerCategoryTemplateSelector : DataTemplateSelector
 {
     public DataTemplate? LocalModelsTemplate { get; set; }
 
+    public DataTemplate? WinAiApisTemplate { get; set; }
+
+    public DataTemplate? OnnxTemplate { get; set; }
+
+    public DataTemplate? OllamaTemplate { get; set; }
+
     public DataTemplate? OpenAiTemplate { get; set; }
+
+    public DataTemplate? LemonadeTemplate { get; set; }
 
     public DataTemplate? AnthropicTemplate { get; set; }
 
@@ -23,7 +31,11 @@ public sealed class PickerCategoryTemplateSelector : DataTemplateSelector
         => item switch
         {
             LocalModelsPickerViewModel => LocalModelsTemplate,
+            WinAiApisPickerViewModel => WinAiApisTemplate,
+            OnnxPickerViewModel => OnnxTemplate,
+            OllamaPickerViewModel => OllamaTemplate,
             OpenAiPickerViewModel => OpenAiTemplate,
+            LemonadePickerViewModel => LemonadeTemplate,
             AnthropicPickerViewModel => AnthropicTemplate,
             AzureAiFoundryPickerViewModel => FoundryTemplate,
             _ => null,

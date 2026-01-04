@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using JitHub.GitHub.Abstractions.Security;
 using JitHubV3.Services.Ai;
@@ -15,6 +17,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
     private readonly IPickerDefinitionRegistry _registry;
     private readonly IServiceProvider _services;
     private readonly IAiModelStore _modelStore;
+    private readonly ILogger<ModelOrApiPickerViewModel> _logger;
 
     private readonly Dictionary<string, IPickerDefinition> _definitionsById = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PickerCategoryViewModel> _paneCacheById = new(StringComparer.Ordinal);
@@ -108,6 +111,11 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
                 return;
             }
 
+            _logger.LogInformation(
+                "ModelPicker: IsOpen changed to {IsOpen} (Thread={ThreadId})",
+                _isOpen,
+                Environment.CurrentManagedThreadId);
+
             if (_isOpen)
             {
                 LastCloseReason = ModelPickerCloseReason.Unknown;
@@ -123,17 +131,20 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
         IPickerDefinitionRegistry registry,
         IServiceProvider services,
         IAiModelStore modelStore,
-        IAiModelDownloadQueue downloads)
+        IAiModelDownloadQueue downloads,
+        ILogger<ModelOrApiPickerViewModel>? logger = null)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _services = services ?? throw new ArgumentNullException(nameof(services));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
+        _logger = logger ?? NullLogger<ModelOrApiPickerViewModel>.Instance;
 
         DownloadProgressList = new DownloadProgressListViewModel(downloads ?? throw new ArgumentNullException(nameof(downloads)));
 
         ApplyCommand = new AsyncRelayCommand(ApplyAsync, () => CanApply);
         CancelCommand = new RelayCommand(() =>
         {
+            _logger.LogInformation("ModelPicker: Cancel clicked (Thread={ThreadId})", Environment.CurrentManagedThreadId);
             LastCloseReason = ModelPickerCloseReason.Canceled;
             IsOpen = false;
         });
@@ -142,6 +153,11 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
     public void SetInvocation(ModelPickerInvocation invocation)
     {
         _invocation = invocation ?? throw new ArgumentNullException(nameof(invocation));
+        _logger.LogInformation(
+            "ModelPicker: Invocation set (PrimaryAction={PrimaryAction}, Slots={SlotsCount}, PersistSelection={PersistSelection})",
+            _invocation.PrimaryAction,
+            _invocation.Slots.Count,
+            _invocation.PersistSelection);
         OnPropertyChanged(nameof(PrimaryActionText));
     }
 
@@ -150,11 +166,27 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
 
     private async Task OpenAsync(ModelPickerInvocation invocation)
     {
+        _logger.LogInformation(
+            "ModelPicker: OpenAsync start (PrimaryAction={PrimaryAction}, Slots={SlotsCount}, PersistSelection={PersistSelection}, Thread={ThreadId})",
+            invocation.PrimaryAction,
+            invocation.Slots.Count,
+            invocation.PersistSelection,
+            Environment.CurrentManagedThreadId);
+
         try
         {
-            await RefreshCategoriesAsync(invocation, CancellationToken.None).ConfigureAwait(false);
+            await RefreshCategoriesAsync(invocation, CancellationToken.None);
 
-            var selection = await _modelStore.GetSelectionAsync(CancellationToken.None).ConfigureAwait(false);
+            _logger.LogInformation(
+                "ModelPicker: Categories refreshed (Count={Count}, Thread={ThreadId})",
+                Categories.Count,
+                Environment.CurrentManagedThreadId);
+
+            var selection = await _modelStore.GetSelectionAsync(CancellationToken.None);
+            _logger.LogInformation(
+                "ModelPicker: Current selection (RuntimeId={RuntimeId}, ModelId={ModelId})",
+                selection?.RuntimeId,
+                selection?.ModelId);
             var categoryId = selection?.RuntimeId switch
             {
                 null => null,
@@ -170,26 +202,47 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
                 var match = Categories.FirstOrDefault(c => string.Equals(c.Id, categoryId, StringComparison.Ordinal));
                 if (match is not null)
                 {
+                    _logger.LogInformation("ModelPicker: Selecting category from selection mapping (CategoryId={CategoryId})", categoryId);
                     SelectedCategory = match;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "ModelPicker: Selection mapped to CategoryId={CategoryId} but not found in Categories (Available={Available})",
+                        categoryId,
+                        string.Join(",", Categories.Select(c => c.Id)));
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore
+            _logger.LogError(ex, "ModelPicker: OpenAsync failed; picker may render empty");
         }
 
         if (SelectedCategory is null)
         {
+            _logger.LogWarning(
+                "ModelPicker: SelectedCategory still null; defaulting to first (CategoriesCount={Count})",
+                Categories.Count);
             SelectedCategory = Categories.FirstOrDefault();
         }
 
-        await RefreshActiveAsync(CancellationToken.None).ConfigureAwait(false);
+        await RefreshActiveAsync(CancellationToken.None);
+
+        _logger.LogInformation(
+            "ModelPicker: OpenAsync end (SelectedCategory={SelectedCategory}, ActiveCategoryType={ActiveType})",
+            SelectedCategory?.Id,
+            ActiveCategory?.GetType().Name);
     }
 
     private void UpdateActiveCategory()
     {
         ActiveCategory = SelectedCategory is null ? null : GetPaneForCategoryId(SelectedCategory.Id);
+
+        _logger.LogInformation(
+            "ModelPicker: UpdateActiveCategory (SelectedCategory={SelectedId}, ActiveType={ActiveType})",
+            SelectedCategory?.Id,
+            ActiveCategory?.GetType().Name);
 
         ApplyCommand.NotifyCanExecuteChanged();
 
@@ -201,7 +254,16 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
 
     private async Task RefreshCategoriesAsync(ModelPickerInvocation invocation, CancellationToken ct)
     {
-        var available = await _registry.GetAvailableAsync(invocation, ct).ConfigureAwait(false);
+        _logger.LogInformation(
+            "ModelPicker: RefreshCategoriesAsync start (Thread={ThreadId})",
+            Environment.CurrentManagedThreadId);
+
+        var available = await _registry.GetAvailableAsync(invocation, ct);
+
+        _logger.LogInformation(
+            "ModelPicker: Registry available (Count={Count}, Ids={Ids})",
+            available.Count,
+            string.Join(",", available.Select(a => a.Id)));
 
         Categories.Clear();
         _definitionsById.Clear();
@@ -216,10 +278,18 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
             _definitionsById[def.Id] = def;
         }
 
+        _logger.LogInformation(
+            "ModelPicker: Registry total definitions cached (Count={Count}, Ids={Ids})",
+            _definitionsById.Count,
+            string.Join(",", _definitionsById.Keys));
+
         foreach (var d in available)
         {
             if (!HasPaneForCategoryId(d.Id))
             {
+                _logger.LogWarning(
+                    "ModelPicker: Skipping available category {CategoryId} because no pane is registered/resolvable",
+                    d.Id);
                 continue;
             }
 
@@ -230,8 +300,16 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
                 IconUri: d.IconUri));
         }
 
+        _logger.LogInformation(
+            "ModelPicker: Categories built (Count={Count}, Ids={Ids})",
+            Categories.Count,
+            string.Join(",", Categories.Select(c => c.Id)));
+
         if (Categories.Count == 0)
         {
+            _logger.LogError(
+                "ModelPicker: No categories available; UI will be empty (Invocation PrimaryAction={PrimaryAction})",
+                invocation.PrimaryAction);
             ActiveCategory = null;
             SelectedCategory = null;
             ApplyCommand.NotifyCanExecuteChanged();
@@ -240,6 +318,9 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
 
         if (SelectedCategory is null || Categories.All(c => !string.Equals(c.Id, SelectedCategory.Id, StringComparison.Ordinal)))
         {
+            _logger.LogInformation(
+                "ModelPicker: SelectedCategory was missing/invalid; selecting first category (First={First})",
+                Categories.FirstOrDefault()?.Id);
             SelectedCategory = Categories.FirstOrDefault();
         }
     }
@@ -248,30 +329,49 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
     {
         if (string.IsNullOrWhiteSpace(categoryId))
         {
+            _logger.LogWarning("ModelPicker: GetPaneForCategoryId called with blank id");
             return null;
         }
 
         if (_paneCacheById.TryGetValue(categoryId, out var cached))
         {
+            _logger.LogInformation("ModelPicker: Reusing cached pane for {CategoryId} ({Type})", categoryId, cached.GetType().Name);
             return cached;
         }
 
         if (!_definitionsById.TryGetValue(categoryId, out var def))
         {
+            _logger.LogWarning(
+                "ModelPicker: No definition found for CategoryId={CategoryId} (Known={Known})",
+                categoryId,
+                string.Join(",", _definitionsById.Keys));
             return null;
         }
 
         var paneType = def.PaneViewModelType;
         if (paneType is null || !typeof(PickerCategoryViewModel).IsAssignableFrom(paneType))
         {
+            _logger.LogWarning(
+                "ModelPicker: Definition {CategoryId} has invalid PaneViewModelType={PaneType}",
+                categoryId,
+                paneType?.FullName);
             return null;
         }
 
         var pane = _services.GetService(paneType) as PickerCategoryViewModel;
         if (pane is null)
         {
+            _logger.LogError(
+                "ModelPicker: Failed to resolve pane instance for CategoryId={CategoryId} Type={PaneType}",
+                categoryId,
+                paneType.FullName);
             return null;
         }
+
+        _logger.LogInformation(
+            "ModelPicker: Created pane for CategoryId={CategoryId} Type={PaneType}",
+            categoryId,
+            paneType.Name);
 
         _paneCacheById[categoryId] = pane;
         return pane;
@@ -318,6 +418,9 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
         var active = ActiveCategory;
         if (active is null)
         {
+            _logger.LogWarning(
+                "ModelPicker: RefreshActiveAsync with null ActiveCategory (Thread={ThreadId})",
+                Environment.CurrentManagedThreadId);
             SelectedModels.Clear();
             SelectedModelChips.Clear();
             return;
@@ -325,11 +428,13 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
 
         try
         {
-            await active.RefreshAsync(ct).ConfigureAwait(false);
+            _logger.LogInformation("ModelPicker: Refreshing active pane ({PaneType})", active.GetType().Name);
+            await active.RefreshAsync(ct);
+            _logger.LogInformation("ModelPicker: Active pane refreshed ({PaneType})", active.GetType().Name);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore
+            _logger.LogError(ex, "ModelPicker: Active pane refresh failed ({PaneType})", active.GetType().Name);
         }
 
         OnPropertyChanged(nameof(FooterSummary));
@@ -364,6 +469,7 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
         var active = ActiveCategory;
         if (active is null)
         {
+            _logger.LogWarning("ModelPicker: ApplyAsync with null ActiveCategory; closing");
             LastCloseReason = ModelPickerCloseReason.Confirmed;
             IsOpen = false;
             return;
@@ -375,12 +481,18 @@ public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModel
             // should not be persisted, avoid mutating the global selection store.
             if (_invocation.PersistSelection)
             {
-                await active.ApplyAsync(CancellationToken.None).ConfigureAwait(false);
+                _logger.LogInformation("ModelPicker: Applying active pane ({PaneType})", active.GetType().Name);
+                await active.ApplyAsync(CancellationToken.None);
+                _logger.LogInformation("ModelPicker: Apply complete ({PaneType})", active.GetType().Name);
+            }
+            else
+            {
+                _logger.LogInformation("ModelPicker: PersistSelection=false; skipping ApplyAsync for pane {PaneType}", active.GetType().Name);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore
+            _logger.LogError(ex, "ModelPicker: Apply failed ({PaneType})", active.GetType().Name);
         }
 
         RefreshSelectedModelsFromActive();

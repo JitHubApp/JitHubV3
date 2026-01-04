@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using JitHubV3.Services.Ai.ModelPicker;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.Extensions.Logging;
 
 public sealed partial class ModelOrApiPickerOverlay : UserControl
 {
@@ -14,6 +15,7 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
     private ModelOrApiPickerViewModel? _vm;
     private bool _isAnimating;
     private INotifyCollectionChanged? _categoriesChanged;
+    private ILogger<ModelOrApiPickerOverlay>? _logger;
 
     public event EventHandler? Closed;
     public event EventHandler? Confirmed;
@@ -30,16 +32,21 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _logger ??= (Application.Current as App)?.Services?.GetService<ILogger<ModelOrApiPickerOverlay>>();
+        _logger?.LogInformation("ModelPickerOverlay: Loaded (Thread={ThreadId})", Environment.CurrentManagedThreadId);
+
         AttachToViewModel();
         UpdateSidePaneState();
         if (_vm is { IsOpen: true })
         {
+            _logger?.LogInformation("ModelPickerOverlay: VM already open on load; beginning open animation");
             BeginOpen();
         }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        _logger?.LogInformation("ModelPickerOverlay: Unloaded");
         DetachFromViewModel();
     }
 
@@ -71,6 +78,13 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
         _vm = DataContext as ModelOrApiPickerViewModel;
         if (_vm is not null)
         {
+            _logger?.LogInformation(
+                "ModelPickerOverlay: Attached VM (IsOpen={IsOpen}, Categories={CategoriesCount}, SelectedCategory={SelectedCategory}, Active={ActiveType})",
+                _vm.IsOpen,
+                _vm.Categories.Count,
+                _vm.SelectedCategory?.Id,
+                _vm.ActiveCategory?.GetType().Name);
+
             _vm.PropertyChanged += OnViewModelPropertyChanged;
 
             _categoriesChanged = _vm.Categories;
@@ -83,6 +97,7 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
     private void UpdateSidePaneState()
     {
         var showSidePane = _vm?.Categories.Count > 1;
+        _logger?.LogInformation("ModelPickerOverlay: Side pane state (Show={Show}, Categories={Count})", showSidePane, _vm?.Categories.Count ?? 0);
         _ = VisualStateManager.GoToState(this, showSidePane ? "SidePaneVisible" : "SidePaneCollapsed", true);
     }
 
@@ -96,12 +111,20 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
 
         if (_vm is not null)
         {
+            _logger?.LogInformation("ModelPickerOverlay: Detached VM");
             _vm.PropertyChanged -= OnViewModelPropertyChanged;
             _vm = null;
         }
     }
 
-    private void OnCategoriesChanged(object? sender, NotifyCollectionChangedEventArgs e) => UpdateSidePaneState();
+    private void OnCategoriesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        _logger?.LogInformation(
+            "ModelPickerOverlay: Categories changed (Action={Action}, NewCount={Count})",
+            e.Action,
+            _vm?.Categories.Count ?? 0);
+        UpdateSidePaneState();
+    }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -117,10 +140,12 @@ public sealed partial class ModelOrApiPickerOverlay : UserControl
 
         if (_vm.IsOpen)
         {
+            _logger?.LogInformation("ModelPickerOverlay: VM opened; beginning open animation");
             BeginOpen();
         }
         else
         {
+            _logger?.LogInformation("ModelPickerOverlay: VM closed; beginning close animation (Reason={Reason})", _vm.LastCloseReason);
             BeginClose();
         }
     }
