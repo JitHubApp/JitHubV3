@@ -97,8 +97,25 @@
       Emit generated files under obj/ so they remain excluded from Compile globs.
       (Emitting into the project root can cause the SDK to compile them, resulting in duplicate members.)
     -->
-    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated\$(Configuration)\$(TargetFramework)</CompilerGeneratedFilesOutputPath>
+    <!--
+      Keep the path short to avoid Windows MAX_PATH issues.
+      (Overly long paths can surface as CS0016 "Could not find a part of the path" when writing generated files.)
+    -->
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)g\$(TargetFramework)</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
+
+  <Target Name="EnsureCompilerGeneratedFilesOutputPath" BeforeTargets="CoreCompile"
+          Condition="'$(EmitCompilerGeneratedFiles)'=='true' and '$(CompilerGeneratedFilesOutputPath)' != ''">
+    <MakeDir Directories="$(CompilerGeneratedFilesOutputPath)" />
+  </Target>
+
+  <Target Name="WorkaroundMsixDuplicateResourcesPri" BeforeTargets="PrepareForBuild"
+          Condition="'$(TargetFramework)'=='net10.0-windows10.0.26100'">
+    <ItemGroup>
+      <_StaleMsixPri Include="$(IntermediateOutputPath)**\MsixContent\resources.pri" />
+    </ItemGroup>
+    <Delete Files="@(_StaleMsixPri)" />
+  </Target>
 
   <!--
     Uno's net*-desktop TFM does not necessarily define a dedicated platform symbol we can rely on.
@@ -106,6 +123,14 @@
   -->
   <PropertyGroup Condition="'$(TargetFramework)'=='net10.0-desktop'">
     <DefineConstants>$(DefineConstants);JITHUB_DESKTOP</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='net10.0-windows10.0.26100'">
+    <!--
+      WinAppSDK/packaging targets can surface duplicate publish items for resources.pri during build.
+      Treat duplicates as non-fatal so local builds keep working.
+    -->
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
   <ItemGroup>
