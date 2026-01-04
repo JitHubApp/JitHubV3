@@ -77,4 +77,27 @@ public sealed class ModelPickerRegistryTests
 
         results.Select(r => r.Id).Should().BeEquivalentTo(["openai", "anthropic"]);
     }
+
+    [Test]
+    public async Task GetAvailableAsync_OrdersByGeneratedModelOrder_WhenKnown()
+    {
+        // Ordered per TestModelTypeHelpers.GetModelOrder:
+        // winai (1) -> local-models (2) -> onnx (3) -> openai (4)
+        var registry = new PickerDefinitionRegistry(
+        [
+            new FakePickerDefinition("openai", available: true, "openai"),
+            new FakePickerDefinition("onnx", available: true, "onnx"),
+            new FakePickerDefinition("local-models", available: true, "local-foundry"),
+            new FakePickerDefinition("winai", available: true, "windows-ai-apis"),
+        ]);
+
+        var invocation = new ModelPickerInvocation(
+            PrimaryAction: PickerPrimaryAction.Apply,
+            Slots: Array.Empty<ModelPickerSlot>(),
+            PersistSelection: false);
+
+        var results = await registry.GetAvailableAsync(invocation, CancellationToken.None);
+
+        results.Select(r => r.Id).Should().Equal(["winai", "local-models", "onnx", "openai"]);
+    }
 }

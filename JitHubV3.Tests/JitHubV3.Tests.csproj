@@ -93,6 +93,14 @@
     <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloadQueue.cs" Link="Ai\AiModelDownloadQueue.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ExternalProviders\FoundryLocal\IFoundryLocalModelProvider.cs" Link="Ai\ExternalProviders\FoundryLocal\IFoundryLocalModelProvider.cs" />
 
+    <Compile Include="..\JitHubV3\Services\Ai\ExternalProviders\FoundryLocal\FoundryLocalModelProvider.cs" Link="Ai\ExternalProviders\FoundryLocal\FoundryLocalModelProvider.cs" />
+
+    <Compile Include="..\JitHubV3\Services\Ai\FoundryLocal\FoundryCatalogModel.cs" Link="Ai\FoundryLocal\FoundryCatalogModel.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\FoundryLocal\FoundryClient.cs" Link="Ai\FoundryLocal\FoundryClient.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\FoundryLocal\FoundryJsonContext.cs" Link="Ai\FoundryLocal\FoundryJsonContext.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\FoundryLocal\FoundryServiceManager.cs" Link="Ai\FoundryLocal\FoundryServiceManager.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\FoundryLocal\Utils.cs" Link="Ai\FoundryLocal\Utils.cs" />
+
     <Compile Include="..\JitHubV3\Services\Ai\AiLocalModelDefinitionsConfiguration.cs" Link="Ai\AiLocalModelDefinitionsConfiguration.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\IAiStatusEventBus.cs" Link="Ai\IAiStatusEventBus.cs" />
@@ -106,6 +114,8 @@
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\OpenAiPickerViewModel.cs" Link="Presentation\ModelPicker\OpenAiPickerViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AnthropicPickerViewModel.cs" Link="Presentation\ModelPicker\AnthropicPickerViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AzureAiFoundryPickerViewModel.cs" Link="Presentation\ModelPicker\AzureAiFoundryPickerViewModel.cs" />
+
+    <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\FoundryLocalPickerViewModel.cs" Link="Presentation\ModelPicker\FoundryLocalPickerViewModel.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\IModelPickerService.cs" Link="Ai\ModelPicker\IModelPickerService.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\IModelPickerOverlayViewModel.cs" Link="Ai\ModelPicker\IModelPickerOverlayViewModel.cs" />

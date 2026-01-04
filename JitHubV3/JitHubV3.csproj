@@ -92,6 +92,12 @@
   <PropertyGroup Condition="'$(Configuration)'=='Debug' or '$(IsUiAutomationMappingEnabled)'=='True'">
     <IsUiAutomationMappingEnabled>True</IsUiAutomationMappingEnabled>
     <DefineConstants>$(DefineConstants);USE_UITESTS</DefineConstants>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <!--
+      Emit generated files under obj/ so they remain excluded from Compile globs.
+      (Emitting into the project root can cause the SDK to compile them, resulting in duplicate members.)
+    -->
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated\$(Configuration)\$(TargetFramework)</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <!--

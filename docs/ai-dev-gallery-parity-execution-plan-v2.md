@@ -810,7 +810,6 @@ JitHubV3 currently has categories/view-models for:
 - Processes downloads sequentially and dispatches the download start onto the UI thread (`App.MainWindow.DispatcherQueue.TryEnqueue(...)`).
 - Emits `ModelsChanged` and `ModelDownloadCompleted` events.
 - Sends a Windows App Notification on completion (`Microsoft.Windows.AppNotifications`).
-
 **JitHubV3**
 - `AiModelDownloadQueue.Enqueue(...)` always creates a new `Guid` handle and enqueues work; there is no “already cached” fast-path.
 - It overwrites an existing artifact file if present and updates an inventory store entry.

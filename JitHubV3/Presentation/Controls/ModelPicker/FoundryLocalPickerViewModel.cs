@@ -359,7 +359,8 @@ public sealed class FoundryCatalogModelDetailsViewModel
     {
         _details = details;
 
-        if (_details.ProviderModelDetails is JitHubV3.Services.Ai.FoundryLocal.FoundryCatalogModel m)
+        if (_details.ProviderModelDetails is JitHubV3.Services.Ai.FoundryLocal.FoundryCatalogModel m
+            && m.Runtime is not null)
         {
             RuntimeDeviceType = m.Runtime.DeviceType;
             RuntimeExecutionProvider = m.Runtime.ExecutionProvider;
@@ -394,6 +395,7 @@ public sealed partial class DownloadableFoundryModelViewModel : ObservableObject
 
     public string DisplayText
         => _details.ProviderModelDetails is JitHubV3.Services.Ai.FoundryLocal.FoundryCatalogModel m
+            && m.Runtime is not null
             ? $"{FoundryLocalText.GetShortExecutionProvider(m.Runtime.ExecutionProvider)} · {FoundryLocalText.FormatBytes(_details.SizeBytes)}"
             : _details.Name;
 

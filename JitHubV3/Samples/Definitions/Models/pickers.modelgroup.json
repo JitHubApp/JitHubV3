@@ -1,0 +1,44 @@
+{
+  "WinAiApis": {
+    "Id": "winai",
+    "Name": "Windows AI APIs",
+    "Icon": "\uF4A5",
+    "Order": 1,
+    "Models": {}
+  },
+  "FoundryLocal": {
+    "Id": "local-models",
+    "Name": "Foundry local",
+    "Icon": "\uE7BE",
+    "Order": 2,
+    "Models": {}
+  },
+  "Onnx": {
+    "Id": "onnx",
+    "Name": "Custom models",
+    "Icon": "\uE9CA",
+    "Order": 3,
+    "Models": {}
+  },
+  "OpenAI": {
+    "Id": "openai",
+    "Name": "OpenAI",
+    "Icon": "\uE8C7",
+    "Order": 4,
+    "Models": {}
+  },
+  "Ollama": {
+    "Id": "ollama",
+    "Name": "Ollama",
+    "Icon": "\uE7C1",
+    "Order": 5,
+    "Models": {}
+  },
+  "Lemonade": {
+    "Id": "lemonade",
+    "Name": "Lemonade",
+    "Icon": "\uE790",
+    "Order": 6,
+    "Models": {}
+  }
+}

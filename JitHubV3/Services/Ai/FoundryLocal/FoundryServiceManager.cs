@@ -18,11 +18,14 @@ internal sealed class FoundryServiceManager
         return null;
     }
 
+    internal static string GetLocatorExeForOs(bool isWindows)
+        => isWindows ? "where" : "which";
+
     private static bool IsAvailable()
     {
         // AI Dev Gallery checks with: `where foundry` (Windows).
         // Per Phase 1.3, use `which foundry` on macOS/Linux.
-        var locatorExe = OperatingSystem.IsWindows() ? "where" : "which";
+        var locatorExe = GetLocatorExeForOs(OperatingSystem.IsWindows());
 
         using var process = new Process();
         process.StartInfo.FileName = locatorExe;

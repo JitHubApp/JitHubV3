@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace JitHubV3.Services.Ai.FoundryLocal;
 
@@ -170,7 +171,7 @@ internal sealed class FoundryClient
                     if (match.Success)
                     {
                         var percentage = match.Value;
-                        if (float.TryParse(percentage.TrimEnd('%'), out var progressValue))
+                        if (float.TryParse(percentage.TrimEnd('%'), NumberStyles.Float, CultureInfo.InvariantCulture, out var progressValue))
                         {
                             progress?.Report(progressValue / 100);
                         }
