@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using JitHubV3.Services.Ai.ModelPicker;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 

@@ -1,16 +1,15 @@
 using System.ComponentModel;
-using JitHubV3.Presentation.Controls.ModelPicker;
 
 namespace JitHubV3.Services.Ai.ModelPicker;
 
 public sealed class ModelPickerService : IModelPickerService
 {
-    private readonly ModelOrApiPickerViewModel _picker;
+    private readonly IModelPickerOverlayViewModel _picker;
     private readonly IAiModelStore _modelStore;
 
     public event Action<ModelPickerSelectedModelsChanged>? SelectedModelsChanged;
 
-    public ModelPickerService(ModelOrApiPickerViewModel picker, IAiModelStore modelStore)
+    public ModelPickerService(IModelPickerOverlayViewModel picker, IAiModelStore modelStore)
     {
         _picker = picker ?? throw new ArgumentNullException(nameof(picker));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
@@ -24,6 +23,18 @@ public sealed class ModelPickerService : IModelPickerService
         // but the existing picker VM is still single-selection (gap report sections 2.3 and 6.1).
 
         var tcs = new TaskCompletionSource<ModelPickerResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void DetachSelectionListener()
+        {
+            try
+            {
+                _picker.SelectedModels.CollectionChanged -= OnSelectedModelsCollectionChanged;
+            }
+            catch
+            {
+                // ignore
+            }
+        }
 
         var lastSelectedModels = Array.Empty<PickerSelectedModel>();
 
@@ -39,9 +50,17 @@ public sealed class ModelPickerService : IModelPickerService
             SelectedModelsChanged?.Invoke(new ModelPickerSelectedModelsChanged(invocation, lastSelectedModels));
         }
 
+        void OnSelectedModelsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (_picker.IsOpen)
+            {
+                RaiseSelectedModelsChangedIfNeeded();
+            }
+        }
+
         void Handler(object? sender, PropertyChangedEventArgs e)
         {
-            if (!string.Equals(e.PropertyName, nameof(ModelOrApiPickerViewModel.IsOpen), StringComparison.Ordinal))
+            if (!string.Equals(e.PropertyName, nameof(IModelPickerOverlayViewModel.IsOpen), StringComparison.Ordinal))
             {
                 // Treat any picker VM change while open as a potential selection change.
                 // We de-dupe emissions by comparing snapshots.
@@ -58,6 +77,7 @@ public sealed class ModelPickerService : IModelPickerService
             }
 
             _picker.PropertyChanged -= Handler;
+            DetachSelectionListener();
             _ = CompleteAsync();
         }
 
@@ -88,6 +108,7 @@ public sealed class ModelPickerService : IModelPickerService
             tcs.TrySetCanceled(ct);
         });
 
+        _picker.SelectedModels.CollectionChanged += OnSelectedModelsCollectionChanged;
         _picker.PropertyChanged += Handler;
         _picker.SetInvocation(invocation);
         _picker.IsOpen = true;

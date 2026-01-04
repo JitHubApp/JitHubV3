@@ -204,6 +204,7 @@ public partial class App : Application
                     services.AddSingleton<AzureAiFoundryPickerViewModel>();
 
                     services.AddSingleton<ModelOrApiPickerViewModel>();
+                    services.AddSingleton<JitHubV3.Services.Ai.ModelPicker.IModelPickerOverlayViewModel>(sp => sp.GetRequiredService<ModelOrApiPickerViewModel>());
 
                     // Phase 1 (gap report sections 5.1 + 5.2): invocation contract + definition registry scaffolding.
                     services.AddSingleton<JitHubV3.Services.Ai.ModelPicker.IModelPickerService, JitHubV3.Services.Ai.ModelPicker.ModelPickerService>();

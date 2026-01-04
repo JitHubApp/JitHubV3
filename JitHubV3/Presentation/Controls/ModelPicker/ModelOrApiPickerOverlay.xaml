@@ -208,7 +208,8 @@
                           BorderThickness="1"
                           CornerRadius="{StaticResource DashboardRadiusM}"
                           Margin="{StaticResource DashboardEdgePadding}"
-                          Padding="{StaticResource DashboardEdgePadding}">
+                      Padding="{StaticResource DashboardEdgePadding}"
+                      AutomationProperties.Name="{x:Bind DisplayNameOrId}">
                     <Grid ColumnSpacing="{StaticResource DashboardSpacingS}"
                           RowSpacing="{StaticResource DashboardSpacingXS}">
                       <Grid.ColumnDefinitions>
@@ -502,6 +503,7 @@
           IsTabStop="False"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
+            AutomationProperties.AutomationId="ModelPicker.Dismiss"
             AutomationProperties.Name="Close AI model picker" />
 
     <!-- Dialog container -->
@@ -553,6 +555,7 @@
                   MinHeight="44"
                   Background="Transparent"
                   Command="{Binding CancelCommand}"
+                  AutomationProperties.AutomationId="ModelPicker.HeaderClose"
                   AutomationProperties.Name="Close">
             <SymbolIcon Symbol="Cancel" />
           </Button>
@@ -572,12 +575,14 @@
                     ItemsSource="{Binding Categories}"
                     SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
                     SelectionMode="Single"
+                    AutomationProperties.AutomationId="ModelPicker.Categories"
                     AutomationProperties.Name="Categories">
             <ListView.ItemTemplate>
               <DataTemplate x:DataType="local:ModelPickerCategoryItem">
                 <Grid MinHeight="44"
                       Padding="{StaticResource DashboardSpacingS}"
-                      ColumnSpacing="{StaticResource DashboardSpacingS}">
+                      ColumnSpacing="{StaticResource DashboardSpacingS}"
+                      AutomationProperties.Name="{x:Bind DisplayName}">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -666,7 +671,7 @@
                               MinWidth="44"
                               MinHeight="44"
                               Background="Transparent"
-                              AutomationProperties.Name="Remove"
+                              AutomationProperties.Name="{x:Bind RemoveAutomationName}"
                               Command="{x:Bind RemoveCommand}">
                         <SymbolIcon Symbol="Cancel" />
                       </Button>
@@ -682,6 +687,7 @@
                   Grid.Column="1"
                   Content="Cancel"
                   MinHeight="44"
+                  AutomationProperties.AutomationId="ModelPicker.Cancel"
                   Command="{Binding CancelCommand}" />
 
           <Button x:Uid="ModelPickerOverlay.Apply"
@@ -689,6 +695,7 @@
               Content="{Binding PrimaryActionText}"
                   MinHeight="44"
               Command="{Binding ApplyCommand}"
+              AutomationProperties.AutomationId="ModelPicker.PrimaryAction"
               IsEnabled="{Binding CanApply}" />
         </Grid>
 

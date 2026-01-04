@@ -98,6 +98,7 @@
     <Compile Include="..\JitHubV3\Services\Ai\AiStatusEvents.cs" Link="Ai\AiStatusEvents.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiStatusEventBus.cs" Link="Ai\AiStatusEventBus.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\AiStatusEventingDecorators.cs" Link="Ai\AiStatusEventingDecorators.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\AiModelDownloadQueueEventingDecorator.cs" Link="Ai\AiModelDownloadQueueEventingDecorator.cs" />
 
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\PickerCategoryViewModel.cs" Link="Presentation\ModelPicker\PickerCategoryViewModel.cs" />
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\LocalModelsPickerViewModel.cs" Link="Presentation\ModelPicker\LocalModelsPickerViewModel.cs" />
@@ -106,8 +107,11 @@
     <Compile Include="..\JitHubV3\Presentation\Controls\ModelPicker\AzureAiFoundryPickerViewModel.cs" Link="Presentation\ModelPicker\AzureAiFoundryPickerViewModel.cs" />
 
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\IModelPickerService.cs" Link="Ai\ModelPicker\IModelPickerService.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\IModelPickerOverlayViewModel.cs" Link="Ai\ModelPicker\IModelPickerOverlayViewModel.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerCloseReason.cs" Link="Ai\ModelPicker\ModelPickerCloseReason.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerInvocation.cs" Link="Ai\ModelPicker\ModelPickerInvocation.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerResult.cs" Link="Ai\ModelPicker\ModelPickerResult.cs" />
+    <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerService.cs" Link="Ai\ModelPicker\ModelPickerService.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\ModelPickerSlot.cs" Link="Ai\ModelPicker\ModelPickerSlot.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\PickerPrimaryAction.cs" Link="Ai\ModelPicker\PickerPrimaryAction.cs" />
     <Compile Include="..\JitHubV3\Services\Ai\ModelPicker\PickerSelectedModel.cs" Link="Ai\ModelPicker\PickerSelectedModel.cs" />

@@ -604,6 +604,20 @@ public sealed class OllamaPickerDefinition : IPickerDefinition
   - download queue dedupe
   - verification state transitions
 
+**Implementation status (2026-01-03)**
+- Windows app build validated (project-level):
+  - `dotnet build JitHubV3/JitHubV3.csproj -f net10.0-windows10.0.26100 -r win-x64`
+- Unit tests validated:
+  - `dotnet test JitHubV3.Tests/JitHubV3.Tests.csproj` (84 passed)
+
+**Important constraint discovered during Phase 11 validation**
+- Building the entire `.slnx` for a single Windows TFM/RID is not viable:
+  - `NETSDK1134`: building a solution with `-r win-x64` is not supported.
+  - `NETSDK1005`: forcing `net10.0-windows10.0.26100` at solution level fails for projects that target `net10.0` only.
+- Practical validation approach is **per-project**:
+  - build the Windows UI app for the Windows TFM/RID
+  - build/test non-Windows projects using their own TFMs
+
 ### 11.2 UI tests
 - Extend UI tests to cover:
   - overlay open/close
@@ -611,11 +625,26 @@ public sealed class OllamaPickerDefinition : IPickerDefinition
   - chip add/remove
   - run/apply primary action
 
+**Implementation status (2026-01-03)**
+- UI tests compile and run in “no devices connected” environments:
+  - `dotnet test JitHubV3.UITests/JitHubV3.UITests.csproj` (8 skipped, 0 failed)
+- Added explicit overlay coverage using stable `AutomationId`s:
+  - open/close via dismiss/cancel
+  - primary action presence
+
+**Notes**
+- The “left rail collapse” and “chip add/remove” behaviors are part of earlier parity phases and are not implemented yet; the corresponding UI tests should be added once those UX surfaces exist.
+
 ### 11.3 Accessibility
 - Ensure meaningful `AutomationProperties.Name` for:
   - dismiss button (“Close AI model picker”)
   - chip remove buttons
   - list rows
+
+**Implementation status (2026-01-03)**
+- Added stable automation IDs to make UI tests reliable:
+  - `ModelPicker.Dismiss`, `ModelPicker.HeaderClose`, `ModelPicker.Categories`, `ModelPicker.Cancel`, `ModelPicker.PrimaryAction`
+- Improved naming for list rows and chip remove buttons (per-item naming, not generic).
 
 ---
 

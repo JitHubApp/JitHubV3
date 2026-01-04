@@ -8,6 +8,8 @@ public sealed partial class SelectedModelChipViewModel : ObservableObject
 
     public string DisplayNameOrId => Model.DisplayNameOrId;
 
+    public string RemoveAutomationName => $"Remove {DisplayNameOrId}";
+
     public IRelayCommand RemoveCommand { get; }
 
     public SelectedModelChipViewModel(PickerSelectedModel model, Action<PickerSelectedModel> remove)

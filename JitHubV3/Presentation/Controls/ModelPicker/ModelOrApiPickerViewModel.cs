@@ -10,14 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace JitHubV3.Presentation.Controls.ModelPicker;
 
-public enum ModelPickerCloseReason
-{
-    Unknown = 0,
-    Confirmed = 1,
-    Canceled = 2,
-}
-
-public sealed partial class ModelOrApiPickerViewModel : ObservableObject
+public sealed partial class ModelOrApiPickerViewModel : ObservableObject, IModelPickerOverlayViewModel
 {
     private readonly IPickerDefinitionRegistry _registry;
     private readonly IServiceProvider _services;
