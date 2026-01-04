@@ -8,11 +8,17 @@ namespace JitHubV3.Services.Ai.FoundryLocal;
 
 internal sealed record PromptTemplate
 {
+    [JsonPropertyName("system")]
+    public string? System { get; init; }
+
+    [JsonPropertyName("user")]
+    public string? User { get; init; }
+
     [JsonPropertyName("assistant")]
-    public string Assistant { get; init; } = default!;
+    public string? Assistant { get; init; }
 
     [JsonPropertyName("prompt")]
-    public string Prompt { get; init; } = default!;
+    public string? Prompt { get; init; }
 }
 
 internal sealed record Runtime
@@ -40,7 +46,7 @@ internal sealed record FoundryModelDownload(
     string Uri,
     string Path,
     string ProviderType,
-    PromptTemplate PromptTemplate);
+    PromptTemplate? PromptTemplate);
 
 internal sealed record FoundryDownloadBody(FoundryModelDownload Model, bool IgnorePipeReport);
 
@@ -65,7 +71,7 @@ internal sealed record FoundryCatalogModel
     public string ModelType { get; init; } = default!;
 
     [JsonPropertyName("promptTemplate")]
-    public PromptTemplate PromptTemplate { get; init; } = default!;
+    public PromptTemplate? PromptTemplate { get; init; }
 
     [JsonPropertyName("publisher")]
     public string Publisher { get; init; } = default!;

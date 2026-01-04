@@ -520,8 +520,10 @@
     <Border x:Name="Dialog"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            MaxWidth="900"
-            MaxHeight="720"
+            Width="{StaticResource ModelPickerDialogMaxWidth}"
+            Height="{StaticResource ModelPickerDialogMaxHeight}"
+            MaxWidth="{StaticResource ModelPickerDialogMaxWidth}"
+            MaxHeight="{StaticResource ModelPickerDialogMaxHeight}"
             Margin="{StaticResource DashboardEdgePadding}"
             Opacity="0"
           Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
@@ -624,9 +626,12 @@
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
 
-              <ContentControl Grid.Row="0"
-                              Content="{Binding ActiveCategory}"
-                              ContentTemplateSelector="{StaticResource PickerCategoryTemplateSelector}" />
+              <ScrollViewer Grid.Row="0"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+                <ContentControl Content="{Binding ActiveCategory}"
+                                ContentTemplateSelector="{StaticResource PickerCategoryTemplateSelector}" />
+              </ScrollViewer>
 
               <local:DownloadProgressList Grid.Row="1"
                                           DataContext="{Binding DownloadProgressList}" />

@@ -20,6 +20,7 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
     private readonly IAiModelDownloadQueue _downloads;
     private readonly IAiModelStore _modelStore;
     private readonly ILocalModelShellActions _shell;
+    private readonly SynchronizationContext? _uiContext;
 
     public ObservableCollection<FoundryModelPairViewModel> AvailableModels { get; } = new();
 
@@ -80,6 +81,7 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
         _downloads = downloads ?? throw new ArgumentNullException(nameof(downloads));
         _modelStore = modelStore ?? throw new ArgumentNullException(nameof(modelStore));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
+        _uiContext = SynchronizationContext.Current;
 
         CopyUrlCommand = new AsyncRelayCommand(CopyUrlAsync);
         DownloadModelCommand = new AsyncRelayCommand<DownloadableFoundryModelViewModel>(DownloadModelAsync);
@@ -145,60 +147,89 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
     {
         ct.ThrowIfCancellationRequested();
 
-        IsLoading = true;
-        IsNotAvailable = false;
-        OnPropertyChanged(nameof(ShowModels));
+        await RunOnUiAsync(() =>
+        {
+            IsLoading = true;
+            IsNotAvailable = false;
+            OnPropertyChanged(nameof(ShowModels));
+        }).ConfigureAwait(false);
 
         try
         {
             var available = await _provider.IsAvailable(ct).ConfigureAwait(false);
             if (!available)
             {
-                AvailableModels.Clear();
-                CatalogModels.Clear();
-                FoundryLocalUrl = string.Empty;
-
-                IsNotAvailable = true;
+                await RunOnUiAsync(() =>
+                {
+                    AvailableModels.Clear();
+                    CatalogModels.Clear();
+                    SelectedModel = null;
+                    FoundryLocalUrl = string.Empty;
+                    IsNotAvailable = true;
+                }).ConfigureAwait(false);
                 return;
             }
 
-            FoundryLocalUrl = _provider.Url;
+            await RunOnUiAsync(() =>
+            {
+                FoundryLocalUrl = _provider.Url;
+            }).ConfigureAwait(false);
 
-            var downloaded = await _provider.GetModelsAsync(ignoreCached: true, ct).ConfigureAwait(false);
-            var catalog = await _provider.GetAllModelsInCatalogAsync(ct).ConfigureAwait(false);
+            IReadOnlyList<FoundryLocalModelDetails> downloaded;
+            IReadOnlyList<FoundryLocalModelDetails> catalog;
+
+            try
+            {
+                downloaded = await _provider.GetModelsAsync(ignoreCached: true, ct).ConfigureAwait(false);
+                catalog = await _provider.GetAllModelsInCatalogAsync(ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                await RunOnUiAsync(() =>
+                {
+                    AvailableModels.Clear();
+                    CatalogModels.Clear();
+                    SelectedModel = null;
+                    IsNotAvailable = true;
+                }).ConfigureAwait(false);
+                return;
+            }
 
             var downloadedNames = downloaded.Select(d => d.Name).ToHashSet(StringComparer.Ordinal);
 
-            AvailableModels.Clear();
-            foreach (var m in downloaded.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase))
+            await RunOnUiAsync(() =>
             {
-                AvailableModels.Add(new FoundryModelPairViewModel(m));
-            }
-
-            CatalogModels.Clear();
-            foreach (var group in catalog
-                         .OfType<FoundryLocalModelDetails>()
-                         .GroupBy(m => GetAlias(m) ?? m.Name, StringComparer.Ordinal)
-                         .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
-            {
-                var modelsInGroup = group.ToArray();
-
-                var groupVm = new FoundryCatalogModelGroupViewModel(
-                    alias: group.Key,
-                    license: modelsInGroup.Select(m => m.License).FirstOrDefault(l => !string.IsNullOrWhiteSpace(l)));
-
-                foreach (var m in modelsInGroup.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase))
+                AvailableModels.Clear();
+                foreach (var m in downloaded.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase))
                 {
-                    groupVm.Details.Add(new FoundryCatalogModelDetailsViewModel(m));
-
-                    if (!downloadedNames.Contains(m.Name))
-                    {
-                        groupVm.Models.Add(new DownloadableFoundryModelViewModel(m));
-                    }
+                    AvailableModels.Add(new FoundryModelPairViewModel(m));
                 }
 
-                CatalogModels.Add(groupVm);
-            }
+                CatalogModels.Clear();
+                foreach (var group in catalog
+                             .OfType<FoundryLocalModelDetails>()
+                             .GroupBy(m => GetAlias(m) ?? m.Name, StringComparer.Ordinal)
+                             .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    var modelsInGroup = group.ToArray();
+
+                    var groupVm = new FoundryCatalogModelGroupViewModel(
+                        alias: group.Key,
+                        license: modelsInGroup.Select(m => m.License).FirstOrDefault(l => !string.IsNullOrWhiteSpace(l)));
+
+                    foreach (var m in modelsInGroup.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase))
+                    {
+                        groupVm.Details.Add(new FoundryCatalogModelDetailsViewModel(m));
+
+                        if (!downloadedNames.Contains(m.Name))
+                        {
+                            groupVm.Models.Add(new DownloadableFoundryModelViewModel(m));
+                        }
+                    }
+
+                    CatalogModels.Add(groupVm);
+                }
+            }).ConfigureAwait(false);
 
             // Best-effort: restore selection if it points at a Foundry Local model.
             try
@@ -206,7 +237,10 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
                 var selection = await _modelStore.GetSelectionAsync(ct).ConfigureAwait(false);
                 if (selection is not null && string.Equals(selection.RuntimeId, "local-foundry", StringComparison.OrdinalIgnoreCase))
                 {
-                    SelectedModel = AvailableModels.FirstOrDefault(x => string.Equals(x.Name, selection.ModelId, StringComparison.OrdinalIgnoreCase));
+                    await RunOnUiAsync(() =>
+                    {
+                        SelectedModel = AvailableModels.FirstOrDefault(x => string.Equals(x.Name, selection.ModelId, StringComparison.OrdinalIgnoreCase));
+                    }).ConfigureAwait(false);
                 }
             }
             catch
@@ -216,8 +250,11 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
         }
         finally
         {
-            IsLoading = false;
-            OnPropertyChanged(nameof(ShowModels));
+            await RunOnUiAsync(() =>
+            {
+                IsLoading = false;
+                OnPropertyChanged(nameof(ShowModels));
+            }).ConfigureAwait(false);
         }
     }
 
@@ -265,7 +302,7 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
             }
 
             lastUpdate = now;
-            model.UpdateFromProgress(p);
+            _ = RunOnUiAsync(() => model.UpdateFromProgress(p));
         });
 
         _ = Task.Run(async () =>
@@ -284,7 +321,7 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
                 // Refresh to move model from catalog->available.
                 try
                 {
-                    await RefreshAsync(CancellationToken.None).ConfigureAwait(false);
+                    await RunOnUiAsync(() => RefreshAsync(CancellationToken.None)).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -292,6 +329,53 @@ public sealed partial class FoundryLocalPickerViewModel : PickerCategoryViewMode
                 }
             }
         });
+    }
+
+    private Task RunOnUiAsync(Action action)
+    {
+        if (_uiContext is null || ReferenceEquals(SynchronizationContext.Current, _uiContext))
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        var tcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _uiContext.Post(_ =>
+        {
+            try
+            {
+                action();
+                tcs.TrySetResult(null);
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        }, null);
+        return tcs.Task;
+    }
+
+    private Task RunOnUiAsync(Func<Task> action)
+    {
+        if (_uiContext is null || ReferenceEquals(SynchronizationContext.Current, _uiContext))
+        {
+            return action();
+        }
+
+        var tcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _uiContext.Post(async _ =>
+        {
+            try
+            {
+                await action().ConfigureAwait(false);
+                tcs.TrySetResult(null);
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        }, null);
+        return tcs.Task;
     }
 
     private static string? GetAlias(FoundryLocalModelDetails details)

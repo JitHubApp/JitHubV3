@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace JitHubV3.Services.Ai.FoundryLocal;
 
@@ -70,8 +71,9 @@ internal sealed class FoundryClient
                 models.ForEach(_catalogModels.Add);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[FoundryLocal] Failed to list catalog models from '{_baseUrl}/foundry/list': {ex}");
         }
 
         return _catalogModels;
@@ -79,33 +81,41 @@ internal sealed class FoundryClient
 
     public async Task<List<FoundryCachedModel>> ListCachedModels()
     {
-        var response = await _httpClient.GetAsync($"{_baseUrl}/openai/models").ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-
-        var catalogModels = await ListCatalogModels().ConfigureAwait(false);
-
-        var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        var modelIds = content
-            .Trim('[', ']')
-            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(id => id.Trim('"'));
-
-        List<FoundryCachedModel> models = [];
-
-        foreach (var id in modelIds)
+        try
         {
-            var model = catalogModels.FirstOrDefault(m => m.Name == id);
-            if (model != null)
-            {
-                models.Add(new FoundryCachedModel(id, model.Alias));
-            }
-            else
-            {
-                models.Add(new FoundryCachedModel(id, null));
-            }
-        }
+            var response = await _httpClient.GetAsync($"{_baseUrl}/openai/models").ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
 
-        return models;
+            var catalogModels = await ListCatalogModels().ConfigureAwait(false);
+
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var modelIds = content
+                .Trim('[', ']')
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Select(id => id.Trim('"'));
+
+            List<FoundryCachedModel> models = [];
+
+            foreach (var id in modelIds)
+            {
+                var model = catalogModels.FirstOrDefault(m => m.Name == id);
+                if (model != null)
+                {
+                    models.Add(new FoundryCachedModel(id, model.Alias));
+                }
+                else
+                {
+                    models.Add(new FoundryCachedModel(id, null));
+                }
+            }
+
+            return models;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[FoundryLocal] Failed to list cached models from '{_baseUrl}/openai/models': {ex}");
+            return [];
+        }
     }
 
     public async Task<FoundryDownloadResult> DownloadModel(FoundryCatalogModel model, IProgress<float>? progress, CancellationToken cancellationToken = default)
