@@ -115,4 +115,16 @@
     <ProjectReference Include="..\JitHub.Dashboard.Layouts\JitHub.Dashboard.Layouts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\JitHubV3.SourceGenerator\JitHubV3.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Samples\Definitions\**\*.json" />
+
+    <!-- These files are definition-adjacent helper/code snippets; keep them in the repo but don't compile them into the app. -->
+    <Compile Remove="Samples\Definitions\WcrApis\*.cs" />
+    <None Include="Samples\Definitions\WcrApis\*.cs" />
+  </ItemGroup>
+
 </Project>

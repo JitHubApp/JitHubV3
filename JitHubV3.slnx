@@ -62,6 +62,9 @@
   <Project Path="JitHubV3.Server/JitHubV3.Server.csproj">
     <Deploy />
   </Project>
+  <Project Path="JitHubV3.SourceGenerator/JitHubV3.SourceGenerator.csproj">
+    <Deploy />
+  </Project>
   <Project Path="JitHubV3/JitHubV3.csproj">
     <Deploy />
   </Project>
